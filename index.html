@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciador de Atendimentos</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js">
-    </script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg: #f0f4f8;
@@ -26,1561 +25,585 @@
             --transition: 0.2s ease;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            line-height: 1.5;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 20px; line-height: 1.5;
         }
 
         .app-container {
-            width: 100%;
-            max-width: 1100px;
-            min-height: 85vh;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition: all var(--transition);
+            width: 100%; max-width: 1100px; min-height: 85vh;
+            background: var(--surface); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg); display: flex; flex-direction: column;
+            overflow: hidden; transition: all var(--transition);
         }
 
         .app-header {
-            background: var(--primary);
-            color: #fff;
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
+            background: var(--primary); color: #fff; padding: 16px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px;
         }
-        .app-header .logo {
-            font-size: 1.3rem;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .app-header .logo span {
-            font-size: 1.5rem;
-        }
-        .header-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
+        .app-header .logo { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .header-actions .user-tag {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px;
+            font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 6px;
         }
-        .header-actions .user-tag .admin-badge {
-            background: #fbbf24;
-            color: #1e293b;
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .admin-badge {
+            background: #fbbf24; color: #1e293b; font-size: 0.7rem; padding: 2px 8px;
+            border-radius: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
         }
 
         .nav-bar {
-            display: flex;
-            gap: 2px;
-            padding: 12px 24px;
-            background: #f8fafc;
-            border-bottom: 1px solid var(--border);
-            flex-wrap: wrap;
+            display: flex; gap: 2px; padding: 12px 24px; background: #f8fafc;
+            border-bottom: 1px solid var(--border); flex-wrap: wrap;
         }
         .nav-btn {
-            padding: 9px 18px;
-            border: none;
-            background: transparent;
-            color: var(--text-light);
-            cursor: pointer;
-            border-radius: 20px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all var(--transition);
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            padding: 9px 18px; border: none; background: transparent; color: var(--text-light);
+            cursor: pointer; border-radius: 20px; font-weight: 500; font-size: 0.9rem;
+            transition: all var(--transition); white-space: nowrap; display: flex; align-items: center; gap: 6px;
         }
-        .nav-btn:hover {
-            background: #e2e8f0;
-            color: var(--text);
-        }
-        .nav-btn.active {
-            background: var(--primary);
-            color: #fff;
-            font-weight: 600;
-            box-shadow: var(--shadow);
-        }
+        .nav-btn:hover { background: #e2e8f0; color: var(--text); }
+        .nav-btn.active { background: var(--primary); color: #fff; font-weight: 600; box-shadow: var(--shadow); }
 
-        .main-content {
-            flex: 1;
-            padding: 24px;
-            overflow-y: auto;
-            max-height: 65vh;
-        }
-        .page {
-            display: none;
-            animation: fadeIn 0.25s ease;
-        }
-        .page.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        .main-content { flex: 1; padding: 24px; overflow-y: auto; max-height: 65vh; }
+        .page { display: none; animation: fadeIn 0.25s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
         .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
+            padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer;
+            font-weight: 600; font-size: 0.9rem; transition: all var(--transition);
+            display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
         }
-        .btn-primary {
-            background: var(--primary);
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
-        .btn-success {
-            background: var(--success);
-            color: #fff;
-        }
-        .btn-danger {
-            background: var(--danger);
-            color: #fff;
-        }
-        .btn-danger:hover {
-            background: var(--danger-hover);
-        }
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-        .btn-outline:hover {
-            background: var(--primary);
-            color: #fff;
-        }
-        .btn-sm {
-            padding: 6px 14px;
-            font-size: 0.8rem;
-            border-radius: 16px;
-        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: #fff; }
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 16px; }
 
         .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: var(--shadow);
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow);
         }
         .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; margin-bottom: 16px;
         }
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text);
-        }
+        .card-title { font-size: 1.1rem; font-weight: 700; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-        th,
-        td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-        th {
-            background: #f8fafc;
-            font-weight: 700;
-            color: var(--text-light);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            position: sticky;
-            top: 0;
-        }
-        tr:hover td {
-            background: #f1f5f9;
-        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; font-weight: 700; color: var(--text-light); font-size: 0.8rem; text-transform: uppercase; }
+        tr:hover td { background: #f1f5f9; }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 14px;
-            font-size: 0.78rem;
-            font-weight: 600;
-        }
-        .status-aberto {
-            background: #fef3c7;
-            color: #92400e;
-        }
-        .status-em-andamento {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-        .status-finalizado {
-            background: #d1fae5;
-            color: #065f46;
-        }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 14px; font-size: 0.78rem; font-weight: 600; }
+        .status-aberto { background: #fef3c7; color: #92400e; }
+        .status-em-andamento { background: #dbeafe; color: #1e40af; }
+        .status-finalizado { background: #d1fae5; color: #065f46; }
 
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-light);
-        }
-        .empty-icon {
-            font-size: 3rem;
-            display: block;
-            margin-bottom: 12px;
-        }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); }
+        .empty-icon { font-size: 3rem; display: block; margin-bottom: 12px; }
 
-        .form-group {
-            margin-bottom: 16px;
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem; color: var(--text-light); }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 0.95rem; transition: all var(--transition); background: #fafbfc; font-family: inherit;
         }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 5px;
-            font-size: 0.85rem;
-            color: var(--text-light);
+        .form-group input:focus, .form-group select:focus {
+            outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); background: #fff;
         }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px 14px;
-            border: 2px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.95rem;
-            transition: all var(--transition);
-            background: #fafbfc;
-            font-family: inherit;
-        }
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            background: #fff;
-        }
-        .form-group input.error {
-            border-color: var(--danger);
-            animation: shake 0.4s ease;
-        }
-        @keyframes shake {
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-            25% {
-                transform: translateX(-6px);
-            }
-            50% {
-                transform: translateX(6px);
-            }
-            75% {
-                transform: translateX(-4px);
-            }
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-        @media (max-width: 600px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
 
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            animation: fadeIn 0.2s ease;
-            padding: 20px;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex;
+            align-items: center; justify-content: center; z-index: 1000; padding: 20px;
         }
         .modal {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 28px;
-            width: 100%;
-            max-width: 550px;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-            position: relative;
+            background: var(--surface); border-radius: var(--radius); padding: 28px;
+            width: 100%; max-width: 550px; max-height: 85vh; overflow-y: auto;
+            box-shadow: var(--shadow-lg); position: relative;
         }
-        .modal h3 {
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-        }
-        .modal-close {
-            position: absolute;
-            top: 12px;
-            right: 16px;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-light);
-            transition: var(--transition);
-        }
-        .modal-close:hover {
-            color: var(--danger);
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
+        .modal-close { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); }
+        .modal-close:hover { color: var(--danger); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
 
         .login-container {
-            max-width: 420px;
-            width: 100%;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            padding: 40px 32px;
-            text-align: center;
+            max-width: 420px; width: 100%; background: var(--surface); border-radius: var(--radius);
+            box-shadow: var(--shadow-lg); padding: 40px 32px; text-align: center;
         }
-        .login-container .login-icon {
-            font-size: 3.5rem;
-            margin-bottom: 8px;
-        }
-        .login-container h2 {
-            margin-bottom: 6px;
-            font-size: 1.5rem;
-        }
-        .login-container .subtitle {
-            color: var(--text-light);
-            margin-bottom: 24px;
-            font-size: 0.9rem;
-        }
-        .login-container .form-group {
-            text-align: left;
-        }
-        .login-error {
-            color: var(--danger);
-            font-size: 0.85rem;
-            margin-top: 8px;
-            display: none;
-        }
+        .login-container .login-icon { font-size: 3.5rem; margin-bottom: 8px; }
+        .login-container h2 { margin-bottom: 6px; font-size: 1.5rem; }
+        .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 8px; display: none; }
 
         .report-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; margin-bottom: 20px;
         }
         .summary-card {
-            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-            border-radius: var(--radius);
-            padding: 16px;
-            text-align: center;
-            border: 1px solid #bae6fd;
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-radius: var(--radius);
+            padding: 16px; text-align: center; border: 1px solid #bae6fd;
         }
-        .summary-card .summary-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        .summary-card .summary-label {
-            font-size: 0.8rem;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+        .summary-value { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .summary-label { font-size: 0.8rem; color: var(--text-light); text-transform: uppercase; }
 
         .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #1e293b;
-            color: #fff;
-            padding: 14px 22px;
-            border-radius: 25px;
-            font-weight: 500;
-            z-index: 2000;
+            position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff;
+            padding: 14px 22px; border-radius: 25px; font-weight: 500; z-index: 2000;
             animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
-            box-shadow: var(--shadow-lg);
-            font-size: 0.9rem;
+            box-shadow: var(--shadow-lg); font-size: 0.9rem;
         }
-        @keyframes slideUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-        }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(10px); } }
 
         @media (max-width: 768px) {
-            .app-container {
-                border-radius: 0;
-                min-height: 100vh;
-                max-width: 100%;
-            }
-            .app-header {
-                padding: 12px 16px;
-                font-size: 0.9rem;
-            }
-            .nav-bar {
-                padding: 8px 12px;
-                gap: 4px;
-                overflow-x: auto;
-                flex-wrap: nowrap;
-            }
-            .nav-btn {
-                padding: 7px 14px;
-                font-size: 0.8rem;
-            }
-            .main-content {
-                padding: 16px;
-                max-height: none;
-            }
-            table {
-                font-size: 0.75rem;
-            }
-            th,
-            td {
-                padding: 6px 8px;
-            }
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            .modal {
-                padding: 20px;
-                max-width: 95vw;
-            }
-            .report-summary {
-                grid-template-columns: 1fr 1fr;
-            }
+            .app-container { border-radius: 0; min-height: 100vh; }
+            .nav-bar { padding: 8px 12px; overflow-x: auto; flex-wrap: nowrap; }
+            .main-content { padding: 16px; max-height: none; }
+            table { font-size: 0.75rem; }
+            th, td { padding: 6px 8px; }
+            .modal { padding: 20px; max-width: 95vw; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ==================== LOGIN ==================== -->
-    <div id="loginContainer" class="login-container">
-        <div class="login-icon">📋</div>
-        <h2>Gerenciador de Atendimentos</h2>
-        <p class="subtitle">Conectado ao Google Sheets em tempo real</p>
-        <div class="form-group">
-            <label>Usuário</label>
-            <input type="text" id="loginUser" placeholder="Digite seu usuário" autocomplete="username">
+<!-- LOGIN -->
+<div id="loginContainer" class="login-container">
+    <div class="login-icon">📋</div>
+    <h2>Gerenciador de Atendimentos</h2>
+    <p class="subtitle" id="loginSubtitle">Conectado ao Google Sheets</p>
+    <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="Usuário"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha"></div>
+    <p class="login-error" id="loginError">Usuário ou senha inválidos.</p>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">🔐 Entrar</button>
+</div>
+
+<!-- APP -->
+<div id="appContainer" class="app-container" style="display:none;">
+    <header class="app-header">
+        <div class="logo"><span>📋</span> Atendimentos</div>
+        <div class="header-actions">
+            <span class="user-tag" id="headerUserTag">👤 Usuário</span>
+            <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;" onclick="logout()">🚪 Sair</button>
         </div>
-        <div class="form-group">
-            <label>Senha</label>
-            <input type="password" id="loginPass" placeholder="Digite sua senha" autocomplete="current-password">
-        </div>
-        <p class="login-error" id="loginError">Usuário ou senha inválidos.</p>
-        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">
-            🔐 Entrar
-        </button>
-        <p style="margin-top:16px;font-size:0.78rem;color:var(--text-light);">
-            Admin padrão: <strong>Angelo</strong> / <strong>142536</strong>
-        </p>
-    </div>
-
-    <!-- ==================== APP ==================== -->
-    <div id="appContainer" class="app-container" style="display:none;">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="logo"><span>📋</span> Atendimentos</div>
-            <div class="header-actions">
-                <span class="user-tag" id="headerUserTag">👤 Usuário</span>
-                <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;border:none;" onclick="logout()">🚪 Sair</button>
-            </div>
-        </header>
-
-        <!-- Nav -->
-        <nav class="nav-bar" id="navBar">
-            <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">
-                📅 Atividades
-            </button>
-            <button class="nav-btn" data-page="relatorio" onclick="navigateTo('relatorio')">
-                📊 Relatório
-            </button>
-            <button class="nav-btn" data-page="minhaconta" onclick="navigateTo('minhaconta')">
-                👤 Minha Conta
-            </button>
-            <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">
-                ⚙️ Admin
-            </button>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Dashboard -->
-            <div class="page active" id="page-dashboard">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">📅 Atendimentos do Dia</span>
-                        <button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Adicionar Atividade</button>
-                    </div>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Serviço Realizado</th>
-                                    <th>Solicitante</th>
-                                    <th>Hora Início</th>
-                                    <th>Hora Fim</th>
-                                    <th>Estado</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyAtividades">
-                                <tr><td colspan="6" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade registrada hoje.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+    </header>
+    <nav class="nav-bar" id="navBar">
+        <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">📅 Atividades</button>
+        <button class="nav-btn" data-page="relatorio" onclick="navigateTo('relatorio')">📊 Relatório</button>
+        <button class="nav-btn" data-page="minhaconta" onclick="navigateTo('minhaconta')">👤 Minha Conta</button>
+        <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">⚙️ Admin</button>
+    </nav>
+    <main class="main-content">
+        <div class="page active" id="page-dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📅 Atendimentos do Dia</span>
+                    <button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Adicionar Atividade</button>
                 </div>
-            </div>
-
-            <!-- Relatório -->
-            <div class="page" id="page-relatorio">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">📊 Relatório de Atendimentos</span>
-                        <button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button>
-                    </div>
-                    <div class="form-row" style="margin-bottom:16px;">
-                        <div class="form-group">
-                            <label>Data Início</label>
-                            <input type="date" id="relDataInicio">
-                        </div>
-                        <div class="form-group">
-                            <label>Data Fim</label>
-                            <input type="date" id="relDataFim">
-                        </div>
-                    </div>
-                    <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
-                    <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
-                    <div style="overflow-x:auto;margin-top:8px;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Serviço</th>
-                                    <th>Solicitante</th>
-                                    <th>Início</th>
-                                    <th>Fim</th>
-                                    <th>Duração</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyRelatorio">
-                                <tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Selecione um período e clique em Filtrar.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Minha Conta -->
-            <div class="page" id="page-minhaconta">
-                <div class="card" style="max-width:500px;">
-                    <div class="card-header"><span class="card-title">👤 Minha Conta</span></div>
-                    <div class="form-group">
-                        <label>Nome de Usuário</label>
-                        <input type="text" id="contaNome" readonly disabled style="background:#f1f5f9;">
-                    </div>
-                    <div class="form-group">
-                        <label>Nível de Acesso</label>
-                        <input type="text" id="contaNivel" readonly disabled style="background:#f1f5f9;">
-                    </div>
-                    <div class="form-group">
-                        <label>Nova Senha</label>
-                        <input type="password" id="contaNovaSenha" placeholder="Digite nova senha (mín. 4 caracteres)">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirmar Nova Senha</label>
-                        <input type="password" id="contaConfirmarSenha" placeholder="Confirme a nova senha">
-                    </div>
-                    <button class="btn btn-primary" onclick="alterarMinhaSenha()">🔒 Alterar Senha</button>
-                </div>
-            </div>
-
-            <!-- Admin -->
-            <div class="page" id="page-admin">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">⚙️ Gerenciamento de Usuários</span>
-                        <button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button>
-                    </div>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Usuário</th>
-                                    <th>Nível</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyUsuarios"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- ==================== MODAL ATIVIDADE ==================== -->
-    <div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
-        <div class="modal">
-            <button class="modal-close" onclick="closeActivityModal()">✕</button>
-            <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3>
-            <input type="hidden" id="atvId">
-            <div class="form-group">
-                <label>Serviço Realizado *</label>
-                <input type="text" id="atvServico" placeholder="Descreva o serviço">
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Hora Início *</label>
-                    <input type="time" id="atvHoraInicio">
-                </div>
-                <div class="form-group">
-                    <label>Hora Fim</label>
-                    <input type="time" id="atvHoraFim">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Solicitante *</label>
-                <input type="text" id="atvSolicitante" placeholder="Quem solicitou">
-            </div>
-            <div class="form-group">
-                <label>Estado</label>
-                <select id="atvEstado">
-                    <option value="Aberto" selected>🔓 Aberto</option>
-                    <option value="Em andamento">🔄 Em andamento</option>
-                    <option value="Finalizado">✅ Finalizado</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Data</label>
-                <input type="date" id="atvData">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button>
-                <button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Ações</th></tr></thead>
+                    <tbody id="tbodyAtividades"></tbody></table></div>
             </div>
         </div>
-    </div>
-
-    <!-- ==================== MODAL USUÁRIO ==================== -->
-    <div class="modal-overlay" id="modalUserOverlay" style="display:none;">
-        <div class="modal">
-            <button class="modal-close" onclick="closeUserModal()">✕</button>
-            <h3 id="modalUserTitulo">➕ Novo Usuário</h3>
-            <input type="hidden" id="userId">
-            <div class="form-group">
-                <label>Nome de Usuário *</label>
-                <input type="text" id="userNome" placeholder="Nome do usuário">
-            </div>
-            <div class="form-group">
-                <label>Senha *</label>
-                <input type="password" id="userSenha" placeholder="Mínimo 4 caracteres">
-            </div>
-            <div class="form-group">
-                <label>Nível de Acesso *</label>
-                <select id="userNivel">
-                    <option value="comum">👤 Usuário Comum</option>
-                    <option value="admin">👑 Administrador</option>
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button>
-                <button class="btn btn-primary btn-sm" onclick="salvarUsuario()">💾 Salvar</button>
+        <div class="page" id="page-relatorio">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📊 Relatório</span>
+                    <button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button>
+                </div>
+                <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div>
+                <div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div></div>
+                <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
+                <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead>
+                    <tbody id="tbodyRelatorio"></tbody></table></div>
             </div>
         </div>
+        <div class="page" id="page-minhaconta">
+            <div class="card" style="max-width:500px;">
+                <div class="card-header"><span class="card-title">👤 Minha Conta</span></div>
+                <div class="form-group"><label>Usuário</label><input type="text" id="contaNome" disabled></div>
+                <div class="form-group"><label>Nível</label><input type="text" id="contaNivel" disabled></div>
+                <div class="form-group"><label>Nova Senha</label><input type="password" id="contaNovaSenha" placeholder="Mín. 4 caracteres"></div>
+                <div class="form-group"><label>Confirmar Senha</label><input type="password" id="contaConfirmarSenha"></div>
+                <button class="btn btn-primary" onclick="alterarMinhaSenha()">🔒 Alterar Senha</button>
+            </div>
+        </div>
+        <div class="page" id="page-admin">
+            <div class="card">
+                <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span>
+                    <button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button>
+                </div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead>
+                    <tbody id="tbodyUsuarios"></tbody></table></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- MODAIS -->
+<div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
+    <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
+        <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
+        <div class="form-group"><label>Serviço *</label><input type="text" id="atvServico"></div>
+        <div class="form-row"><div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div>
+        <div class="form-group"><label>Hora Fim</label><input type="time" id="atvHoraFim"></div></div>
+        <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
+        <div class="form-group"><label>Estado</label><select id="atvEstado"><option value="Aberto">🔓 Aberto</option><option value="Em andamento">🔄 Em andamento</option><option value="Finalizado">✅ Finalizado</option></select></div>
+        <div class="form-group"><label>Data</label><input type="date" id="atvData"></div>
+        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
     </div>
-
-    <!-- Toast -->
-    <div id="toastContainer"></div>
-
-    <script>
-        (function() {
-            // ==================== CONFIGURAÇÃO ====================
-            const API_URL =
-                'https://script.google.com/macros/s/AKfycbzcnNnE5S0pvrwNSncg-vN7meESRVaDpNoKKtbSm1yeYsaeDoQIMy6WPJkvpuSex2FhgQ/exec';
-
-            // ==================== ESTADO ====================
-            let currentUser = null;
-
-            // ==================== API ====================
-            async function apiLoad() {
-                const resp = await fetch(`${API_URL}?action=load`);
-                const data = await resp.json();
-                return data;
-            }
-
-            async function apiSync(type, payload) {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'sync', type, payload })
-                });
-            }
-
-            // ==================== BANCO DE DADOS ====================
-            async function getUsers() {
-                const data = await apiLoad();
-                return data.users || [];
-            }
-
-            async function getActivities() {
-                const data = await apiLoad();
-                return data.activities || [];
-            }
-
-            async function saveUsers(users) {
-                await apiSync('users', users);
-            }
-
-            async function saveActivities(activities) {
-                await apiSync('activities', activities);
-            }
-
-            // ==================== SENHA ====================
-            function hashPassword(pwd) {
-                let hash = 0;
-                const str = 'salt_' + pwd + '_app';
-                for (let i = 0; i < str.length; i++) {
-                    const char = str.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash |= 0;
-                }
-                return 'h_' + Math.abs(hash).toString(36) + '_' + btoa(pwd).substring(0, 8);
-            }
-
-            function verifyPassword(pwd, stored) {
-                // Compatível com senha em texto puro (planilha) ou hash
-                if (pwd === stored) return true;
-                if (hashPassword(pwd) === stored) return true;
-                return false;
-            }
-
-            // ==================== UTILITÁRIOS ====================
-            function generateId() {
-                return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            }
-
-            function escapeHtml(str) {
-                if (!str) return '';
-                const div = document.createElement('div');
-                div.textContent = str;
-                return div.innerHTML;
-            }
-
-            function formatarData(dataStr) {
-                if (!dataStr) return '-';
-                const [ano, mes, dia] = dataStr.split('-');
-                return `${dia}/${mes}/${ano}`;
-            }
-
-            function calcularDuracaoMinutos(horaInicio, horaFim) {
-                if (!horaInicio || !horaFim) return 0;
-                const [h1, m1] = horaInicio.split(':').map(Number);
-                const [h2, m2] = horaFim.split(':').map(Number);
-                let minutos = (h2 * 60 + m2) - (h1 * 60 + m1);
-                if (minutos < 0) minutos += 24 * 60;
-                return Math.max(0, minutos);
-            }
-
-            function formatarDuracao(minutos) {
-                if (minutos <= 0) return '-';
-                const h = Math.floor(minutos / 60);
-                const m = minutos % 60;
-                return h > 0 ? `${h}h ${m}min` : `${m}min`;
-            }
-
-            function getStatusClass(estado) {
-                if (estado === 'Aberto') return 'status-aberto';
-                if (estado === 'Em andamento') return 'status-em-andamento';
-                if (estado === 'Finalizado') return 'status-finalizado';
-                return '';
-            }
-
-            function showToast(message) {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = 'toast';
-                toast.textContent = message;
-                container.appendChild(toast);
-                setTimeout(() => {
-                    if (toast.parentNode) toast.parentNode.removeChild(toast);
-                }, 3000);
-            }
-
-            // ==================== SESSÃO ====================
-            function setCurrentUser(user) {
-                currentUser = user;
-                if (user) {
-                    sessionStorage.setItem('app_current_user_id', user.id);
-                } else {
-                    sessionStorage.removeItem('app_current_user_id');
-                }
-            }
-
-            async function restoreSession() {
-                const userId = sessionStorage.getItem('app_current_user_id');
-                if (!userId) return null;
-                const users = await getUsers();
-                return users.find(u => u.id === userId) || null;
-            }
-
-            // ==================== LOGIN / LOGOUT ====================
-            async function doLogin() {
-                const nome = document.getElementById('loginUser').value.trim();
-                const senha = document.getElementById('loginPass').value.trim();
-                const errorEl = document.getElementById('loginError');
-
-                errorEl.style.display = 'none';
-
-                if (!nome || !senha) {
-                    errorEl.textContent = 'Preencha todos os campos.';
-                    errorEl.style.display = 'block';
-                    return;
-                }
-
-                const users = await getUsers();
-                const user = users.find(u => u.nome.toLowerCase() === nome.toLowerCase());
-
-                if (!user || !verifyPassword(senha, user.senha)) {
-                    errorEl.textContent = 'Usuário ou senha inválidos.';
-                    errorEl.style.display = 'block';
-                    document.getElementById('loginPass').classList.add('error');
-                    setTimeout(() => document.getElementById('loginPass').classList.remove('error'), 500);
-                    return;
-                }
-
-                setCurrentUser(user);
-                showApp();
-                showToast('✅ Bem-vindo, ' + user.nome + '!');
-            }
-
-            function logout() {
-                if (confirm('Deseja realmente sair?')) {
-                    setCurrentUser(null);
-                    hideApp();
-                    document.getElementById('loginUser').value = '';
-                    document.getElementById('loginPass').value = '';
-                    document.getElementById('loginError').style.display = 'none';
-                    showToast('👋 Até logo!');
-                }
-            }
-
-            function showApp() {
-                document.getElementById('loginContainer').style.display = 'none';
-                document.getElementById('appContainer').style.display = 'flex';
-                updateHeader();
-                updateNav();
-                navigateTo('dashboard');
-            }
-
-            function hideApp() {
-                document.getElementById('loginContainer').style.display = 'block';
-                document.getElementById('appContainer').style.display = 'none';
-                document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
-            }
-
-            function updateHeader() {
-                if (!currentUser) return;
-                const tag = document.getElementById('headerUserTag');
-                if (currentUser.nivel === 'admin') {
-                    tag.innerHTML = '👑 ' + currentUser.nome + ' <span class="admin-badge">Admin</span>';
-                } else {
-                    tag.innerHTML = '👤 ' + currentUser.nome;
-                }
-            }
-
-            function updateNav() {
-                const navAdmin = document.getElementById('navAdmin');
-                if (currentUser && currentUser.nivel === 'admin') {
-                    navAdmin.style.display = 'flex';
-                } else {
-                    navAdmin.style.display = 'none';
-                    if (document.getElementById('page-admin').classList.contains('active')) {
-                        navigateTo('dashboard');
-                    }
-                }
-            }
-
-            // ==================== NAVEGAÇÃO ====================
-            function navigateTo(page) {
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-
-                const pageEl = document.getElementById('page-' + page);
-                if (pageEl) pageEl.classList.add('active');
-
-                const navBtn = document.querySelector(`.nav-btn[data-page="${page}"]`);
-                if (navBtn) navBtn.classList.add('active');
-
-                if (page === 'dashboard') renderDashboard();
-                if (page === 'relatorio') setupRelatorio();
-                if (page === 'minhaconta') renderMinhaConta();
-                if (page === 'admin') renderAdmin();
-            }
-
-            // ==================== DASHBOARD ====================
-            async function renderDashboard() {
-                const activities = await getActivities();
-                const hoje = new Date().toISOString().split('T')[0];
-                let atividadesDoDia;
-
-                if (currentUser.nivel === 'admin') {
-                    atividadesDoDia = activities.filter(a => a.data === hoje);
-                } else {
-                    atividadesDoDia = activities.filter(a => a.data === hoje && a.usuarioId === currentUser.id);
-                }
-
-                atividadesDoDia.sort((a, b) => {
-                    if (!a.hora_inicio) return 1;
-                    if (!b.hora_inicio) return -1;
-                    return a.hora_inicio.localeCompare(b.hora_inicio);
-                });
-
-                const tbody = document.getElementById('tbodyAtividades');
-                if (atividadesDoDia.length === 0) {
-                    tbody.innerHTML =
-                        '<tr><td colspan="6" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade registrada hoje.</td></tr>';
-                } else {
-                    tbody.innerHTML = atividadesDoDia.map(a => {
-                        const statusClass = getStatusClass(a.estado);
-                        const podeEditar = currentUser.nivel === 'admin' || a.usuarioId === currentUser
-                            .id;
-                        return `
-                            <tr>
-                                <td><strong>${escapeHtml(a.servico_realizado)}</strong></td>
-                                <td>${escapeHtml(a.solicitante)}</td>
-                                <td>${a.hora_inicio || '-'}</td>
-                                <td>${a.hora_fim || '-'}</td>
-                                <td><span class="status-badge ${statusClass}">${a.estado}</span></td>
-                                <td>
-                                    ${podeEditar ? `<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')" title="Editar">✏️</button>
-                                    <button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')" title="Excluir">🗑️</button>` : '<span style="color:var(--text-light);font-size:0.8rem;">🔒</span>'}
-                                </td>
-                            </tr>`;
-                    }).join('');
-                }
-            }
-
-            // ==================== MODAL ATIVIDADE ====================
-            function openActivityModal(atividade = null) {
-                const modal = document.getElementById('modalAtividadeOverlay');
-                const titulo = document.getElementById('modalAtividadeTitulo');
-
-                document.getElementById('atvId').value = '';
-                document.getElementById('atvServico').value = '';
-                document.getElementById('atvHoraInicio').value = '';
-                document.getElementById('atvHoraFim').value = '';
-                document.getElementById('atvSolicitante').value = '';
-                document.getElementById('atvEstado').value = 'Aberto';
-                document.getElementById('atvData').value = new Date().toISOString().split('T')[0];
-
-                if (atividade) {
-                    titulo.textContent = '✏️ Editar Atividade';
-                    document.getElementById('atvId').value = atividade.id;
-                    document.getElementById('atvServico').value = atividade.servico_realizado || '';
-                    document.getElementById('atvHoraInicio').value = atividade.hora_inicio || '';
-                    document.getElementById('atvHoraFim').value = atividade.hora_fim || '';
-                    document.getElementById('atvSolicitante').value = atividade.solicitante || '';
-                    document.getElementById('atvEstado').value = atividade.estado || 'Aberto';
-                    document.getElementById('atvData').value = atividade.data || new Date().toISOString().split(
-                        'T')[0];
-                } else {
-                    titulo.textContent = '➕ Nova Atividade';
-                    const now = new Date();
-                    document.getElementById('atvHoraInicio').value =
-                        String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2,
-                        '0');
-                }
-
-                modal.style.display = 'flex';
-                document.getElementById('atvServico').focus();
-            }
-
-            function closeActivityModal() {
-                document.getElementById('modalAtividadeOverlay').style.display = 'none';
-            }
-
-            async function editarAtividade(id) {
-                const activities = await getActivities();
-                const atividade = activities.find(a => a.id === id);
-                if (!atividade) {
-                    showToast('⚠️ Atividade não encontrada.');
-                    return;
-                }
-                if (currentUser.nivel !== 'admin' && atividade.usuarioId !== currentUser.id) {
-                    showToast('⛔ Sem permissão para editar esta atividade.');
-                    return;
-                }
-                openActivityModal(atividade);
-            }
-
-            async function salvarAtividade() {
-                const id = document.getElementById('atvId').value;
-                const servico_realizado = document.getElementById('atvServico').value.trim();
-                const hora_inicio = document.getElementById('atvHoraInicio').value;
-                const hora_fim = document.getElementById('atvHoraFim').value;
-                const solicitante = document.getElementById('atvSolicitante').value.trim();
-                const estado = document.getElementById('atvEstado').value;
-                const data = document.getElementById('atvData').value;
-
-                if (!servico_realizado) {
-                    highlightError('atvServico');
-                    showToast('⚠️ Preencha o serviço realizado.');
-                    return;
-                }
-                if (!hora_inicio) {
-                    highlightError('atvHoraInicio');
-                    showToast('⚠️ Preencha a hora de início.');
-                    return;
-                }
-                if (!solicitante) {
-                    highlightError('atvSolicitante');
-                    showToast('⚠️ Preencha o solicitante.');
-                    return;
-                }
-                if (estado === 'Finalizado' && !hora_fim) {
-                    highlightError('atvHoraFim');
-                    showToast('⚠️ Para finalizar, informe a hora fim.');
-                    document.getElementById('atvHoraFim').focus();
-                    return;
-                }
-
-                let activities = await getActivities();
-
-                if (id) {
-                    const index = activities.findIndex(a => a.id === id);
-                    if (index >= 0) {
-                        activities[index].servico_realizado = servico_realizado;
-                        activities[index].hora_inicio = hora_inicio;
-                        activities[index].hora_fim = hora_fim;
-                        activities[index].solicitante = solicitante;
-                        activities[index].estado = estado;
-                        activities[index].data = data;
-                        activities[index].atualizadoEm = new Date().toISOString();
-                        showToast('✅ Atividade atualizada!');
-                    }
-                } else {
-                    const novaAtividade = {
-                        id: generateId(),
-                        usuarioId: currentUser.id,
-                        usuarioNome: currentUser.nome,
-                        servico_realizado,
-                        hora_inicio,
-                        hora_fim,
-                        solicitante,
-                        estado,
-                        data,
-                        criadoEm: new Date().toISOString(),
-                        atualizadoEm: new Date().toISOString()
-                    };
-                    activities.push(novaAtividade);
-                    showToast('✅ Atividade adicionada!');
-                }
-
-                await saveActivities(activities);
-                closeActivityModal();
-                renderDashboard();
-            }
-
-            async function excluirAtividade(id) {
-                const activities = await getActivities();
-                const atividade = activities.find(a => a.id === id);
-                if (!atividade) return;
-
-                if (currentUser.nivel !== 'admin' && atividade.usuarioId !== currentUser.id) {
-                    showToast('⛔ Sem permissão para excluir esta atividade.');
-                    return;
-                }
-
-                if (!confirm(`Deseja realmente excluir a atividade "${atividade.servico_realizado}"?`)) return;
-
-                const novasActivities = activities.filter(a => a.id !== id);
-                await saveActivities(novasActivities);
-                showToast('🗑️ Atividade excluída.');
-                renderDashboard();
-            }
-
-            function highlightError(fieldId) {
-                const el = document.getElementById(fieldId);
-                el.classList.add('error');
-                el.focus();
-                setTimeout(() => el.classList.remove('error'), 600);
-            }
-
-            // ==================== RELATÓRIO ====================
-            function setupRelatorio() {
-                const hoje = new Date().toISOString().split('T')[0];
-                if (!document.getElementById('relDataInicio').value) {
-                    document.getElementById('relDataInicio').value = hoje;
-                }
-                if (!document.getElementById('relDataFim').value) {
-                    document.getElementById('relDataFim').value = hoje;
-                }
-                carregarRelatorio();
-            }
-
-            async function carregarRelatorio() {
-                const dataInicio = document.getElementById('relDataInicio').value;
-                const dataFim = document.getElementById('relDataFim').value;
-
-                if (!dataInicio || !dataFim) {
-                    showToast('⚠️ Selecione as datas de início e fim.');
-                    return;
-                }
-
-                let activities = await getActivities();
-                activities = activities.filter(a => a.data >= dataInicio && a.data <= dataFim);
-
-                if (currentUser.nivel !== 'admin') {
-                    activities = activities.filter(a => a.usuarioId === currentUser.id);
-                }
-
-                activities.sort((a, b) => {
-                    if (a.data !== b.data) return a.data.localeCompare(b.data);
-                    return (a.hora_inicio || '').localeCompare(b.hora_inicio || '');
-                });
-
-                const tbody = document.getElementById('tbodyRelatorio');
-                const summaryDiv = document.getElementById('reportSummary');
-
-                if (activities.length === 0) {
-                    tbody.innerHTML =
-                        '<tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento encontrado no período.</td></tr>';
-                    summaryDiv.innerHTML = '';
-                    return;
-                }
-
-                let totalMinutos = 0;
-                let finalizados = 0;
-
-                tbody.innerHTML = activities.map(a => {
-                    const duracaoMinutos = calcularDuracaoMinutos(a.hora_inicio, a.hora_fim);
-                    const duracaoStr = formatarDuracao(duracaoMinutos);
-                    const statusClass = getStatusClass(a.estado);
-
-                    if (a.estado === 'Finalizado') {
-                        totalMinutos += duracaoMinutos;
-                        finalizados++;
-                    }
-
-                    return `
-                        <tr>
-                            <td>${formatarData(a.data)}</td>
-                            <td>${escapeHtml(a.servico_realizado)}</td>
-                            <td>${escapeHtml(a.solicitante)}</td>
-                            <td>${a.hora_inicio || '-'}</td>
-                            <td>${a.hora_fim || '-'}</td>
-                            <td><strong>${duracaoStr}</strong></td>
-                            <td><span class="status-badge ${statusClass}">${a.estado}</span></td>
-                        </tr>`;
-                }).join('');
-
-                const horasTotal = Math.floor(totalMinutos / 60);
-                const minTotal = totalMinutos % 60;
-                const tempoTotalStr = horasTotal > 0 ? `${horasTotal}h ${minTotal}min` : `${minTotal}min`;
-
-                summaryDiv.innerHTML = `
-                    <div class="summary-card">
-                        <div class="summary-value">${activities.length}</div>
-                        <div class="summary-label">Total de Atendimentos</div>
-                    </div>
-                    <div class="summary-card">
-                        <div class="summary-value">${finalizados}</div>
-                        <div class="summary-label">Finalizados ✅</div>
-                    </div>
-                    <div class="summary-card" style="background:linear-gradient(135deg,#fefce8,#fef9c3);border-color:#fde68a;">
-                        <div class="summary-value" style="color:#b45309;">${tempoTotalStr}</div>
-                        <div class="summary-label">Tempo Total Gasto</div>
-                    </div>
-                `;
-            }
-
-            async function exportarRelatorio() {
-                const dataInicio = document.getElementById('relDataInicio').value;
-                const dataFim = document.getElementById('relDataFim').value;
-
-                let activities = await getActivities();
-                if (dataInicio && dataFim) {
-                    activities = activities.filter(a => a.data >= dataInicio && a.data <= dataFim);
-                }
-                if (currentUser.nivel !== 'admin') {
-                    activities = activities.filter(a => a.usuarioId === currentUser.id);
-                }
-                activities.sort((a, b) => {
-                    if (a.data !== b.data) return a.data.localeCompare(b.data);
-                    return (a.hora_inicio || '').localeCompare(b.hora_inicio || '');
-                });
-
-                if (activities.length === 0) {
-                    showToast('⚠️ Nenhum dado para exportar.');
-                    return;
-                }
-
-                const excelData = [
-                    ['Data', 'Serviço Realizado', 'Solicitante', 'Hora Início', 'Hora Fim', 'Duração', 'Estado',
-                        'Usuário'
-                    ]
-                ];
-
-                let totalMinutos = 0;
-                activities.forEach(a => {
-                    const duracao = calcularDuracaoMinutos(a.hora_inicio, a.hora_fim);
-                    if (a.estado === 'Finalizado') totalMinutos += duracao;
-                    excelData.push([
-                        formatarData(a.data),
-                        a.servico_realizado,
-                        a.solicitante,
-                        a.hora_inicio || '',
-                        a.hora_fim || '',
-                        formatarDuracao(duracao),
-                        a.estado,
-                        a.usuarioNome || ''
-                    ]);
-                });
-
-                const horasTotal = Math.floor(totalMinutos / 60);
-                const minTotal = totalMinutos % 60;
-                excelData.push([]);
-                excelData.push(['', '', '', '', 'TEMPO TOTAL:', `${horasTotal}h ${minTotal}min`, '', '']);
-                excelData.push(['', '', '', '', 'Total de registros:', activities.length, '', '']);
-                excelData.push(['', '', '', '', 'Finalizados:', activities.filter(a => a.estado === 'Finalizado')
-                    .length, '', '']);
-
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(excelData);
-                ws['!cols'] = [
-                    { wch: 12 }, { wch: 35 }, { wch: 25 }, { wch: 12 },
-                    { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 18 }
-                ];
-
-                XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
-                XLSX.writeFile(wb, `relatorio_atendimentos_${dataInicio || 'todos'}_a_${dataFim || 'todos'}.xlsx`);
-                showToast('📥 Relatório exportado com sucesso!');
-            }
-
-            // ==================== MINHA CONTA ====================
-            function renderMinhaConta() {
-                if (!currentUser) return;
-                document.getElementById('contaNome').value = currentUser.nome;
-                document.getElementById('contaNivel').value = currentUser.nivel === 'admin' ? 'Administrador' :
-                    'Usuário Comum';
-                document.getElementById('contaNovaSenha').value = '';
-                document.getElementById('contaConfirmarSenha').value = '';
-            }
-
-            async function alterarMinhaSenha() {
-                const novaSenha = document.getElementById('contaNovaSenha').value.trim();
-                const confirmar = document.getElementById('contaConfirmarSenha').value.trim();
-
-                if (!novaSenha || novaSenha.length < 4) {
-                    showToast('⚠️ A senha deve ter no mínimo 4 caracteres.');
-                    return;
-                }
-                if (novaSenha !== confirmar) {
-                    showToast('⚠️ As senhas não conferem.');
-                    return;
-                }
-
-                let users = await getUsers();
-                const index = users.findIndex(u => u.id === currentUser.id);
-                if (index >= 0) {
-                    users[index].senha = hashPassword(novaSenha);
-                    await saveUsers(users);
-                    setCurrentUser(users[index]);
-                    showToast('🔒 Senha alterada com sucesso!');
-                    document.getElementById('contaNovaSenha').value = '';
-                    document.getElementById('contaConfirmarSenha').value = '';
-                }
-            }
-
-            // ==================== ADMIN ====================
-            async function renderAdmin() {
-                if (!currentUser || currentUser.nivel !== 'admin') {
-                    navigateTo('dashboard');
-                    return;
-                }
-                const users = await getUsers();
-                const tbody = document.getElementById('tbodyUsuarios');
-                tbody.innerHTML = users.map(u => `
-                    <tr>
-                        <td><strong>${escapeHtml(u.nome)}</strong> ${u.id === currentUser.id ? '<span style="font-size:0.7rem;color:var(--primary);">(você)</span>' : ''}</td>
-                        <td><span class="status-badge ${u.nivel === 'admin' ? 'status-em-andamento' : 'status-aberto'}">${u.nivel === 'admin' ? '👑 Admin' : '👤 Comum'}</span></td>
-                        <td>
-                            <button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')" title="Editar">✏️</button>
-                            ${u.id !== currentUser.id ? `<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')" title="Excluir">🗑️</button>` : ''}
-                        </td>
-                    </tr>
-                `).join('');
-            }
-
-            function openUserModal(usuario = null) {
-                if (!currentUser || currentUser.nivel !== 'admin') return;
-                const modal = document.getElementById('modalUserOverlay');
-                const titulo = document.getElementById('modalUserTitulo');
-
-                document.getElementById('userId').value = '';
-                document.getElementById('userNome').value = '';
-                document.getElementById('userSenha').value = '';
-                document.getElementById('userNivel').value = 'comum';
-
-                if (usuario) {
-                    titulo.textContent = '✏️ Editar Usuário';
-                    document.getElementById('userId').value = usuario.id;
-                    document.getElementById('userNome').value = usuario.nome;
-                    document.getElementById('userSenha').value = '';
-                    document.getElementById('userSenha').placeholder = 'Deixe em branco para manter a senha atual';
-                    document.getElementById('userNivel').value = usuario.nivel;
-                } else {
-                    titulo.textContent = '➕ Novo Usuário';
-                    document.getElementById('userSenha').placeholder = 'Mínimo 4 caracteres';
-                }
-
-                modal.style.display = 'flex';
-            }
-
-            function closeUserModal() {
-                document.getElementById('modalUserOverlay').style.display = 'none';
-            }
-
-            async function editarUsuario(id) {
-                const users = await getUsers();
-                const usuario = users.find(u => u.id === id);
-                if (!usuario) return;
-                openUserModal(usuario);
-            }
-
-            async function salvarUsuario() {
-                const id = document.getElementById('userId').value;
-                const nome = document.getElementById('userNome').value.trim();
-                const senha = document.getElementById('userSenha').value.trim();
-                const nivel = document.getElementById('userNivel').value;
-
-                if (!nome || nome.length < 2) {
-                    showToast('⚠️ O nome de usuário deve ter no mínimo 2 caracteres.');
-                    return;
-                }
-
-                let users = await getUsers();
-
-                const duplicado = users.find(u => u.nome.toLowerCase() === nome.toLowerCase() && u.id !== id);
-                if (duplicado) {
-                    showToast('⚠️ Já existe um usuário com este nome.');
-                    return;
-                }
-
-                if (id) {
-                    const index = users.findIndex(u => u.id === id);
-                    if (index >= 0) {
-                        users[index].nome = nome;
-                        users[index].nivel = nivel;
-                        if (senha.length >= 4) {
-                            users[index].senha = hashPassword(senha);
-                        }
-                        users[index].atualizadoEm = new Date().toISOString();
-                        if (currentUser && currentUser.id === id) {
-                            setCurrentUser(users[index]);
-                            updateHeader();
-                            updateNav();
-                        }
-                        showToast('✅ Usuário atualizado!');
-                    }
-                } else {
-                    if (!senha || senha.length < 4) {
-                        showToast('⚠️ A senha deve ter no mínimo 4 caracteres.');
-                        return;
-                    }
-                    const novoUser = {
-                        id: generateId(),
-                        nome,
-                        senha: hashPassword(senha),
-                        nivel,
-                        criadoEm: new Date().toISOString(),
-                        atualizadoEm: new Date().toISOString()
-                    };
-                    users.push(novoUser);
-                    showToast('✅ Usuário criado!');
-                }
-
-                await saveUsers(users);
-                closeUserModal();
-                renderAdmin();
-                updateNav();
-            }
-
-            async function excluirUsuario(id) {
-                if (!currentUser || currentUser.nivel !== 'admin') return;
-                if (id === currentUser.id) {
-                    showToast('⚠️ Você não pode excluir seu próprio usuário.');
-                    return;
-                }
-
-                const users = await getUsers();
-                const usuario = users.find(u => u.id === id);
-                if (!usuario) return;
-
-                if (!confirm(`Deseja realmente excluir o usuário "${usuario.nome}"?`)) return;
-
-                const novasUsers = users.filter(u => u.id !== id);
-                await saveUsers(novasUsers);
-                showToast('🗑️ Usuário excluído.');
-                renderAdmin();
-            }
-
-            // ==================== EVENTOS ====================
-            document.addEventListener('click', function(e) {
-                if (e.target.id === 'modalAtividadeOverlay') closeActivityModal();
-                if (e.target.id === 'modalUserOverlay') closeUserModal();
-            });
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    const loginContainer = document.getElementById('loginContainer');
-                    if (loginContainer.style.display !== 'none') {
-                        doLogin();
-                    }
-                }
-                if (e.key === 'Escape') {
-                    closeActivityModal();
-                    closeUserModal();
-                }
-            });
-
-            // Listener para estado "Finalizado"
-            const estadoSelect = document.getElementById('atvEstado');
-            if (estadoSelect) {
-                estadoSelect.addEventListener('change', function() {
-                    if (this.value === 'Finalizado') {
-                        const horaFim = document.getElementById('atvHoraFim');
-                        if (!horaFim.value) {
-                            horaFim.focus();
-                            horaFim.style.borderColor = '#f59e0b';
-                            horaFim.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.2)';
-                            showToast('⚠️ Informe a hora de finalização.');
-                            setTimeout(() => {
-                                horaFim.style.borderColor = '';
-                                horaFim.style.boxShadow = '';
-                            }, 2500);
-                        }
-                    }
-                });
-            }
-
-            // ==================== INICIALIZAÇÃO ====================
-            async function init() {
-                const savedUser = await restoreSession();
-                if (savedUser) {
-                    setCurrentUser(savedUser);
-                    showApp();
-                } else {
-                    hideApp();
-                }
-
-                const hoje = new Date().toISOString().split('T')[0];
-                document.getElementById('relDataInicio').value = hoje;
-                document.getElementById('relDataFim').value = hoje;
-            }
-
-            // Expor funções globalmente
-            window.doLogin = doLogin;
-            window.logout = logout;
-            window.navigateTo = navigateTo;
-            window.openActivityModal = openActivityModal;
-            window.closeActivityModal = closeActivityModal;
-            window.editarAtividade = editarAtividade;
-            window.salvarAtividade = salvarAtividade;
-            window.excluirAtividade = excluirAtividade;
-            window.carregarRelatorio = carregarRelatorio;
-            window.exportarRelatorio = exportarRelatorio;
-            window.alterarMinhaSenha = alterarMinhaSenha;
-            window.openUserModal = openUserModal;
-            window.closeUserModal = closeUserModal;
-            window.editarUsuario = editarUsuario;
-            window.salvarUsuario = salvarUsuario;
-            window.excluirUsuario = excluirUsuario;
-            window.showToast = showToast;
-
-            init();
-
-            console.log('✅ Gerenciador de Atendimentos inicializado!');
-            console.log('🔗 API:', API_URL);
-            console.log('👤 Admin: Angelo / 142536');
-            console.log('📊 Google Sheets integrado em tempo real');
-        })();
-    </script>
+</div>
+
+<div class="modal-overlay" id="modalUserOverlay" style="display:none;">
+    <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
+        <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
+        <div class="form-group"><label>Nome *</label><input type="text" id="userNome"></div>
+        <div class="form-group"><label>Senha *</label><input type="password" id="userSenha" placeholder="Mín. 4 caracteres"></div>
+        <div class="form-group"><label>Nível</label><select id="userNivel"><option value="comum">👤 Comum</option><option value="admin">👑 Admin</option></select></div>
+        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button>
+        <button class="btn btn-primary btn-sm" onclick="salvarUsuario()">💾 Salvar</button></div>
+    </div>
+</div>
+<div id="toastContainer"></div>
+
+<script>
+(function() {
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzcnNnE5S0pvrwNSncg-vN7meESRVaDpNoKKtbSm1yeYsaeDoQIMy6WPJkvpuSex2FhgQ/exec';
+    let currentUser = null;
+
+    // Funções auxiliares de data (formato local YYYY-MM-DD)
+    function hojeLocal() { return new Date().toLocaleDateString('en-CA'); }
+    function agoraISO() { return new Date().toISOString(); }
+
+    // API
+    async function apiLoad() {
+        try {
+            const resp = await fetch(`${API_URL}?action=load`);
+            return await resp.json();
+        } catch(e) { console.error('Erro ao carregar dados:', e); return { users: [], activities: [] }; }
+    }
+    async function apiSync(type, payload) {
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'sync', type, payload }) });
+    }
+
+    async function getUsers() { return (await apiLoad()).users || []; }
+    async function getActivities() { return (await apiLoad()).activities || []; }
+    async function saveUsers(users) { await apiSync('users', users); }
+    async function saveActivities(activities) { await apiSync('activities', activities); }
+
+    function hashPassword(pwd) {
+        let hash = 0; const str = 'salt_' + pwd + '_app';
+        for (let i = 0; i < str.length; i++) { const char = str.charCodeAt(i); hash = ((hash << 5) - hash) + char; hash |= 0; }
+        return 'h_' + Math.abs(hash).toString(36) + '_' + btoa(pwd).substring(0, 8);
+    }
+
+    function verifyPassword(pwd, stored) { return (pwd === stored || hashPassword(pwd) === stored); }
+
+    function generateId() { return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9); }
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    function formatarData(s) { if(!s) return '-'; const [a,m,d]=s.split('-'); return `${d}/${m}/${a}`; }
+    function calcularDuracao(hi,hf) {
+        if(!hi||!hf) return 0; const [h1,m1]=hi.split(':').map(Number); const [h2,m2]=hf.split(':').map(Number);
+        let min = (h2*60+m2)-(h1*60+m1); if(min<0) min+=24*60; return Math.max(0,min);
+    }
+    function formatarDuracao(m) { if(m<=0) return '-'; const h=Math.floor(m/60), min=m%60; return h>0?`${h}h ${min}min`:`${min}min`; }
+    function getStatusClass(e) { return e==='Aberto'?'status-aberto':(e==='Em andamento'?'status-em-andamento':'status-finalizado'); }
+    function showToast(msg) { const t = document.createElement('div'); t.className='toast'; t.textContent=msg; document.getElementById('toastContainer').appendChild(t); setTimeout(()=>t.remove(),3000); }
+
+    // Sessão
+    function setCurrentUser(user) { currentUser = user; if(user) sessionStorage.setItem('app_uid', user.id); else sessionStorage.removeItem('app_uid'); }
+    async function restoreSession() {
+        const uid = sessionStorage.getItem('app_uid');
+        if(!uid) return null;
+        try {
+            const users = await getUsers();
+            return users.find(u => u.id === uid) || null;
+        } catch { return null; }
+    }
+
+    // Login
+    async function doLogin() {
+        const nome = document.getElementById('loginUser').value.trim();
+        const senha = document.getElementById('loginPass').value.trim();
+        const err = document.getElementById('loginError'); err.style.display='none';
+        if(!nome||!senha) { err.textContent='Preencha todos os campos.'; err.style.display='block'; return; }
+        const users = await getUsers();
+        const u = users.find(u => u.nome.toLowerCase()===nome.toLowerCase());
+        if(!u || !verifyPassword(senha, u.senha)) { err.textContent='Usuário ou senha inválidos.'; err.style.display='block'; return; }
+        setCurrentUser(u); showApp(); showToast('✅ Bem-vindo, '+u.nome+'!');
+    }
+
+    function logout() { if(confirm('Sair?')) { setCurrentUser(null); hideApp(); } }
+    function showApp() {
+        document.getElementById('loginContainer').style.display='none';
+        document.getElementById('appContainer').style.display='flex';
+        updateHeader(); updateNav(); navigateTo('dashboard');
+    }
+    function hideApp() {
+        document.getElementById('loginContainer').style.display='block';
+        document.getElementById('appContainer').style.display='none';
+    }
+    function updateHeader() {
+        if(!currentUser) return;
+        const tag = document.getElementById('headerUserTag');
+        tag.innerHTML = currentUser.nivel==='admin' ? `👑 ${currentUser.nome} <span class="admin-badge">Admin</span>` : `👤 ${currentUser.nome}`;
+    }
+    function updateNav() {
+        const navAdmin = document.getElementById('navAdmin');
+        navAdmin.style.display = (currentUser && currentUser.nivel==='admin') ? 'flex' : 'none';
+    }
+
+    function navigateTo(page) {
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+        const el = document.getElementById('page-'+page); if(el) el.classList.add('active');
+        const btn = document.querySelector(`.nav-btn[data-page="${page}"]`); if(btn) btn.classList.add('active');
+        if(page==='dashboard') renderDashboard();
+        if(page==='relatorio') setupRelatorio();
+        if(page==='minhaconta') renderMinhaConta();
+        if(page==='admin') renderAdmin();
+    }
+
+    // Dashboard
+    async function renderDashboard() {
+        const acts = await getActivities();
+        const hoje = hojeLocal();
+        let filtradas = currentUser.nivel==='admin' ? acts.filter(a=>a.data===hoje) : acts.filter(a=>a.data===hoje && a.usuarioId===currentUser.id);
+        filtradas.sort((a,b)=>(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+        const tbody = document.getElementById('tbodyAtividades');
+        if(!filtradas.length) { tbody.innerHTML='<tr><td colspan="6" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade hoje.</td></tr>'; return; }
+        tbody.innerHTML = filtradas.map(a=>{
+            const pode = currentUser.nivel==='admin' || a.usuarioId===currentUser.id;
+            return `<tr><td><strong>${escapeHtml(a.servico_realizado)}</strong></td><td>${escapeHtml(a.solicitante)}</td><td>${a.hora_inicio||'-'}</td><td>${a.hora_fim||'-'}</td><td><span class="status-badge ${getStatusClass(a.estado)}">${a.estado}</span></td><td>${pode ? `<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>` : '🔒'}</td></tr>`;
+        }).join('');
+    }
+
+    function openActivityModal(atv=null) {
+        document.getElementById('atvId').value = '';
+        document.getElementById('atvServico').value = '';
+        document.getElementById('atvSolicitante').value = '';
+        document.getElementById('atvEstado').value = 'Aberto';
+        document.getElementById('atvData').value = hojeLocal();
+        document.getElementById('atvHoraFim').value = '';
+        const now = new Date();
+        document.getElementById('atvHoraInicio').value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        document.getElementById('modalAtividadeTitulo').textContent = '➕ Nova Atividade';
+        if(atv) {
+            document.getElementById('atvId').value = atv.id;
+            document.getElementById('atvServico').value = atv.servico_realizado;
+            document.getElementById('atvHoraInicio').value = atv.hora_inicio || '';
+            document.getElementById('atvHoraFim').value = atv.hora_fim || '';
+            document.getElementById('atvSolicitante').value = atv.solicitante;
+            document.getElementById('atvEstado').value = atv.estado;
+            document.getElementById('atvData').value = atv.data;
+            document.getElementById('modalAtividadeTitulo').textContent = '✏️ Editar Atividade';
+        }
+        document.getElementById('modalAtividadeOverlay').style.display='flex';
+    }
+    function closeActivityModal() { document.getElementById('modalAtividadeOverlay').style.display='none'; }
+
+    async function salvarAtividade() {
+        const id = document.getElementById('atvId').value;
+        const servico = document.getElementById('atvServico').value.trim();
+        const inicio = document.getElementById('atvHoraInicio').value;
+        const fim = document.getElementById('atvHoraFim').value;
+        const solicitante = document.getElementById('atvSolicitante').value.trim();
+        const estado = document.getElementById('atvEstado').value;
+        const data = document.getElementById('atvData').value;
+        if(!servico||!inicio||!solicitante) { showToast('⚠️ Preencha os campos obrigatórios.'); return; }
+        if(estado==='Finalizado' && !fim) { showToast('⚠️ Informe a hora fim.'); return; }
+        let acts = await getActivities();
+        if(id) {
+            const idx = acts.findIndex(a=>a.id===id);
+            if(idx>=0) { acts[idx].servico_realizado=servico; acts[idx].hora_inicio=inicio; acts[idx].hora_fim=fim; acts[idx].solicitante=solicitante; acts[idx].estado=estado; acts[idx].data=data; acts[idx].atualizadoEm=agoraISO(); }
+        } else {
+            acts.push({ id:generateId(), usuarioId:currentUser.id, usuarioNome:currentUser.nome, servico_realizado:servico, hora_inicio:inicio, hora_fim:fim, solicitante, estado, data, criadoEm:agoraISO(), atualizadoEm:agoraISO() });
+        }
+        await saveActivities(acts);
+        closeActivityModal();
+        renderDashboard();
+        showToast(id ? '✅ Atividade atualizada!' : '✅ Atividade adicionada!');
+    }
+
+    async function excluirAtividade(id) {
+        if(!confirm('Excluir atividade?')) return;
+        let acts = await getActivities();
+        acts = acts.filter(a=>a.id!==id);
+        await saveActivities(acts);
+        renderDashboard();
+        showToast('🗑️ Excluída.');
+    }
+
+    async function editarAtividade(id) {
+        const acts = await getActivities();
+        const a = acts.find(a=>a.id===id);
+        if(!a) return showToast('⚠️ Não encontrada.');
+        if(currentUser.nivel!=='admin' && a.usuarioId!==currentUser.id) return showToast('⛔ Sem permissão.');
+        openActivityModal(a);
+    }
+
+    // Relatório
+    function setupRelatorio() {
+        document.getElementById('relDataInicio').value = hojeLocal();
+        document.getElementById('relDataFim').value = hojeLocal();
+        carregarRelatorio();
+    }
+
+    async function carregarRelatorio() {
+        const ini = document.getElementById('relDataInicio').value;
+        const fim = document.getElementById('relDataFim').value;
+        if(!ini||!fim) return;
+        let acts = await getActivities();
+        acts = acts.filter(a=>a.data>=ini && a.data<=fim);
+        if(currentUser.nivel!=='admin') acts = acts.filter(a=>a.usuarioId===currentUser.id);
+        acts.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+        const tbody = document.getElementById('tbodyRelatorio');
+        const summary = document.getElementById('reportSummary');
+        if(!acts.length) { tbody.innerHTML='<tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>'; summary.innerHTML=''; return; }
+        let totalMin=0, finalizados=0;
+        tbody.innerHTML = acts.map(a=>{
+            const dur = calcularDuracao(a.hora_inicio, a.hora_fim);
+            if(a.estado==='Finalizado') { totalMin+=dur; finalizados++; }
+            return `<tr><td>${formatarData(a.data)}</td><td>${escapeHtml(a.servico_realizado)}</td><td>${escapeHtml(a.solicitante)}</td><td>${a.hora_inicio||'-'}</td><td>${a.hora_fim||'-'}</td><td><strong>${formatarDuracao(dur)}</strong></td><td><span class="status-badge ${getStatusClass(a.estado)}">${a.estado}</span></td></tr>`;
+        }).join('');
+        const h = Math.floor(totalMin/60), m = totalMin%60;
+        summary.innerHTML = `<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados ✅</div></div><div class="summary-card" style="background:linear-gradient(135deg,#fefce8,#fef9c3);"><div class="summary-value" style="color:#b45309;">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
+    }
+
+    async function exportarRelatorio() {
+        const ini = document.getElementById('relDataInicio').value;
+        const fim = document.getElementById('relDataFim').value;
+        let acts = await getActivities();
+        if(ini&&fim) acts = acts.filter(a=>a.data>=ini && a.data<=fim);
+        if(currentUser.nivel!=='admin') acts = acts.filter(a=>a.usuarioId===currentUser.id);
+        const excel = [['Data','Serviço','Solicitante','Início','Fim','Duração','Estado']];
+        acts.forEach(a=> excel.push([formatarData(a.data), a.servico_realizado, a.solicitante, a.hora_inicio||'', a.hora_fim||'', formatarDuracao(calcularDuracao(a.hora_inicio,a.hora_fim)), a.estado]));
+        const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(excel);
+        ws['!cols'] = [{wch:12},{wch:30},{wch:20},{wch:10},{wch:10},{wch:12},{wch:12}];
+        XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+        XLSX.writeFile(wb, `relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
+        showToast('📥 Exportado!');
+    }
+
+    // Minha Conta
+    function renderMinhaConta() {
+        document.getElementById('contaNome').value = currentUser.nome;
+        document.getElementById('contaNivel').value = currentUser.nivel==='admin'?'Administrador':'Usuário Comum';
+        document.getElementById('contaNovaSenha').value = '';
+        document.getElementById('contaConfirmarSenha').value = '';
+    }
+
+    async function alterarMinhaSenha() {
+        const nova = document.getElementById('contaNovaSenha').value.trim();
+        const conf = document.getElementById('contaConfirmarSenha').value.trim();
+        if(!nova||nova.length<4) return showToast('⚠️ Mínimo 4 caracteres.');
+        if(nova!==conf) return showToast('⚠️ Senhas não conferem.');
+        let users = await getUsers();
+        const idx = users.findIndex(u=>u.id===currentUser.id);
+        if(idx>=0) { users[idx].senha = hashPassword(nova); await saveUsers(users); setCurrentUser(users[idx]); showToast('🔒 Senha alterada!'); }
+    }
+
+    // Admin
+    async function renderAdmin() {
+        if(currentUser.nivel!=='admin') return navigateTo('dashboard');
+        const users = await getUsers();
+        document.getElementById('tbodyUsuarios').innerHTML = users.map(u=>`<tr><td><strong>${escapeHtml(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td><td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
+    }
+
+    function openUserModal(u=null) {
+        document.getElementById('userId').value = '';
+        document.getElementById('userNome').value = '';
+        document.getElementById('userSenha').value = '';
+        document.getElementById('userNivel').value = 'comum';
+        document.getElementById('modalUserTitulo').textContent = '➕ Novo Usuário';
+        if(u) {
+            document.getElementById('userId').value = u.id;
+            document.getElementById('userNome').value = u.nome;
+            document.getElementById('userSenha').placeholder = 'Deixe em branco';
+            document.getElementById('userNivel').value = u.nivel;
+            document.getElementById('modalUserTitulo').textContent = '✏️ Editar Usuário';
+        }
+        document.getElementById('modalUserOverlay').style.display='flex';
+    }
+    function closeUserModal() { document.getElementById('modalUserOverlay').style.display='none'; }
+
+    async function salvarUsuario() {
+        const id = document.getElementById('userId').value;
+        const nome = document.getElementById('userNome').value.trim();
+        const senha = document.getElementById('userSenha').value.trim();
+        const nivel = document.getElementById('userNivel').value;
+        if(!nome||nome.length<2) return showToast('⚠️ Nome curto.');
+        let users = await getUsers();
+        if(users.some(u=>u.nome.toLowerCase()===nome.toLowerCase() && u.id!==id)) return showToast('⚠️ Nome já existe.');
+        if(id) {
+            const idx = users.findIndex(u=>u.id===id);
+            users[idx].nome=nome; users[idx].nivel=nivel;
+            if(senha.length>=4) users[idx].senha = hashPassword(senha);
+        } else {
+            if(!senha||senha.length<4) return showToast('⚠️ Senha mínima 4.');
+            users.push({ id: generateId(), nome, senha: hashPassword(senha), nivel, criadoEm: agoraISO() });
+        }
+        await saveUsers(users);
+        closeUserModal();
+        renderAdmin();
+        showToast(id ? '✅ Usuário atualizado!' : '✅ Usuário criado!');
+    }
+
+    async function excluirUsuario(id) {
+        if(!confirm('Excluir?')) return;
+        let users = await getUsers();
+        users = users.filter(u=>u.id!==id);
+        await saveUsers(users);
+        renderAdmin();
+        showToast('🗑️ Excluído.');
+    }
+
+    async function editarUsuario(id) { const users = await getUsers(); const u = users.find(u=>u.id===id); if(u) openUserModal(u); }
+
+    // Eventos
+    document.addEventListener('click', e => { if(e.target.id==='modalAtividadeOverlay') closeActivityModal(); if(e.target.id==='modalUserOverlay') closeUserModal(); });
+    document.addEventListener('keydown', e => { if(e.key==='Enter' && document.getElementById('loginContainer').style.display!=='none') doLogin(); if(e.key==='Escape') { closeActivityModal(); closeUserModal(); } });
+    document.getElementById('atvEstado').addEventListener('change', function() {
+        if(this.value==='Finalizado' && !document.getElementById('atvHoraFim').value) {
+            document.getElementById('atvHoraFim').focus();
+            showToast('⚠️ Informe a hora de finalização.');
+        }
+    });
+
+    // Inicialização
+    window.addEventListener('load', async () => {
+        try {
+            const u = await restoreSession();
+            if(u) { setCurrentUser(u); showApp(); }
+            else { hideApp(); }
+        } catch(e) {
+            console.error('Falha na restauração de sessão:', e);
+            hideApp();
+            document.getElementById('loginSubtitle').textContent = 'Erro de conexão. Tente novamente.';
+        }
+        // Preencher datas do relatório
+        document.getElementById('relDataInicio').value = hojeLocal();
+        document.getElementById('relDataFim').value = hojeLocal();
+    });
+
+    // Expor funções
+    window.doLogin = doLogin; window.logout = logout; window.navigateTo = navigateTo;
+    window.openActivityModal = openActivityModal; window.closeActivityModal = closeActivityModal;
+    window.editarAtividade = editarAtividade; window.salvarAtividade = salvarAtividade;
+    window.excluirAtividade = excluirAtividade; window.carregarRelatorio = carregarRelatorio;
+    window.exportarRelatorio = exportarRelatorio; window.alterarMinhaSenha = alterarMinhaSenha;
+    window.openUserModal = openUserModal; window.closeUserModal = closeUserModal;
+    window.editarUsuario = editarUsuario; window.salvarUsuario = salvarUsuario;
+    window.excluirUsuario = excluirUsuario; window.showToast = showToast;
+})();
+</script>
 </body>
 </html>
