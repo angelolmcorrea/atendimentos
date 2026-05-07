@@ -6,67 +6,64 @@
     <title>Gerenciador de Atendimentos</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root {
-            --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --primary-dark: #1d4ed8; --danger: #dc2626;
-            --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0;
-            --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-lg: 0 10px 25px rgba(0,0,0,0.12); --radius: 10px;
-        }
-        *{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;line-height:1.5;}
-        .app-container{width:100%;max-width:1200px;min-height:85vh;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden;}
-        .app-header{background:var(--primary);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
-        .logo{font-size:1.3rem;font-weight:700;display:flex;align-items:center;gap:8px;}
-        .header-actions{display:flex;gap:8px;align-items:center;}
-        .user-tag{background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:0.9rem;display:flex;align-items:center;gap:6px;}
-        .admin-badge{background:#fbbf24;color:#1e293b;font-size:0.7rem;padding:2px 8px;border-radius:10px;font-weight:700;}
-        .nav-bar{display:flex;gap:2px;padding:12px 24px;background:#f8fafc;border-bottom:1px solid var(--border);flex-wrap:wrap;}
-        .nav-btn{padding:9px 18px;border:none;background:transparent;color:var(--text-light);cursor:pointer;border-radius:20px;font-weight:500;font-size:0.9rem;display:flex;align-items:center;gap:6px;transition:.2s;}
-        .nav-btn:hover{background:#e2e8f0;color:var(--text);}
-        .nav-btn.active{background:var(--primary);color:#fff;font-weight:600;}
-        .main-content{flex:1;padding:24px;overflow-y:auto;max-height:70vh;}
-        .page{display:none;animation:fadeIn .25s;}
-        .page.active{display:block;}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-        .btn{padding:10px 20px;border:none;border-radius:20px;cursor:pointer;font-weight:600;font-size:0.9rem;display:inline-flex;align-items:center;gap:6px;transition:.2s;}
-        .btn-primary{background:var(--primary);color:#fff;}
-        .btn-primary:hover{background:var(--primary-dark);}
-        .btn-success{background:var(--success);color:#fff;}
-        .btn-danger{background:var(--danger);color:#fff;}
-        .btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary);}
-        .btn-outline:hover{background:var(--primary);color:#fff;}
-        .btn-sm{padding:6px 14px;font-size:0.8rem;border-radius:16px;}
-        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
-        .card-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
-        .card-title{font-size:1.1rem;font-weight:700;}
-        table{width:100%;border-collapse:collapse;font-size:0.85rem;}
-        th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
-        th{background:#f8fafc;font-weight:700;color:var(--text-light);text-transform:uppercase;font-size:0.75rem;}
-        tr:hover td{background:#f1f5f9;}
-        .status-badge{display:inline-block;padding:4px 10px;border-radius:14px;font-size:0.75rem;font-weight:600;}
-        .status-aberto{background:#fef3c7;color:#92400e;}
-        .status-em-andamento{background:#dbeafe;color:#1e40af;}
-        .status-finalizado{background:#d1fae5;color:#065f46;}
-        .empty-state{text-align:center;padding:40px 20px;color:var(--text-light);}
-        .form-group{margin-bottom:14px;}
-        .form-group label{display:block;font-weight:600;margin-bottom:4px;font-size:0.85rem;color:var(--text-light);}
-        .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:6px;font-size:0.95rem;transition:.2s;background:#fafbfc;font-family:inherit;}
-        .form-group textarea{resize:vertical;min-height:60px;}
-        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,0.1);background:#fff;}
-        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-        @media(max-width:600px){.form-row{grid-template-columns:1fr;}}
-        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
-        .modal{background:var(--surface);border-radius:var(--radius);padding:24px;width:100%;max-width:550px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);position:relative;}
-        .modal-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-light);}
-        .login-container{max-width:420px;width:100%;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:40px 32px;text-align:center;}
-        .login-error{color:var(--danger);font-size:0.85rem;margin-top:8px;display:none;}
-        .report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;}
-        .summary-card{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:var(--radius);padding:16px;text-align:center;border:1px solid #bae6fd;}
-        .summary-value{font-size:1.8rem;font-weight:700;color:var(--primary);}
-        .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:14px 22px;border-radius:25px;font-weight:500;z-index:2000;animation:slideUp .3s,fadeOut .3s 2.5s forwards;font-size:0.9rem;}
-        @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-        @keyframes fadeOut{to{opacity:0;transform:translateY(10px);}}
-        .solucao-cell{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle;}
-        @media(max-width:768px){.app-container{border-radius:0;min-height:100vh;}.nav-bar{padding:8px 12px;overflow-x:auto;}.main-content{padding:16px;max-height:none;}table{font-size:0.7rem;}}
+        /* (mantenha todo o CSS anterior) */
+        :root { --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --primary-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-lg: 0 10px 25px rgba(0,0,0,0.12); --radius: 10px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI', system-ui, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; line-height:1.5; }
+        .app-container { width:100%; max-width:1300px; min-height:85vh; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-lg); display:flex; flex-direction:column; overflow:hidden; }
+        .app-header { background:var(--primary); color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+        .logo { font-size:1.3rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+        .header-actions { display:flex; gap:8px; align-items:center; }
+        .user-tag { background:rgba(255,255,255,0.2); padding:6px 14px; border-radius:20px; font-size:0.9rem; display:flex; align-items:center; gap:6px; }
+        .admin-badge { background:#fbbf24; color:#1e293b; font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:700; }
+        .nav-bar { display:flex; gap:2px; padding:12px 24px; background:#f8fafc; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+        .nav-btn { padding:9px 18px; border:none; background:transparent; color:var(--text-light); cursor:pointer; border-radius:20px; font-weight:500; font-size:0.9rem; display:flex; align-items:center; gap:6px; transition:.2s; }
+        .nav-btn:hover { background:#e2e8f0; color:var(--text); }
+        .nav-btn.active { background:var(--primary); color:#fff; font-weight:600; }
+        .main-content { flex:1; padding:24px; overflow-y:auto; max-height:70vh; }
+        .page { display:none; animation:fadeIn .25s; }
+        .page.active { display:block; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+        .btn { padding:10px 20px; border:none; border-radius:20px; cursor:pointer; font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:6px; transition:.2s; }
+        .btn-primary { background:var(--primary); color:#fff; }
+        .btn-primary:hover { background:var(--primary-dark); }
+        .btn-success { background:var(--success); color:#fff; }
+        .btn-danger { background:var(--danger); color:#fff; }
+        .btn-outline { background:transparent; border:2px solid var(--primary); color:var(--primary); }
+        .btn-outline:hover { background:var(--primary); color:#fff; }
+        .btn-sm { padding:6px 14px; font-size:0.8rem; border-radius:16px; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); }
+        .card-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+        .card-title { font-size:1.1rem; font-weight:700; }
+        table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+        th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); }
+        th { background:#f8fafc; font-weight:700; color:var(--text-light); text-transform:uppercase; font-size:0.75rem; }
+        tr:hover td { background:#f1f5f9; }
+        .status-badge { display:inline-block; padding:4px 10px; border-radius:14px; font-size:0.75rem; font-weight:600; }
+        .status-aberto { background:#fef3c7; color:#92400e; }
+        .status-em-andamento { background:#dbeafe; color:#1e40af; }
+        .status-finalizado { background:#d1fae5; color:#065f46; }
+        .empty-state { text-align:center; padding:40px 20px; color:var(--text-light); }
+        .form-group { margin-bottom:14px; }
+        .form-group label { display:block; font-weight:600; margin-bottom:4px; font-size:0.85rem; color:var(--text-light); }
+        .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 14px; border:2px solid var(--border); border-radius:6px; font-size:0.95rem; transition:.2s; background:#fafbfc; font-family:inherit; }
+        .form-group textarea { resize:vertical; min-height:60px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,0.1); background:#fff; }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        @media(max-width:600px){ .form-row{grid-template-columns:1fr;} }
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+        .modal { background:var(--surface); border-radius:var(--radius); padding:24px; width:100%; max-width:550px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); position:relative; }
+        .modal-close { position:absolute; top:12px; right:16px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-light); }
+        .login-container { max-width:420px; width:100%; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:40px 32px; text-align:center; }
+        .login-error { color:var(--danger); font-size:0.85rem; margin-top:8px; display:none; }
+        .report-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:20px; }
+        .summary-card { background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border-radius:var(--radius); padding:16px; text-align:center; border:1px solid #bae6fd; }
+        .summary-value { font-size:1.8rem; font-weight:700; color:var(--primary); }
+        .toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:14px 22px; border-radius:25px; font-weight:500; z-index:2000; animation:slideUp .3s,fadeOut .3s 2.5s forwards; font-size:0.9rem; }
+        @keyframes slideUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+        @keyframes fadeOut { to{opacity:0;transform:translateY(10px);} }
+        .solucao-cell { max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; vertical-align:middle; }
+        @media(max-width:768px){ .app-container{border-radius:0;min-height:100vh;} .nav-bar{padding:8px 12px;overflow-x:auto;} .main-content{padding:16px;max-height:none;} table{font-size:0.7rem;} }
     </style>
 </head>
 <body>
@@ -74,7 +71,7 @@
 <div id="loginContainer" class="login-container">
     <div class="login-icon">📋</div>
     <h2>Gerenciador de Atendimentos</h2>
-    <p class="subtitle">Conectado ao Google Sheets</p>
+    <p class="subtitle">Conectado ao Google Sheets & Jira</p>
     <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="Usuário"></div>
     <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha"></div>
     <p class="login-error" id="loginError">Usuário ou senha inválidos.</p>
@@ -91,12 +88,14 @@
         </div>
     </header>
     <nav class="nav-bar" id="navBar">
-        <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">📅 Atividades</button>
+        <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">📅 Fila do Dia</button>
+        <button class="nav-btn" data-page="jira" onclick="navigateTo('jira')">🐛 Fila do Jira</button>
         <button class="nav-btn" data-page="relatorio" onclick="navigateTo('relatorio')">📊 Relatório</button>
         <button class="nav-btn" data-page="minhaconta" onclick="navigateTo('minhaconta')">👤 Minha Conta</button>
         <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">⚙️ Admin</button>
     </nav>
     <main class="main-content">
+        <!-- Fila do Dia (existente) -->
         <div class="page active" id="page-dashboard">
             <div class="card">
                 <div class="card-header">
@@ -106,6 +105,20 @@
                 <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Solução</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
             </div>
         </div>
+
+        <!-- Fila do Jira (nova) -->
+        <div class="page" id="page-jira">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">🐛 Fila do Jira</span>
+                    <button class="btn btn-primary btn-sm" onclick="sincronizarJira()">🔄 Sincronizar com Jira</button>
+                </div>
+                <p style="font-size:0.8rem;color:var(--text-light);margin-bottom:10px;">As alterações de status aqui são locais e não afetam o Jira.</p>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Chave</th><th>Título</th><th>Resumo</th><th>Solicitante</th><th>Status Local</th><th>Ações</th></tr></thead><tbody id="tbodyJira"></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- Relatório, Minha Conta, Admin (mantidos) -->
         <div class="page" id="page-relatorio">
             <div class="card">
                 <div class="card-header"><span class="card-title">📊 Relatório</span><button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button></div>
@@ -134,7 +147,7 @@
     </main>
 </div>
 
-<!-- MODAIS -->
+<!-- MODAIS (mantidos) -->
 <div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
     <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
         <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
@@ -151,7 +164,6 @@
         <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
     </div>
 </div>
-
 <div class="modal-overlay" id="modalUserOverlay" style="display:none;">
     <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
         <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
@@ -166,10 +178,10 @@
 <script>
 (function() {
     const API_URL = 'https://script.google.com/macros/s/AKfycbzcnNnE5S0pvrwNSncg-vN7meESRVaDpNoKKtbSm1yeYsaeDoQIMy6WPJkvpuSex2FhgQ/exec';
-    const dataCache = { users: [], activities: [], lastLoad: 0 };
+    const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
     let currentUser = null;
 
-    // Normalização
+    // Normalização (idêntica à anterior)
     function normalizeDate(v){if(!v)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;if(v.includes('T'))return v.split('T')[0];return String(v).trim();}
     function excelSerialToTime(v){
         if(v==null||v==='')return'';
@@ -190,6 +202,7 @@
             const r=await fetch(`${API_URL}?action=load`);const d=await r.json();
             dataCache.users=d.users||[];
             dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim)}));
+            dataCache.jiraIssues=(d.jiraIssues||[]).map(j=>({...j,status_local:j.status_local||'Aberto'}));
             dataCache.lastLoad=Date.now();
             return true;
         }catch(e){console.error(e);return false;}
@@ -260,12 +273,13 @@
         const el=document.getElementById('page-'+p);if(el)el.classList.add('active');
         const btn=document.querySelector(`.nav-btn[data-page="${p}"]`);if(btn)btn.classList.add('active');
         if(p==='dashboard')renderDashboard();
+        else if(p==='jira')renderJira();
         else if(p==='relatorio')setupRelatorio();
         else if(p==='minhaconta')renderMinhaConta();
         else if(p==='admin')renderAdmin();
     }
 
-    // Dashboard
+    // Dashboard (Fila do Dia)
     function renderDashboard(){
         const hoje=hojeLocal();
         const acts=dataCache.activities;
@@ -288,7 +302,7 @@
         }).join('');
     }
 
-    // Modal atividade com solução dinâmica
+    // Modal de atividade (mantido, com lógica de solução)
     function openActivityModal(atv=null){
         document.getElementById('atvId').value='';
         document.getElementById('atvServico').value='';
@@ -316,7 +330,6 @@
         document.getElementById('modalAtividadeOverlay').style.display='flex';
     }
     function closeActivityModal(){document.getElementById('modalAtividadeOverlay').style.display='none';}
-
     document.getElementById('atvEstado').addEventListener('change',function(){
         const solGroup=document.getElementById('solucaoGroup');
         if(this.value==='Finalizado'){
@@ -328,7 +341,6 @@
             document.getElementById('atvSolucao').value='';
         }
     });
-
     async function salvarAtividade(){
         const id=document.getElementById('atvId').value;
         const servico=document.getElementById('atvServico').value.trim();
@@ -338,13 +350,10 @@
         const estado=document.getElementById('atvEstado').value;
         const data=document.getElementById('atvData').value;
         const solucao=document.getElementById('atvSolucao').value.trim();
-
         if(!servico||!inicio||!solicitante){toast('⚠️ Preencha campos obrigatórios.');return;}
         if(estado==='Finalizado'){
             if(!fim){toast('⚠️ Hora fim é obrigatória para finalizar.');document.getElementById('atvHoraFim').focus();return;}
-            // Solução não obrigatória, mas pode ser vazia
         }
-
         if(id){
             const idx=dataCache.activities.findIndex(a=>a.id===id);
             if(idx>=0){
@@ -370,7 +379,6 @@
         toast(id?'✅ Atividade atualizada!':'✅ Atividade adicionada!');
         syncData('activities',dataCache.activities);
     }
-
     async function excluirAtividade(id){
         if(!confirm('Excluir atividade?'))return;
         dataCache.activities=dataCache.activities.filter(a=>a.id!==id);
@@ -385,7 +393,116 @@
         openActivityModal(a);
     }
 
-    // Relatório
+    // FILA DO JIRA
+    async function sincronizarJira(){
+        toast('🔄 Buscando issues do Jira...');
+        try{
+            const resp = await fetch(`${API_URL}?action=jira`);
+            const data = await resp.json();
+            if(data.error){ toast('❌ Erro: ' + JSON.stringify(data.error)); return; }
+            const novasIssues = data.issues;
+            // Mesclar com dados locais existentes (manter status_local e outros campos)
+            const mapaExistente = {};
+            dataCache.jiraIssues.forEach(j => { mapaExistente[j.issue_id] = j; });
+            const merged = novasIssues.map(issue => {
+                const existente = mapaExistente[issue.issue_id];
+                if(existente){
+                    // Mantém dados locais
+                    return { ...existente, summary: issue.summary, description: issue.description, reporter: issue.reporter, issue_key: issue.issue_key };
+                } else {
+                    // Novo registro
+                    return {
+                        id: genId(),
+                        issue_id: issue.issue_id,
+                        issue_key: issue.issue_key,
+                        summary: issue.summary,
+                        description: issue.description,
+                        reporter: issue.reporter,
+                        status_local: 'Aberto',
+                        hora_inicio: '',
+                        hora_fim: '',
+                        data: hojeLocal(),
+                        usuarioId: currentUser.id,
+                        usuarioNome: currentUser.nome,
+                        solucao_aplicada: '',
+                        criadoEm: agoraISO(),
+                        atualizadoEm: agoraISO()
+                    };
+                }
+            });
+            dataCache.jiraIssues = merged;
+            // Salvar na planilha
+            await syncData('jira_issues', dataCache.jiraIssues);
+            renderJira();
+            toast('✅ ' + novasIssues.length + ' issues sincronizadas.');
+        } catch(e){
+            toast('❌ Falha ao sincronizar com Jira.');
+            console.error(e);
+        }
+    }
+
+    function renderJira(){
+        const issues = dataCache.jiraIssues;
+        const tbody = document.getElementById('tbodyJira');
+        if(!issues.length){
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><span class="empty-icon">🐛</span>Nenhuma issue do Jira sincronizada. Clique em "Sincronizar com Jira".</td></tr>';
+            return;
+        }
+        tbody.innerHTML = issues.map(j => {
+            const status = j.status_local || 'Aberto';
+            const podeEditar = currentUser.nivel === 'admin' || j.usuarioId === currentUser.id;
+            return `<tr>
+                <td><strong>${esc(j.issue_key)}</strong></td>
+                <td>${esc(j.summary)}</td>
+                <td>${esc(j.description?j.description.substring(0,80):'')}</td>
+                <td>${esc(j.reporter)}</td>
+                <td>
+                    <select onchange="atualizarStatusJira('${j.id}', this.value)" ${podeEditar ? '' : 'disabled'}>
+                        <option value="Aberto" ${status==='Aberto'?'selected':''}>🔓 Aberto</option>
+                        <option value="Em andamento" ${status==='Em andamento'?'selected':''}>🔄 Em andamento</option>
+                        <option value="Finalizado" ${status==='Finalizado'?'selected':''}>✅ Finalizado</option>
+                    </select>
+                </td>
+                <td>
+                    ${podeEditar ? `<button class="btn btn-outline btn-sm" onclick="editarJira('${j.id}')">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="excluirJira('${j.id}')">🗑️</button>` : '🔒'}
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function atualizarStatusJira(id, novoStatus){
+        const idx = dataCache.jiraIssues.findIndex(j => j.id === id);
+        if(idx >= 0){
+            dataCache.jiraIssues[idx].status_local = novoStatus;
+            dataCache.jiraIssues[idx].atualizadoEm = agoraISO();
+            // Se finalizado, obrigar hora_fim? (não obrigatório, mas pode ser opcional)
+            renderJira();
+            await syncData('jira_issues', dataCache.jiraIssues);
+            toast('Status atualizado para ' + novoStatus);
+        }
+    }
+
+    function editarJira(id){
+        const j = dataCache.jiraIssues.find(j => j.id === id);
+        if(!j) return toast('Issue não encontrada.');
+        // Abrir um modal simplificado para editar campos locais (hora_inicio, hora_fim, solucao)
+        // Por simplicidade, vamos reutilizar o modal de atividade com algumas adaptações
+        // Mas para não complicar, vamos apenas permitir editar hora_inicio/fim e solucao via prompt? Melhor não.
+        // Vou criar um mini modal embutido na função, mas para já, apenas mostramos um toast informando que a edição completa será implementada.
+        toast('Funcionalidade de edição completa para issues do Jira em breve.');
+        // Podemos abrir o modal de atividade e adaptar, mas por agora fica o placeholder.
+    }
+
+    async function excluirJira(id){
+        if(!confirm('Remover esta issue da fila local? (Não afeta o Jira)')) return;
+        dataCache.jiraIssues = dataCache.jiraIssues.filter(j => j.id !== id);
+        renderJira();
+        await syncData('jira_issues', dataCache.jiraIssues);
+        toast('Issue removida da fila local.');
+    }
+
+    // Relatório (pode incluir jira issues? fica a critério, por enquanto mantemos apenas activities)
     function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
     function carregarRelatorio(){
         const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
@@ -418,8 +535,13 @@
         toast('📥 Exportado!');
     }
 
-    // Minha Conta
-    function renderMinhaConta(){document.getElementById('contaNome').value=currentUser.nome;document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum';}
+    // Minha Conta e Admin (mantidos)
+    function renderMinhaConta(){
+        document.getElementById('contaNome').value=currentUser.nome;
+        document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum';
+        document.getElementById('contaNovaSenha').value='';
+        document.getElementById('contaConfirmarSenha').value='';
+    }
     async function alterarMinhaSenha(){
         const n=document.getElementById('contaNovaSenha').value.trim(),c=document.getElementById('contaConfirmarSenha').value.trim();
         if(!n||n.length<4)return toast('⚠️ Mínimo 4 caracteres.');
@@ -427,8 +549,6 @@
         const idx=dataCache.users.findIndex(u=>u.id===currentUser.id);
         if(idx>=0){dataCache.users[idx].senha=hashPassword(n);setUser(dataCache.users[idx]);await syncData('users',dataCache.users);toast('🔒 Senha alterada!');}
     }
-
-    // Admin
     function renderAdmin(){
         if(currentUser.nivel!=='admin')return navigateTo('dashboard');
         document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td><strong>${esc(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td><td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
@@ -451,11 +571,11 @@
     async function excluirUsuario(id){if(!confirm('Excluir?'))return;dataCache.users=dataCache.users.filter(u=>u.id!==id);await syncData('users',dataCache.users);renderAdmin();toast('🗑️ Excluído.');}
     function editarUsuario(id){const u=dataCache.users.find(u=>u.id===id);if(u)openUserModal(u);}
 
-    // Eventos globais
+    // Eventos
     document.addEventListener('click',e=>{if(e.target.id==='modalAtividadeOverlay')closeActivityModal();if(e.target.id==='modalUserOverlay')closeUserModal();});
     document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginContainer').style.display!=='none')doLogin();if(e.key==='Escape'){closeActivityModal();closeUserModal();}});
 
-    // Início
+    // Inicialização
     window.addEventListener('load',async()=>{
         const u=await restoreSession();
         if(u){setUser(u);showApp();}else hideApp();
@@ -463,6 +583,7 @@
         document.getElementById('relDataFim').value=hojeLocal();
     });
 
+    // Expor funções globais (adicionadas as do Jira)
     window.doLogin=doLogin;window.logout=logout;window.navigateTo=navigateTo;
     window.openActivityModal=openActivityModal;window.closeActivityModal=closeActivityModal;
     window.editarAtividade=editarAtividade;window.salvarAtividade=salvarAtividade;
@@ -471,6 +592,8 @@
     window.openUserModal=openUserModal;window.closeUserModal=closeUserModal;
     window.editarUsuario=editarUsuario;window.salvarUsuario=salvarUsuario;
     window.excluirUsuario=excluirUsuario;window.showToast=toast;
+    window.sincronizarJira=sincronizarJira;window.atualizarStatusJira=atualizarStatusJira;
+    window.editarJira=editarJira;window.excluirJira=excluirJira;
 })();
 </script>
 </body>
