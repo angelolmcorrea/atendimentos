@@ -6,7 +6,6 @@
     <title>Gerenciador de Atendimentos</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* (mantenha todo o CSS anterior) */
         :root { --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --primary-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-lg: 0 10px 25px rgba(0,0,0,0.12); --radius: 10px; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Segoe UI', system-ui, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; line-height:1.5; }
@@ -72,8 +71,8 @@
     <div class="login-icon">📋</div>
     <h2>Gerenciador de Atendimentos</h2>
     <p class="subtitle">Conectado ao Google Sheets & Jira</p>
-    <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="angelo.correa@tm6.tech"></div>
-    <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Olegn@334"></div>
+    <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="Usuário"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha"></div>
     <p class="login-error" id="loginError">Usuário ou senha inválidos.</p>
     <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">🔐 Entrar</button>
 </div>
@@ -95,7 +94,7 @@
         <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">⚙️ Admin</button>
     </nav>
     <main class="main-content">
-        <!-- Fila do Dia (existente) -->
+        <!-- Fila do Dia -->
         <div class="page active" id="page-dashboard">
             <div class="card">
                 <div class="card-header">
@@ -106,7 +105,7 @@
             </div>
         </div>
 
-        <!-- Fila do Jira (nova) -->
+        <!-- Fila do Jira -->
         <div class="page" id="page-jira">
             <div class="card">
                 <div class="card-header">
@@ -118,7 +117,7 @@
             </div>
         </div>
 
-        <!-- Relatório, Minha Conta, Admin (mantidos) -->
+        <!-- Relatório -->
         <div class="page" id="page-relatorio">
             <div class="card">
                 <div class="card-header"><span class="card-title">📊 Relatório</span><button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button></div>
@@ -128,6 +127,8 @@
                 <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th><th>Solução</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
             </div>
         </div>
+
+        <!-- Minha Conta -->
         <div class="page" id="page-minhaconta">
             <div class="card" style="max-width:500px;">
                 <div class="card-header"><span class="card-title">👤 Minha Conta</span></div>
@@ -138,6 +139,8 @@
                 <button class="btn btn-primary" onclick="alterarMinhaSenha()">🔒 Alterar Senha</button>
             </div>
         </div>
+
+        <!-- Admin -->
         <div class="page" id="page-admin">
             <div class="card">
                 <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span><button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button></div>
@@ -147,7 +150,7 @@
     </main>
 </div>
 
-<!-- MODAIS (mantidos) -->
+<!-- MODAIS -->
 <div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
     <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
         <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
@@ -164,6 +167,7 @@
         <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
     </div>
 </div>
+
 <div class="modal-overlay" id="modalUserOverlay" style="display:none;">
     <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
         <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
@@ -177,11 +181,11 @@
 
 <script>
 (function() {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzcnNnE5S0pvrwNSncg-vN7meESRVaDpNoKKtbSm1yeYsaeDoQIMy6WPJkvpuSex2FhgQ/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzxO8rqia7x1GHERVgPKhcI8ZWz6fhItHpLvi6YmUSlgLOGvaKZiR-_iPT_SSSGedMI0w/exec';
     const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
     let currentUser = null;
 
-    // Normalização (idêntica à anterior)
+    // Normalização
     function normalizeDate(v){if(!v)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;if(v.includes('T'))return v.split('T')[0];return String(v).trim();}
     function excelSerialToTime(v){
         if(v==null||v==='')return'';
@@ -200,6 +204,7 @@
     async function loadData(){
         try{
             const r=await fetch(`${API_URL}?action=load`);const d=await r.json();
+            if(d.error) { console.error('API error:', d.error); return false; }
             dataCache.users=d.users||[];
             dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim)}));
             dataCache.jiraIssues=(d.jiraIssues||[]).map(j=>({...j,status_local:j.status_local||'Aberto'}));
@@ -279,7 +284,7 @@
         else if(p==='admin')renderAdmin();
     }
 
-    // Dashboard (Fila do Dia)
+    // Dashboard
     function renderDashboard(){
         const hoje=hojeLocal();
         const acts=dataCache.activities;
@@ -302,7 +307,7 @@
         }).join('');
     }
 
-    // Modal de atividade (mantido, com lógica de solução)
+    // Modal atividade
     function openActivityModal(atv=null){
         document.getElementById('atvId').value='';
         document.getElementById('atvServico').value='';
@@ -393,116 +398,92 @@
         openActivityModal(a);
     }
 
-    // FILA DO JIRA
+    // Jira
     async function sincronizarJira(){
         toast('🔄 Buscando issues do Jira...');
         try{
-            const resp = await fetch(`${API_URL}?action=jira`);
-            const data = await resp.json();
-            if(data.error){ toast('❌ Erro: ' + JSON.stringify(data.error)); return; }
-            const novasIssues = data.issues;
-            // Mesclar com dados locais existentes (manter status_local e outros campos)
-            const mapaExistente = {};
-            dataCache.jiraIssues.forEach(j => { mapaExistente[j.issue_id] = j; });
-            const merged = novasIssues.map(issue => {
-                const existente = mapaExistente[issue.issue_id];
+            const resp=await fetch(`${API_URL}?action=jira`);
+            const data=await resp.json();
+            if(data.error){toast('❌ Erro: '+JSON.stringify(data.error));return;}
+            const novasIssues=data.issues;
+            const mapaExistente={};
+            dataCache.jiraIssues.forEach(j=>{mapaExistente[j.issue_id]=j;});
+            const merged=novasIssues.map(issue=>{
+                const existente=mapaExistente[issue.issue_id];
                 if(existente){
-                    // Mantém dados locais
-                    return { ...existente, summary: issue.summary, description: issue.description, reporter: issue.reporter, issue_key: issue.issue_key };
-                } else {
-                    // Novo registro
+                    return {...existente,summary:issue.summary,description:issue.description,reporter:issue.reporter,issue_key:issue.issue_key};
+                }else{
                     return {
-                        id: genId(),
-                        issue_id: issue.issue_id,
-                        issue_key: issue.issue_key,
-                        summary: issue.summary,
-                        description: issue.description,
-                        reporter: issue.reporter,
-                        status_local: 'Aberto',
-                        hora_inicio: '',
-                        hora_fim: '',
-                        data: hojeLocal(),
-                        usuarioId: currentUser.id,
-                        usuarioNome: currentUser.nome,
-                        solucao_aplicada: '',
-                        criadoEm: agoraISO(),
-                        atualizadoEm: agoraISO()
+                        id:genId(),issue_id:issue.issue_id,issue_key:issue.issue_key,
+                        summary:issue.summary,description:issue.description,
+                        reporter:issue.reporter,status_local:'Aberto',
+                        hora_inicio:'',hora_fim:'',data:hojeLocal(),
+                        usuarioId:currentUser.id,usuarioNome:currentUser.nome,
+                        solucao_aplicada:'',criadoEm:agoraISO(),atualizadoEm:agoraISO()
                     };
                 }
             });
-            dataCache.jiraIssues = merged;
-            // Salvar na planilha
-            await syncData('jira_issues', dataCache.jiraIssues);
+            dataCache.jiraIssues=merged;
+            await syncData('jira_issues',dataCache.jiraIssues);
             renderJira();
-            toast('✅ ' + novasIssues.length + ' issues sincronizadas.');
-        } catch(e){
-            toast('❌ Falha ao sincronizar com Jira.');
-            console.error(e);
-        }
+            toast('✅ '+novasIssues.length+' issues sincronizadas.');
+        }catch(e){toast('❌ Falha ao sincronizar com Jira.');console.error(e);}
     }
 
     function renderJira(){
-        const issues = dataCache.jiraIssues;
-        const tbody = document.getElementById('tbodyJira');
+        const issues=dataCache.jiraIssues;
+        const tbody=document.getElementById('tbodyJira');
         if(!issues.length){
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><span class="empty-icon">🐛</span>Nenhuma issue do Jira sincronizada. Clique em "Sincronizar com Jira".</td></tr>';
+            tbody.innerHTML='<tr><td colspan="6" class="empty-state"><span class="empty-icon">🐛</span>Nenhuma issue do Jira sincronizada. Clique em "Sincronizar com Jira".</td></tr>';
             return;
         }
-        tbody.innerHTML = issues.map(j => {
-            const status = j.status_local || 'Aberto';
-            const podeEditar = currentUser.nivel === 'admin' || j.usuarioId === currentUser.id;
+        tbody.innerHTML=issues.map(j=>{
+            const status=j.status_local||'Aberto';
+            const podeEditar=currentUser.nivel==='admin'||j.usuarioId===currentUser.id;
             return `<tr>
                 <td><strong>${esc(j.issue_key)}</strong></td>
                 <td>${esc(j.summary)}</td>
                 <td>${esc(j.description?j.description.substring(0,80):'')}</td>
                 <td>${esc(j.reporter)}</td>
                 <td>
-                    <select onchange="atualizarStatusJira('${j.id}', this.value)" ${podeEditar ? '' : 'disabled'}>
+                    <select onchange="atualizarStatusJira('${j.id}', this.value)" ${podeEditar?'':'disabled'}>
                         <option value="Aberto" ${status==='Aberto'?'selected':''}>🔓 Aberto</option>
                         <option value="Em andamento" ${status==='Em andamento'?'selected':''}>🔄 Em andamento</option>
                         <option value="Finalizado" ${status==='Finalizado'?'selected':''}>✅ Finalizado</option>
                     </select>
                 </td>
                 <td>
-                    ${podeEditar ? `<button class="btn btn-outline btn-sm" onclick="editarJira('${j.id}')">✏️</button>
-                    <button class="btn btn-danger btn-sm" onclick="excluirJira('${j.id}')">🗑️</button>` : '🔒'}
+                    ${podeEditar?`<button class="btn btn-outline btn-sm" onclick="editarJira('${j.id}')">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="excluirJira('${j.id}')">🗑️</button>`:'🔒'}
                 </td>
             </tr>`;
         }).join('');
     }
 
-    async function atualizarStatusJira(id, novoStatus){
-        const idx = dataCache.jiraIssues.findIndex(j => j.id === id);
-        if(idx >= 0){
-            dataCache.jiraIssues[idx].status_local = novoStatus;
-            dataCache.jiraIssues[idx].atualizadoEm = agoraISO();
-            // Se finalizado, obrigar hora_fim? (não obrigatório, mas pode ser opcional)
+    async function atualizarStatusJira(id,novoStatus){
+        const idx=dataCache.jiraIssues.findIndex(j=>j.id===id);
+        if(idx>=0){
+            dataCache.jiraIssues[idx].status_local=novoStatus;
+            dataCache.jiraIssues[idx].atualizadoEm=agoraISO();
             renderJira();
-            await syncData('jira_issues', dataCache.jiraIssues);
-            toast('Status atualizado para ' + novoStatus);
+            await syncData('jira_issues',dataCache.jiraIssues);
+            toast('Status atualizado para '+novoStatus);
         }
     }
 
     function editarJira(id){
-        const j = dataCache.jiraIssues.find(j => j.id === id);
-        if(!j) return toast('Issue não encontrada.');
-        // Abrir um modal simplificado para editar campos locais (hora_inicio, hora_fim, solucao)
-        // Por simplicidade, vamos reutilizar o modal de atividade com algumas adaptações
-        // Mas para não complicar, vamos apenas permitir editar hora_inicio/fim e solucao via prompt? Melhor não.
-        // Vou criar um mini modal embutido na função, mas para já, apenas mostramos um toast informando que a edição completa será implementada.
-        toast('Funcionalidade de edição completa para issues do Jira em breve.');
-        // Podemos abrir o modal de atividade e adaptar, mas por agora fica o placeholder.
+        toast('Funcionalidade de edição completa em breve.');
     }
 
     async function excluirJira(id){
-        if(!confirm('Remover esta issue da fila local? (Não afeta o Jira)')) return;
-        dataCache.jiraIssues = dataCache.jiraIssues.filter(j => j.id !== id);
+        if(!confirm('Remover esta issue da fila local? (Não afeta o Jira)'))return;
+        dataCache.jiraIssues=dataCache.jiraIssues.filter(j=>j.id!==id);
         renderJira();
-        await syncData('jira_issues', dataCache.jiraIssues);
+        await syncData('jira_issues',dataCache.jiraIssues);
         toast('Issue removida da fila local.');
     }
 
-    // Relatório (pode incluir jira issues? fica a critério, por enquanto mantemos apenas activities)
+    // Relatório
     function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
     function carregarRelatorio(){
         const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
@@ -535,7 +516,7 @@
         toast('📥 Exportado!');
     }
 
-    // Minha Conta e Admin (mantidos)
+    // Minha Conta e Admin
     function renderMinhaConta(){
         document.getElementById('contaNome').value=currentUser.nome;
         document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum';
@@ -583,7 +564,6 @@
         document.getElementById('relDataFim').value=hojeLocal();
     });
 
-    // Expor funções globais (adicionadas as do Jira)
     window.doLogin=doLogin;window.logout=logout;window.navigateTo=navigateTo;
     window.openActivityModal=openActivityModal;window.closeActivityModal=closeActivityModal;
     window.editarAtividade=editarAtividade;window.salvarAtividade=salvarAtividade;
