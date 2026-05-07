@@ -117,7 +117,7 @@
             </div>
         </div>
 
-        <!-- Relatório, Minha Conta, Admin (idênticos ao anterior) -->
+        <!-- Relatório, Minha Conta, Admin (mantidos) -->
         <div class="page" id="page-relatorio">
             <div class="card">
                 <div class="card-header"><span class="card-title">📊 Relatório</span><button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button></div>
@@ -146,7 +146,7 @@
     </main>
 </div>
 
-<!-- MODAIS (modal de atividade, modal de usuário) -->
+<!-- MODAIS -->
 <div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
     <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
         <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
@@ -176,7 +176,7 @@
     const API_URL = 'https://script.google.com/macros/s/AKfycbzDIXxvNLmM7xQw_IQoUTnqgRnz0CNXPE0jIzFLXDKejIIM0ll1kMWfE0BBVHkXeLsG4w/exec';
     const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
     let currentUser = null;
-    let jiraVisivel = true; // controle de ocultar tickets Jira
+    let jiraVisivel = true;
 
     function normalizeDate(v){if(!v)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;if(v.includes('T'))return v.split('T')[0];return String(v).trim();}
     function excelSerialToTime(v){
@@ -304,12 +304,11 @@
         }).join('');
     }
 
-    // Função dedicada para fechar (chama modal com estado Finalizado)
-    function finalizarAtividade(id){
+    // Função dedicada para fechar
+    window.finalizarAtividade = function(id){
         const a = dataCache.activities.find(a=>a.id===id);
         if(!a) return toast('⚠️ Atividade não encontrada.');
         if(currentUser.nivel!=='admin' && a.usuarioId!==currentUser.id) return toast('⛔ Sem permissão.');
-        // Configura o modal para finalizar
         document.getElementById('atvId').value = a.id;
         document.getElementById('atvServico').value = a.servico_realizado;
         document.getElementById('atvHoraInicio').value = excelSerialToTime(a.hora_inicio) || '';
@@ -318,12 +317,11 @@
         document.getElementById('atvData').value = normalizeDate(a.data);
         document.getElementById('atvSolucao').value = a.solucao_aplicada || '';
         document.getElementById('atvEstado').value = 'Finalizado';
-        // Exibe grupo solução e marca hora fim como obrigatória
         document.getElementById('solucaoGroup').style.display = 'block';
         document.getElementById('obrigatorioFim').style.display = 'inline';
         document.getElementById('modalAtividadeTitulo').textContent = '✅ Finalizar Atendimento';
         document.getElementById('modalAtividadeOverlay').style.display = 'flex';
-    }
+    };
 
     function openActivityModal(atv=null){
         document.getElementById('atvId').value='';
@@ -423,11 +421,8 @@
     }
 
     // ---- JIRA ----
-    async function atualizarJira(){
-        toast('🔄 Atualizando dados do Jira...');
-        await sincronizarJira();
-    }
-    function ocultarJira(){
+    function atualizarJira(){ sincronizarJira(); }
+    window.ocultarJira = function(){
         const container = document.getElementById('jiraTableContainer');
         const btn = document.getElementById('btnOcultarJira');
         if(jiraVisivel){
@@ -439,7 +434,7 @@
             btn.textContent = '👁️ Ocultar tickets Jira';
             jiraVisivel = true;
         }
-    }
+    };
 
     async function sincronizarJira(){
         toast('🔄 Buscando issues do Jira...');
@@ -521,7 +516,7 @@
         toast('Issue removida da fila local.');
     }
 
-    // Relatório, Minha Conta, Admin (mantidos iguais)
+    // Relatório, Minha Conta, Admin
     function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
     function carregarRelatorio(){
         const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
