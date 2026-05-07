@@ -204,7 +204,7 @@
     async function loadData(){
         try{
             const r=await fetch(`${API_URL}?action=load`);const d=await r.json();
-            if(d.error) { console.error('API error:', d.error); return false; }
+            if(d.error){console.error('API error:', d.error);return false;}
             dataCache.users=d.users||[];
             dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim)}));
             dataCache.jiraIssues=(d.jiraIssues||[]).map(j=>({...j,status_local:j.status_local||'Aberto'}));
@@ -216,9 +216,14 @@
         try{await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',type,payload})});return true;}catch(e){return false;}
     }
 
-    // Auth
+    // Auth — CORRIGIDO para aceitar número
     function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
-    function verifyPassword(p,s){return p===s||hashPassword(p)===s;}
+    function verifyPassword(pwd, stored){
+        // Garante comparação como string
+        const spwd = String(pwd);
+        const sstored = String(stored);
+        return spwd === sstored || hashPassword(spwd) === sstored;
+    }
     function genId(){return'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
     function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
     function fmtData(s){if(!s)return'-';const[a,m,d]=s.split('-');return`${d}/${m}/${a}`;}
@@ -284,7 +289,7 @@
         else if(p==='admin')renderAdmin();
     }
 
-    // Dashboard
+    // Dashboard (Fila do Dia)
     function renderDashboard(){
         const hoje=hojeLocal();
         const acts=dataCache.activities;
