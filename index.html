@@ -98,7 +98,6 @@
     </style>
 </head>
 <body>
-
 <!-- LOGIN -->
 <div id="loginContainer" class="login-container">
     <div class="login-icon">📋</div>
@@ -132,22 +131,16 @@
                     <span class="card-title">📅 Atendimentos do Dia</span>
                     <button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Adicionar Atividade</button>
                 </div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Ações</th></tr></thead>
-                    <tbody id="tbodyAtividades"></tbody></table></div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
             </div>
         </div>
         <div class="page" id="page-relatorio">
             <div class="card">
-                <div class="card-header">
-                    <span class="card-title">📊 Relatório</span>
-                    <button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button>
-                </div>
-                <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div>
-                <div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div></div>
+                <div class="card-header"><span class="card-title">📊 Relatório</span><button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button></div>
+                <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div><div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div></div>
                 <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
                 <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead>
-                    <tbody id="tbodyRelatorio"></tbody></table></div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
             </div>
         </div>
         <div class="page" id="page-minhaconta">
@@ -162,11 +155,8 @@
         </div>
         <div class="page" id="page-admin">
             <div class="card">
-                <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span>
-                    <button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button>
-                </div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead>
-                    <tbody id="tbodyUsuarios"></tbody></table></div>
+                <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span><button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button></div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table></div>
             </div>
         </div>
     </main>
@@ -174,27 +164,23 @@
 
 <!-- MODAIS -->
 <div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
-        <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
+    <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button><h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
         <div class="form-group"><label>Serviço *</label><input type="text" id="atvServico"></div>
         <div class="form-row"><div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div>
         <div class="form-group"><label>Hora Fim</label><input type="time" id="atvHoraFim"></div></div>
         <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
         <div class="form-group"><label>Estado</label><select id="atvEstado"><option value="Aberto">🔓 Aberto</option><option value="Em andamento">🔄 Em andamento</option><option value="Finalizado">✅ Finalizado</option></select></div>
         <div class="form-group"><label>Data</label><input type="date" id="atvData"></div>
-        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button>
-        <button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
+        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
     </div>
 </div>
 
 <div class="modal-overlay" id="modalUserOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
-        <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
+    <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button><h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
         <div class="form-group"><label>Nome *</label><input type="text" id="userNome"></div>
         <div class="form-group"><label>Senha *</label><input type="password" id="userSenha" placeholder="Mín. 4 caracteres"></div>
         <div class="form-group"><label>Nível</label><select id="userNivel"><option value="comum">👤 Comum</option><option value="admin">👑 Admin</option></select></div>
-        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button>
-        <button class="btn btn-primary btn-sm" onclick="salvarUsuario()">💾 Salvar</button></div>
+        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarUsuario()">💾 Salvar</button></div>
     </div>
 </div>
 <div id="toastContainer"></div>
@@ -202,25 +188,28 @@
 <script>
 (function() {
     const API_URL = 'https://script.google.com/macros/s/AKfycbzcnNnE5S0pvrwNSncg-vN7meESRVaDpNoKKtbSm1yeYsaeDoQIMy6WPJkvpuSex2FhgQ/exec';
+
+    // Cache local para evitar requisições repetidas
+    const dataCache = {
+        users: [],
+        activities: [],
+        lastLoad: 0
+    };
+
     let currentUser = null;
 
-    // ---------- NORMALIZAÇÃO DE DADOS ----------
+    // ---------- NORMALIZAÇÃO ----------
     function normalizeDate(value) {
         if (!value) return '';
-        // Se já for YYYY-MM-DD, retorna como está
         if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-        // Se for ISO string, extrai apenas a parte da data
         if (value.includes('T')) return value.split('T')[0];
-        // Se for número serial (Excel), mas improvável para data aqui
         return String(value).trim();
     }
 
     function excelSerialToTime(val) {
-        if (val === undefined || val === null || val === '') return '';
+        if (val == null || val === '') return '';
         if (typeof val === 'string') {
-            // Se já for HH:MM ou HH:MM:SS
             if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(val)) return val.substring(0,5);
-            // Se for ISO (ex: 1899-12-30T12:06:28.000Z)
             if (val.includes('T')) {
                 const timePart = val.split('T')[1];
                 return timePart ? timePart.substring(0,5) : '';
@@ -239,37 +228,41 @@
     function hojeLocal() { return new Date().toLocaleDateString('en-CA'); }
     function agoraISO() { return new Date().toISOString(); }
 
-    // ---------- API ----------
-    async function apiLoad() {
-        const resp = await fetch(`${API_URL}?action=load`);
-        return await resp.json();
-    }
-    async function apiSync(type, payload) {
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'sync', type, payload }) });
+    // ---------- API ÚNICA ----------
+    async function loadData() {
+        try {
+            const resp = await fetch(`${API_URL}?action=load`);
+            const data = await resp.json();
+            const rawUsers = data.users || [];
+            const rawActivities = data.activities || [];
+
+            // Normaliza dados
+            dataCache.users = rawUsers;
+            dataCache.activities = rawActivities.map(a => ({
+                ...a,
+                data: normalizeDate(a.data),
+                hora_inicio: excelSerialToTime(a.hora_inicio),
+                hora_fim: excelSerialToTime(a.hora_fim)
+            }));
+            dataCache.lastLoad = Date.now();
+            return true;
+        } catch(e) {
+            console.error('Erro ao carregar dados:', e);
+            return false;
+        }
     }
 
-    async function getUsers() { const data = await apiLoad(); return data.users || []; }
-    async function getActivities() {
-        const data = await apiLoad();
-        const activities = data.activities || [];
-        // Normaliza cada atividade
-        return activities.map(a => ({
-            ...a,
-            data: normalizeDate(a.data),
-            hora_inicio: excelSerialToTime(a.hora_inicio),
-            hora_fim: excelSerialToTime(a.hora_fim)
-        }));
-    }
-    async function saveUsers(users) { await apiSync('users', users); }
-    async function saveActivities(activities) {
-        // Garante que dados estejam limpos antes de enviar
-        const clean = activities.map(a => ({
-            ...a,
-            data: normalizeDate(a.data),
-            hora_inicio: excelSerialToTime(a.hora_inicio),
-            hora_fim: excelSerialToTime(a.hora_fim)
-        }));
-        await apiSync('activities', clean);
+    async function syncData(type, payload) {
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'sync', type, payload })
+            });
+            return true;
+        } catch(e) {
+            console.error('Erro ao sincronizar:', e);
+            return false;
+        }
     }
 
     // ---------- AUTENTICAÇÃO ----------
@@ -295,7 +288,7 @@
     function getStatusClass(e){if(e==='Aberto')return'status-aberto';if(e==='Em andamento')return'status-em-andamento';return'status-finalizado';}
     function showToast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
 
-    // ---------- SESSÃO (cache robusto) ----------
+    // ---------- SESSÃO ROBUSTA ----------
     function setCurrentUser(user) {
         currentUser = user;
         if (user) {
@@ -307,45 +300,34 @@
         }
     }
 
-    // Retorna usuário do cache imediatamente, depois tenta validar com API
     async function restoreSession() {
         const uid = sessionStorage.getItem('app_uid');
         if (!uid) return null;
 
-        // Carrega cache imediatamente (sempre disponível)
+        // Tenta carregar cache local imediatamente
         let cachedUser = null;
         try {
             const cacheStr = sessionStorage.getItem('app_cache');
             if (cacheStr) cachedUser = JSON.parse(cacheStr);
         } catch(e){}
 
-        // Se não há nem cache, aborta
-        if (!cachedUser || cachedUser.id !== uid) {
-            // Tenta API direto, sem cache
-            try {
-                const users = await getUsers();
-                const user = users.find(u => u.id === uid);
-                if (user) return user;
-            } catch(e){}
-            return null;
+        if (cachedUser && cachedUser.id === uid) {
+            // Já temos um usuário no cache, usamos ele para iniciar rápido
+            // Enquanto isso, atualiza dados em segundo plano
+            loadData().then(() => {
+                const freshUser = dataCache.users.find(u => u.id === uid);
+                if (freshUser) setCurrentUser(freshUser);
+                // Se a tela de dashboard estiver ativa, recarrega
+                if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+            });
+            return cachedUser;
         }
 
-        // Em paralelo, tenta buscar da API para atualizar
-        try {
-            const users = await getUsers();
-            const fresh = users.find(u => u.id === uid);
-            if (fresh) {
-                // Atualiza cache e retorna fresco
-                setCurrentUser(fresh);
-                return fresh;
-            }
-        } catch(e) {
-            console.warn('API indisponível, usando cache.');
-        }
-
-        // Se API falhou ou usuário não existe mais (excluído), mantém cache? 
-        // Para segurança, se não encontrou na API e temos cache, mantemos logado.
-        return cachedUser; // retorna objeto com id, nome, nivel (pode não ter senha, mas suficiente)
+        // Se não há cache, precisa carregar os dados da API
+        await loadData();
+        const user = dataCache.users.find(u => u.id === uid);
+        if (user) return user;
+        return null;
     }
 
     // ---------- LOGIN / LOGOUT ----------
@@ -354,9 +336,14 @@
         const senha = document.getElementById('loginPass').value.trim();
         const err = document.getElementById('loginError'); err.style.display='none';
         if(!nome||!senha){err.textContent='Preencha todos os campos.';err.style.display='block';return;}
-        const users = await getUsers();
-        const u = users.find(u=>u.nome.toLowerCase()===nome.toLowerCase());
-        if(!u||!verifyPassword(senha,u.senha)){
+
+        // Garante que os dados estejam carregados
+        if (!dataCache.users.length || Date.now() - dataCache.lastLoad > 300000) {
+            await loadData();
+        }
+
+        const u = dataCache.users.find(u => u.nome.toLowerCase() === nome.toLowerCase());
+        if(!u || !verifyPassword(senha, u.senha)){
             err.textContent='Usuário ou senha inválidos.';err.style.display='block';
             return;
         }
@@ -404,9 +391,9 @@
     }
 
     // ---------- DASHBOARD ----------
-    async function renderDashboard() {
-        const acts = await getActivities();
+    function renderDashboard() {
         const hoje = hojeLocal();
+        const acts = dataCache.activities;
         let filtradas = (currentUser.nivel==='admin')
             ? acts.filter(a => a.data === hoje)
             : acts.filter(a => a.data === hoje && a.usuarioId === currentUser.id);
@@ -430,7 +417,7 @@
         }).join('');
     }
 
-    // ---------- CRUD ATIVIDADES ----------
+    // ---------- CRUD ATIVIDADES (com cache otimista) ----------
     function openActivityModal(atv=null) {
         document.getElementById('atvId').value='';
         document.getElementById('atvServico').value='';
@@ -465,33 +452,47 @@
         const data=document.getElementById('atvData').value;
         if(!servico||!inicio||!solicitante){showToast('⚠️ Preencha os campos obrigatórios.');return;}
         if(estado==='Finalizado'&&!fim){showToast('⚠️ Informe a hora fim para finalizar.');return;}
-        let acts=await getActivities();
-        if(id){
-            const idx=acts.findIndex(a=>a.id===id);
-            if(idx>=0){acts[idx].servico_realizado=servico;acts[idx].hora_inicio=inicio;acts[idx].hora_fim=fim;acts[idx].solicitante=solicitante;acts[idx].estado=estado;acts[idx].data=data;acts[idx].atualizadoEm=agoraISO();}
-        }else{
-            acts.push({id:generateId(),usuarioId:currentUser.id,usuarioNome:currentUser.nome,servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,solicitante,estado,data,criadoEm:agoraISO(),atualizadoEm:agoraISO()});
+
+        if(id) {
+            const idx = dataCache.activities.findIndex(a=>a.id===id);
+            if(idx>=0){
+                dataCache.activities[idx].servico_realizado=servico;
+                dataCache.activities[idx].hora_inicio=inicio;
+                dataCache.activities[idx].hora_fim=fim;
+                dataCache.activities[idx].solicitante=solicitante;
+                dataCache.activities[idx].estado=estado;
+                dataCache.activities[idx].data=data;
+                dataCache.activities[idx].atualizadoEm=agoraISO();
+            }
+        } else {
+            dataCache.activities.push({
+                id:generateId(), usuarioId:currentUser.id, usuarioNome:currentUser.nome,
+                servico_realizado:servico, hora_inicio:inicio, hora_fim:fim,
+                solicitante, estado, data, criadoEm:agoraISO(), atualizadoEm:agoraISO()
+            });
         }
-        await saveActivities(acts);
-        closeActivityModal();
+
+        // Atualiza o dashboard imediatamente (cache otimista)
         renderDashboard();
+        closeActivityModal();
         showToast(id?'✅ Atividade atualizada!':'✅ Atividade adicionada!');
+
+        // Dispara sincronização em segundo plano
+        syncData('activities', dataCache.activities);
     }
 
     async function excluirAtividade(id){
         if(!confirm('Excluir atividade?'))return;
-        let acts=await getActivities();
-        acts=acts.filter(a=>a.id!==id);
-        await saveActivities(acts);
+        dataCache.activities = dataCache.activities.filter(a => a.id !== id);
         renderDashboard();
         showToast('🗑️ Excluída.');
+        syncData('activities', dataCache.activities);
     }
 
-    async function editarAtividade(id){
-        const acts=await getActivities();
-        const a=acts.find(a=>a.id===id);
-        if(!a)return showToast('⚠️ Não encontrada.');
-        if(currentUser.nivel!=='admin'&&a.usuarioId!==currentUser.id)return showToast('⛔ Sem permissão.');
+    function editarAtividade(id){
+        const a = dataCache.activities.find(a => a.id === id);
+        if(!a) return showToast('⚠️ Não encontrada.');
+        if(currentUser.nivel!=='admin' && a.usuarioId !== currentUser.id) return showToast('⛔ Sem permissão.');
         openActivityModal(a);
     }
 
@@ -502,33 +503,36 @@
         carregarRelatorio();
     }
 
-    async function carregarRelatorio(){
+    function carregarRelatorio(){
         const ini=document.getElementById('relDataInicio').value;
         const fim=document.getElementById('relDataFim').value;
         if(!ini||!fim)return;
-        let acts=await getActivities();
-        acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
+        let acts = dataCache.activities.filter(a=>a.data>=ini && a.data<=fim);
+        if(currentUser.nivel!=='admin') acts = acts.filter(a=>a.usuarioId===currentUser.id);
         acts.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
         const tbody=document.getElementById('tbodyRelatorio');
         const summary=document.getElementById('reportSummary');
-        if(!acts.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>';summary.innerHTML='';return;}
-        let totalMin=0,finalizados=0;
+        if(!acts.length){
+            tbody.innerHTML='<tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>';
+            summary.innerHTML='';
+            return;
+        }
+        let totalMin=0, finalizados=0;
         tbody.innerHTML=acts.map(a=>{
             const dur=calcularDuracao(a.hora_inicio,a.hora_fim);
             if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
             return `<tr><td>${formatarData(a.data)}</td><td>${escapeHtml(a.servico_realizado)}</td><td>${escapeHtml(a.solicitante)}</td><td>${excelSerialToTime(a.hora_inicio)||'-'}</td><td>${excelSerialToTime(a.hora_fim)||'-'}</td><td><strong>${formatarDuracao(dur)}</strong></td><td><span class="status-badge ${getStatusClass(a.estado)}">${a.estado}</span></td></tr>`;
         }).join('');
-        const h=Math.floor(totalMin/60),m=totalMin%60;
+        const h=Math.floor(totalMin/60), m=totalMin%60;
         summary.innerHTML=`<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados ✅</div></div><div class="summary-card" style="background:linear-gradient(135deg,#fefce8,#fef9c3);"><div class="summary-value" style="color:#b45309;">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
     }
 
     async function exportarRelatorio(){
         const ini=document.getElementById('relDataInicio').value;
         const fim=document.getElementById('relDataFim').value;
-        let acts=await getActivities();
-        if(ini&&fim)acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
+        let acts = dataCache.activities;
+        if(ini&&fim) acts = acts.filter(a=>a.data>=ini && a.data<=fim);
+        if(currentUser.nivel!=='admin') acts = acts.filter(a=>a.usuarioId===currentUser.id);
         const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado']];
         acts.forEach(a=>{
             const dur=calcularDuracao(a.hora_inicio,a.hora_fim);
@@ -554,16 +558,23 @@
         const conf=document.getElementById('contaConfirmarSenha').value.trim();
         if(!nova||nova.length<4)return showToast('⚠️ Mínimo 4 caracteres.');
         if(nova!==conf)return showToast('⚠️ Senhas não conferem.');
-        let users=await getUsers();
-        const idx=users.findIndex(u=>u.id===currentUser.id);
-        if(idx>=0){users[idx].senha=hashPassword(nova);await saveUsers(users);setCurrentUser(users[idx]);showToast('🔒 Senha alterada!');}
+        const idx = dataCache.users.findIndex(u=>u.id===currentUser.id);
+        if(idx>=0){
+            dataCache.users[idx].senha = hashPassword(nova);
+            setCurrentUser(dataCache.users[idx]);
+            await syncData('users', dataCache.users);
+            showToast('🔒 Senha alterada!');
+        }
     }
 
     // ---------- ADMIN ----------
-    async function renderAdmin(){
-        if(currentUser.nivel!=='admin')return navigateTo('dashboard');
-        const users=await getUsers();
-        document.getElementById('tbodyUsuarios').innerHTML=users.map(u=>`<tr><td><strong>${escapeHtml(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td><td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
+    function renderAdmin(){
+        if(currentUser.nivel!=='admin') return navigateTo('dashboard');
+        const users = dataCache.users;
+        document.getElementById('tbodyUsuarios').innerHTML = users.map(u => `
+            <tr><td><strong>${escapeHtml(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td>
+            <td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td>
+            <td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
     }
 
     function openUserModal(u=null){
@@ -589,17 +600,18 @@
         const senha=document.getElementById('userSenha').value.trim();
         const nivel=document.getElementById('userNivel').value;
         if(!nome||nome.length<2)return showToast('⚠️ Nome curto.');
-        let users=await getUsers();
-        if(users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()&&u.id!==id))return showToast('⚠️ Nome já existe.');
+        if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase() && u.id!==id)) return showToast('⚠️ Nome já existe.');
+
         if(id){
-            const idx=users.findIndex(u=>u.id===id);
-            users[idx].nome=nome;users[idx].nivel=nivel;
-            if(senha.length>=4)users[idx].senha=hashPassword(senha);
-        }else{
+            const idx = dataCache.users.findIndex(u=>u.id===id);
+            dataCache.users[idx].nome=nome;
+            dataCache.users[idx].nivel=nivel;
+            if(senha.length>=4) dataCache.users[idx].senha = hashPassword(senha);
+        } else {
             if(!senha||senha.length<4)return showToast('⚠️ Senha mínima 4.');
-            users.push({id:generateId(),nome,senha:hashPassword(senha),nivel,criadoEm:agoraISO()});
+            dataCache.users.push({ id:generateId(), nome, senha:hashPassword(senha), nivel, criadoEm:agoraISO() });
         }
-        await saveUsers(users);
+        await syncData('users', dataCache.users);
         closeUserModal();
         renderAdmin();
         showToast(id?'✅ Usuário atualizado!':'✅ Usuário criado!');
@@ -607,24 +619,27 @@
 
     async function excluirUsuario(id){
         if(!confirm('Excluir?'))return;
-        let users=await getUsers();
-        users=users.filter(u=>u.id!==id);
-        await saveUsers(users);
+        dataCache.users = dataCache.users.filter(u=>u.id!==id);
+        await syncData('users', dataCache.users);
         renderAdmin();
         showToast('🗑️ Excluído.');
     }
-    async function editarUsuario(id){const users=await getUsers();const u=users.find(u=>u.id===id);if(u)openUserModal(u);}
+
+    function editarUsuario(id){
+        const u = dataCache.users.find(u=>u.id===id);
+        if(u) openUserModal(u);
+    }
 
     // ---------- EVENTOS ----------
     document.addEventListener('click',e=>{if(e.target.id==='modalAtividadeOverlay')closeActivityModal();if(e.target.id==='modalUserOverlay')closeUserModal();});
     document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginContainer').style.display!=='none')doLogin();if(e.key==='Escape'){closeActivityModal();closeUserModal();}});
     document.getElementById('atvEstado').addEventListener('change',function(){if(this.value==='Finalizado'&&!document.getElementById('atvHoraFim').value){document.getElementById('atvHoraFim').focus();showToast('⚠️ Informe a hora de finalização.');}});
 
-    // ---------- INICIALIZAÇÃO (sessão robusta) ----------
-    window.addEventListener('load',async()=>{
+    // ---------- INICIALIZAÇÃO ----------
+    window.addEventListener('load', async () => {
         const user = await restoreSession();
         if (user) {
-            setCurrentUser(user); // garante que o cache está salvo
+            setCurrentUser(user);
             showApp();
         } else {
             hideApp();
@@ -633,15 +648,14 @@
         document.getElementById('relDataFim').value = hojeLocal();
     });
 
-    // Expor globais
-    window.doLogin=doLogin;window.logout=logout;window.navigateTo=navigateTo;
-    window.openActivityModal=openActivityModal;window.closeActivityModal=closeActivityModal;
-    window.editarAtividade=editarAtividade;window.salvarAtividade=salvarAtividade;
-    window.excluirAtividade=excluirAtividade;window.carregarRelatorio=carregarRelatorio;
-    window.exportarRelatorio=exportarRelatorio;window.alterarMinhaSenha=alterarMinhaSenha;
-    window.openUserModal=openUserModal;window.closeUserModal=closeUserModal;
-    window.editarUsuario=editarUsuario;window.salvarUsuario=salvarUsuario;
-    window.excluirUsuario=excluirUsuario;window.showToast=showToast;
+    window.doLogin=doLogin; window.logout=logout; window.navigateTo=navigateTo;
+    window.openActivityModal=openActivityModal; window.closeActivityModal=closeActivityModal;
+    window.editarAtividade=editarAtividade; window.salvarAtividade=salvarAtividade;
+    window.excluirAtividade=excluirAtividade; window.carregarRelatorio=carregarRelatorio;
+    window.exportarRelatorio=exportarRelatorio; window.alterarMinhaSenha=alterarMinhaSenha;
+    window.openUserModal=openUserModal; window.closeUserModal=closeUserModal;
+    window.editarUsuario=editarUsuario; window.salvarUsuario=salvarUsuario;
+    window.excluirUsuario=excluirUsuario; window.showToast=showToast;
 })();
 </script>
 </body>
