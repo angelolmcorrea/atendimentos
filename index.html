@@ -7,94 +7,66 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
-            --bg: #f0f4f8;
-            --surface: #ffffff;
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --danger: #dc2626;
-            --danger-hover: #b91c1c;
-            --success: #16a34a;
-            --warning: #f59e0b;
-            --text: #1e293b;
-            --text-light: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.06);
-            --shadow-lg: 0 10px 25px rgba(0,0,0,0.12),0 4px 10px rgba(0,0,0,0.08);
-            --radius: 10px; --radius-sm: 6px; --transition: 0.2s ease;
+            --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --primary-dark: #1d4ed8; --danger: #dc2626;
+            --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-lg: 0 10px 25px rgba(0,0,0,0.12); --radius: 10px;
         }
         *{margin:0;padding:0;box-sizing:border-box;}
         body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;line-height:1.5;}
-        .app-container{width:100%;max-width:1100px;min-height:85vh;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden;}
+        .app-container{width:100%;max-width:1200px;min-height:85vh;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden;}
         .app-header{background:var(--primary);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
-        .app-header .logo{font-size:1.3rem;font-weight:700;display:flex;align-items:center;gap:8px;}
-        .header-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-        .header-actions .user-tag{background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:0.9rem;font-weight:500;display:flex;align-items:center;gap:6px;}
-        .admin-badge{background:#fbbf24;color:#1e293b;font-size:0.7rem;padding:2px 8px;border-radius:10px;font-weight:700;text-transform:uppercase;}
-
+        .logo{font-size:1.3rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+        .header-actions{display:flex;gap:8px;align-items:center;}
+        .user-tag{background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:0.9rem;display:flex;align-items:center;gap:6px;}
+        .admin-badge{background:#fbbf24;color:#1e293b;font-size:0.7rem;padding:2px 8px;border-radius:10px;font-weight:700;}
         .nav-bar{display:flex;gap:2px;padding:12px 24px;background:#f8fafc;border-bottom:1px solid var(--border);flex-wrap:wrap;}
-        .nav-btn{padding:9px 18px;border:none;background:transparent;color:var(--text-light);cursor:pointer;border-radius:20px;font-weight:500;font-size:0.9rem;transition:all var(--transition);white-space:nowrap;display:flex;align-items:center;gap:6px;}
+        .nav-btn{padding:9px 18px;border:none;background:transparent;color:var(--text-light);cursor:pointer;border-radius:20px;font-weight:500;font-size:0.9rem;display:flex;align-items:center;gap:6px;transition:.2s;}
         .nav-btn:hover{background:#e2e8f0;color:var(--text);}
-        .nav-btn.active{background:var(--primary);color:#fff;font-weight:600;box-shadow:var(--shadow);}
-
-        .main-content{flex:1;padding:24px;overflow-y:auto;max-height:65vh;}
-        .page{display:none;animation:fadeIn 0.25s ease;}
+        .nav-btn.active{background:var(--primary);color:#fff;font-weight:600;}
+        .main-content{flex:1;padding:24px;overflow-y:auto;max-height:70vh;}
+        .page{display:none;animation:fadeIn .25s;}
         .page.active{display:block;}
         @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-
-        .btn{padding:10px 20px;border:none;border-radius:20px;cursor:pointer;font-weight:600;font-size:0.9rem;transition:all var(--transition);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+        .btn{padding:10px 20px;border:none;border-radius:20px;cursor:pointer;font-weight:600;font-size:0.9rem;display:inline-flex;align-items:center;gap:6px;transition:.2s;}
         .btn-primary{background:var(--primary);color:#fff;}
-        .btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,0.3);}
+        .btn-primary:hover{background:var(--primary-dark);}
         .btn-success{background:var(--success);color:#fff;}
         .btn-danger{background:var(--danger);color:#fff;}
         .btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary);}
         .btn-outline:hover{background:var(--primary);color:#fff;}
         .btn-sm{padding:6px 14px;font-size:0.8rem;border-radius:16px;}
-
         .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
         .card-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
         .card-title{font-size:1.1rem;font-weight:700;}
-
-        table{width:100%;border-collapse:collapse;font-size:0.9rem;}
-        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);}
-        th{background:#f8fafc;font-weight:700;color:var(--text-light);font-size:0.8rem;text-transform:uppercase;}
+        table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+        th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+        th{background:#f8fafc;font-weight:700;color:var(--text-light);text-transform:uppercase;font-size:0.75rem;}
         tr:hover td{background:#f1f5f9;}
-
-        .status-badge{display:inline-block;padding:4px 12px;border-radius:14px;font-size:0.78rem;font-weight:600;}
+        .status-badge{display:inline-block;padding:4px 10px;border-radius:14px;font-size:0.75rem;font-weight:600;}
         .status-aberto{background:#fef3c7;color:#92400e;}
         .status-em-andamento{background:#dbeafe;color:#1e40af;}
         .status-finalizado{background:#d1fae5;color:#065f46;}
-
         .empty-state{text-align:center;padding:40px 20px;color:var(--text-light);}
-        .empty-icon{font-size:3rem;display:block;margin-bottom:12px;}
-
-        .form-group{margin-bottom:16px;}
-        .form-group label{display:block;font-weight:600;margin-bottom:5px;font-size:0.85rem;color:var(--text-light);}
-        .form-group input,.form-group select{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:var(--radius-sm);font-size:0.95rem;transition:all var(--transition);background:#fafbfc;font-family:inherit;}
-        .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,0.1);background:#fff;}
+        .form-group{margin-bottom:14px;}
+        .form-group label{display:block;font-weight:600;margin-bottom:4px;font-size:0.85rem;color:var(--text-light);}
+        .form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:6px;font-size:0.95rem;transition:.2s;background:#fafbfc;font-family:inherit;}
+        .form-group textarea{resize:vertical;min-height:60px;}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,0.1);background:#fff;}
         .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
         @media(max-width:600px){.form-row{grid-template-columns:1fr;}}
-
         .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
-        .modal{background:var(--surface);border-radius:var(--radius);padding:28px;width:100%;max-width:550px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg);position:relative;}
+        .modal{background:var(--surface);border-radius:var(--radius);padding:24px;width:100%;max-width:550px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);position:relative;}
         .modal-close{position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-light);}
-        .modal-close:hover{color:var(--danger);}
-        .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap;}
-
         .login-container{max-width:420px;width:100%;background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:40px 32px;text-align:center;}
-        .login-container .login-icon{font-size:3.5rem;margin-bottom:8px;}
-        .login-container h2{margin-bottom:6px;font-size:1.5rem;}
         .login-error{color:var(--danger);font-size:0.85rem;margin-top:8px;display:none;}
-
         .report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;}
         .summary-card{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:var(--radius);padding:16px;text-align:center;border:1px solid #bae6fd;}
         .summary-value{font-size:1.8rem;font-weight:700;color:var(--primary);}
-        .summary-label{font-size:0.8rem;color:var(--text-light);text-transform:uppercase;}
-
-        .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:14px 22px;border-radius:25px;font-weight:500;z-index:2000;animation:slideUp 0.3s ease,fadeOut 0.3s ease 2.5s forwards;box-shadow:var(--shadow-lg);font-size:0.9rem;}
+        .toast{position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:14px 22px;border-radius:25px;font-weight:500;z-index:2000;animation:slideUp .3s,fadeOut .3s 2.5s forwards;font-size:0.9rem;}
         @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
         @keyframes fadeOut{to{opacity:0;transform:translateY(10px);}}
-
-        @media(max-width:768px){.app-container{border-radius:0;min-height:100vh;}.nav-bar{padding:8px 12px;overflow-x:auto;flex-wrap:nowrap;}.main-content{padding:16px;max-height:none;}table{font-size:0.75rem;}th,td{padding:6px 8px;}.modal{padding:20px;max-width:95vw;}}
+        .solucao-cell{max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;vertical-align:middle;}
+        @media(max-width:768px){.app-container{border-radius:0;min-height:100vh;}.nav-bar{padding:8px 12px;overflow-x:auto;}.main-content{padding:16px;max-height:none;}table{font-size:0.7rem;}}
     </style>
 </head>
 <body>
@@ -103,8 +75,8 @@
     <div class="login-icon">📋</div>
     <h2>Gerenciador de Atendimentos</h2>
     <p class="subtitle">Conectado ao Google Sheets</p>
-    <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="Usuário" autocomplete="username"></div>
-    <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha" autocomplete="current-password"></div>
+    <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="Usuário"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha"></div>
     <p class="login-error" id="loginError">Usuário ou senha inválidos.</p>
     <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">🔐 Entrar</button>
 </div>
@@ -131,7 +103,7 @@
                     <span class="card-title">📅 Atendimentos do Dia</span>
                     <button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Adicionar Atividade</button>
                 </div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Solução</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
             </div>
         </div>
         <div class="page" id="page-relatorio">
@@ -140,7 +112,7 @@
                 <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div><div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div></div>
                 <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
                 <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th><th>Solução</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
             </div>
         </div>
         <div class="page" id="page-minhaconta">
@@ -164,19 +136,25 @@
 
 <!-- MODAIS -->
 <div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button><h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
+    <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
+        <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
         <div class="form-group"><label>Serviço *</label><input type="text" id="atvServico"></div>
         <div class="form-row"><div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div>
         <div class="form-group"><label>Hora Fim</label><input type="time" id="atvHoraFim"></div></div>
         <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
         <div class="form-group"><label>Estado</label><select id="atvEstado"><option value="Aberto">🔓 Aberto</option><option value="Em andamento">🔄 Em andamento</option><option value="Finalizado">✅ Finalizado</option></select></div>
+        <div class="form-group" id="solucaoGroup" style="display:none;">
+            <label>Solução Aplicada</label>
+            <textarea id="atvSolucao" placeholder="Descreva a solução..."></textarea>
+        </div>
         <div class="form-group"><label>Data</label><input type="date" id="atvData"></div>
         <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
     </div>
 </div>
 
 <div class="modal-overlay" id="modalUserOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button><h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
+    <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
+        <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
         <div class="form-group"><label>Nome *</label><input type="text" id="userNome"></div>
         <div class="form-group"><label>Senha *</label><input type="password" id="userSenha" placeholder="Mín. 4 caracteres"></div>
         <div class="form-group"><label>Nível</label><select id="userNivel"><option value="comum">👤 Comum</option><option value="admin">👑 Admin</option></select></div>
@@ -188,245 +166,140 @@
 <script>
 (function() {
     const API_URL = 'https://script.google.com/macros/s/AKfycbzcnNnE5S0pvrwNSncg-vN7meESRVaDpNoKKtbSm1yeYsaeDoQIMy6WPJkvpuSex2FhgQ/exec';
-
-    // Cache local para evitar requisições repetidas
-    const dataCache = {
-        users: [],
-        activities: [],
-        lastLoad: 0
-    };
-
+    const dataCache = { users: [], activities: [], lastLoad: 0 };
     let currentUser = null;
 
-    // ---------- NORMALIZAÇÃO ----------
-    function normalizeDate(value) {
-        if (!value) return '';
-        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-        if (value.includes('T')) return value.split('T')[0];
-        return String(value).trim();
-    }
-
-    function excelSerialToTime(val) {
-        if (val == null || val === '') return '';
-        if (typeof val === 'string') {
-            if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(val)) return val.substring(0,5);
-            if (val.includes('T')) {
-                const timePart = val.split('T')[1];
-                return timePart ? timePart.substring(0,5) : '';
-            }
-            return val;
+    // Normalização
+    function normalizeDate(v){if(!v)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;if(v.includes('T'))return v.split('T')[0];return String(v).trim();}
+    function excelSerialToTime(v){
+        if(v==null||v==='')return'';
+        if(typeof v==='string'){
+            if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v))return v.substring(0,5);
+            if(v.includes('T')){const t=v.split('T')[1];return t?t.substring(0,5):'';}
+            return v;
         }
-        if (typeof val === 'number') {
-            const totalMinutes = Math.round(val * 1440);
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
-            return String(hours).padStart(2,'0') + ':' + String(minutes).padStart(2,'0');
-        }
-        return '';
+        if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');}
+        return'';
     }
+    function hojeLocal(){return new Date().toLocaleDateString('en-CA');}
+    function agoraISO(){return new Date().toISOString();}
 
-    function hojeLocal() { return new Date().toLocaleDateString('en-CA'); }
-    function agoraISO() { return new Date().toISOString(); }
-
-    // ---------- API ÚNICA ----------
-    async function loadData() {
-        try {
-            const resp = await fetch(`${API_URL}?action=load`);
-            const data = await resp.json();
-            const rawUsers = data.users || [];
-            const rawActivities = data.activities || [];
-
-            // Normaliza dados
-            dataCache.users = rawUsers;
-            dataCache.activities = rawActivities.map(a => ({
-                ...a,
-                data: normalizeDate(a.data),
-                hora_inicio: excelSerialToTime(a.hora_inicio),
-                hora_fim: excelSerialToTime(a.hora_fim)
-            }));
-            dataCache.lastLoad = Date.now();
+    // API
+    async function loadData(){
+        try{
+            const r=await fetch(`${API_URL}?action=load`);const d=await r.json();
+            dataCache.users=d.users||[];
+            dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim)}));
+            dataCache.lastLoad=Date.now();
             return true;
-        } catch(e) {
-            console.error('Erro ao carregar dados:', e);
-            return false;
-        }
+        }catch(e){console.error(e);return false;}
+    }
+    async function syncData(type,payload){
+        try{await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',type,payload})});return true;}catch(e){return false;}
     }
 
-    async function syncData(type, payload) {
-        try {
-            await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'sync', type, payload })
-            });
-            return true;
-        } catch(e) {
-            console.error('Erro ao sincronizar:', e);
-            return false;
-        }
-    }
-
-    // ---------- AUTENTICAÇÃO ----------
-    function hashPassword(pwd) {
-        let hash=0; const str='salt_'+pwd+'_app';
-        for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);hash=((hash<<5)-hash)+c;hash|=0;}
-        return 'h_'+Math.abs(hash).toString(36)+'_'+btoa(pwd).substring(0,8);
-    }
-    function verifyPassword(pwd,stored){return pwd===stored||hashPassword(pwd)===stored;}
-
-    // ---------- UTILITÁRIOS ----------
-    function generateId(){return 'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
-    function escapeHtml(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-    function formatarData(s){if(!s)return'-';const[a,m,d]=s.split('-');return`${d}/${m}/${a}`;}
-    function calcularDuracao(hi,hf){
+    // Auth
+    function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
+    function verifyPassword(p,s){return p===s||hashPassword(p)===s;}
+    function genId(){return'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
+    function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+    function fmtData(s){if(!s)return'-';const[a,m,d]=s.split('-');return`${d}/${m}/${a}`;}
+    function calcDur(hi,hf){
         hi=excelSerialToTime(hi);hf=excelSerialToTime(hf);
         if(!hi||!hf)return 0;
         const[h1,m1]=hi.split(':').map(Number);const[h2,m2]=hf.split(':').map(Number);
         let min=(h2*60+m2)-(h1*60+m1);if(min<0)min+=24*60;
         return Math.max(0,min);
     }
-    function formatarDuracao(m){if(m<=0)return'-';const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}min`:`${min}min`;}
-    function getStatusClass(e){if(e==='Aberto')return'status-aberto';if(e==='Em andamento')return'status-em-andamento';return'status-finalizado';}
-    function showToast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
+    function fmtDur(m){if(m<=0)return'-';const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}min`:`${min}min`;}
+    function statusClass(e){return e==='Aberto'?'status-aberto':e==='Em andamento'?'status-em-andamento':'status-finalizado';}
+    function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
 
-    // ---------- SESSÃO ROBUSTA ----------
-    function setCurrentUser(user) {
-        currentUser = user;
-        if (user) {
-            sessionStorage.setItem('app_uid', user.id);
-            sessionStorage.setItem('app_cache', JSON.stringify({ id: user.id, nome: user.nome, nivel: user.nivel }));
-        } else {
-            sessionStorage.removeItem('app_uid');
-            sessionStorage.removeItem('app_cache');
-        }
+    // Sessão
+    function setUser(u){
+        currentUser=u;
+        if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel}));}
+        else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}
     }
-
-    async function restoreSession() {
-        const uid = sessionStorage.getItem('app_uid');
-        if (!uid) return null;
-
-        // Tenta carregar cache local imediatamente
-        let cachedUser = null;
-        try {
-            const cacheStr = sessionStorage.getItem('app_cache');
-            if (cacheStr) cachedUser = JSON.parse(cacheStr);
-        } catch(e){}
-
-        if (cachedUser && cachedUser.id === uid) {
-            // Já temos um usuário no cache, usamos ele para iniciar rápido
-            // Enquanto isso, atualiza dados em segundo plano
-            loadData().then(() => {
-                const freshUser = dataCache.users.find(u => u.id === uid);
-                if (freshUser) setCurrentUser(freshUser);
-                // Se a tela de dashboard estiver ativa, recarrega
-                if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
-            });
-            return cachedUser;
+    async function restoreSession(){
+        const uid=sessionStorage.getItem('app_uid');
+        if(!uid)return null;
+        let cached=null;
+        try{cached=JSON.parse(sessionStorage.getItem('app_cache'));}catch(e){}
+        if(cached&&cached.id===uid){
+            loadData().then(()=>{const fresh=dataCache.users.find(u=>u.id===uid);if(fresh)setUser(fresh);if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();});
+            return cached;
         }
-
-        // Se não há cache, precisa carregar os dados da API
         await loadData();
-        const user = dataCache.users.find(u => u.id === uid);
-        if (user) return user;
-        return null;
+        return dataCache.users.find(u=>u.id===uid)||null;
     }
 
-    // ---------- LOGIN / LOGOUT ----------
-    async function doLogin() {
-        const nome = document.getElementById('loginUser').value.trim();
-        const senha = document.getElementById('loginPass').value.trim();
-        const err = document.getElementById('loginError'); err.style.display='none';
-        if(!nome||!senha){err.textContent='Preencha todos os campos.';err.style.display='block';return;}
-
-        // Garante que os dados estejam carregados
-        if (!dataCache.users.length || Date.now() - dataCache.lastLoad > 300000) {
-            await loadData();
-        }
-
-        const u = dataCache.users.find(u => u.nome.toLowerCase() === nome.toLowerCase());
-        if(!u || !verifyPassword(senha, u.senha)){
-            err.textContent='Usuário ou senha inválidos.';err.style.display='block';
-            return;
-        }
-        setCurrentUser(u);
-        showApp();
-        showToast('✅ Bem-vindo, '+u.nome+'!');
+    // Login/Logout
+    async function doLogin(){
+        const n=document.getElementById('loginUser').value.trim();
+        const p=document.getElementById('loginPass').value.trim();
+        const e=document.getElementById('loginError');e.style.display='none';
+        if(!n||!p){e.textContent='Preencha todos os campos.';e.style.display='block';return;}
+        if(!dataCache.users.length||Date.now()-dataCache.lastLoad>300000)await loadData();
+        const u=dataCache.users.find(u=>u.nome.toLowerCase()===n.toLowerCase());
+        if(!u||!verifyPassword(p,u.senha)){e.textContent='Usuário ou senha inválidos.';e.style.display='block';return;}
+        setUser(u);showApp();toast('✅ Bem-vindo, '+u.nome+'!');
     }
-
-    function logout() {
-        if(confirm('Sair?')){ setCurrentUser(null); hideApp(); }
+    function logout(){if(confirm('Sair?')){setUser(null);hideApp();}}
+    function showApp(){document.getElementById('loginContainer').style.display='none';document.getElementById('appContainer').style.display='flex';updateHeader();updateNav();navigateTo('dashboard');}
+    function hideApp(){document.getElementById('loginContainer').style.display='block';document.getElementById('appContainer').style.display='none';}
+    function updateHeader(){
+        if(!currentUser)return;
+        const t=document.getElementById('headerUserTag');
+        t.innerHTML=currentUser.nivel==='admin'?`👑 ${currentUser.nome} <span class="admin-badge">Admin</span>`:`👤 ${currentUser.nome}`;
     }
-
-    function showApp() {
-        document.getElementById('loginContainer').style.display='none';
-        document.getElementById('appContainer').style.display='flex';
-        updateHeader(); updateNav(); navigateTo('dashboard');
-    }
-    function hideApp() {
-        document.getElementById('loginContainer').style.display='block';
-        document.getElementById('appContainer').style.display='none';
-    }
-
-    function updateHeader() {
-        if(!currentUser) return;
-        const tag = document.getElementById('headerUserTag');
-        tag.innerHTML = (currentUser.nivel==='admin')
-            ? `👑 ${currentUser.nome} <span class="admin-badge">Admin</span>`
-            : `👤 ${currentUser.nome}`;
-    }
-
-    function updateNav() {
-        const navAdmin = document.getElementById('navAdmin');
-        navAdmin.style.display = (currentUser && currentUser.nivel==='admin') ? 'flex' : 'none';
-    }
-
-    function navigateTo(page) {
+    function updateNav(){document.getElementById('navAdmin').style.display=currentUser&&currentUser.nivel==='admin'?'flex':'none';}
+    function navigateTo(p){
         document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-        const el=document.getElementById('page-'+page); if(el)el.classList.add('active');
-        const btn=document.querySelector(`.nav-btn[data-page="${page}"]`); if(btn)btn.classList.add('active');
-        if(page==='dashboard')renderDashboard();
-        else if(page==='relatorio')setupRelatorio();
-        else if(page==='minhaconta')renderMinhaConta();
-        else if(page==='admin')renderAdmin();
+        const el=document.getElementById('page-'+p);if(el)el.classList.add('active');
+        const btn=document.querySelector(`.nav-btn[data-page="${p}"]`);if(btn)btn.classList.add('active');
+        if(p==='dashboard')renderDashboard();
+        else if(p==='relatorio')setupRelatorio();
+        else if(p==='minhaconta')renderMinhaConta();
+        else if(p==='admin')renderAdmin();
     }
 
-    // ---------- DASHBOARD ----------
-    function renderDashboard() {
-        const hoje = hojeLocal();
-        const acts = dataCache.activities;
-        let filtradas = (currentUser.nivel==='admin')
-            ? acts.filter(a => a.data === hoje)
-            : acts.filter(a => a.data === hoje && a.usuarioId === currentUser.id);
+    // Dashboard
+    function renderDashboard(){
+        const hoje=hojeLocal();
+        const acts=dataCache.activities;
+        let filtradas=currentUser.nivel==='admin'?acts.filter(a=>a.data===hoje):acts.filter(a=>a.data===hoje&&a.usuarioId===currentUser.id);
         filtradas.sort((a,b)=>(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-        const tbody = document.getElementById('tbodyAtividades');
-        if(!filtradas.length){
-            tbody.innerHTML='<tr><td colspan="6" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade hoje.</td></tr>';
-            return;
-        }
-        tbody.innerHTML = filtradas.map(a=>{
-            const pode = currentUser.nivel==='admin' || a.usuarioId === currentUser.id;
+        const tbody=document.getElementById('tbodyAtividades');
+        if(!filtradas.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade hoje.</td></tr>';return;}
+        tbody.innerHTML=filtradas.map(a=>{
+            const pode=currentUser.nivel==='admin'||a.usuarioId===currentUser.id;
+            const solucao=a.solucao_aplicada||'';
             return `<tr>
-                <td><strong>${escapeHtml(a.servico_realizado)}</strong></td>
-                <td>${escapeHtml(a.solicitante)}</td>
+                <td><strong>${esc(a.servico_realizado)}</strong></td>
+                <td>${esc(a.solicitante)}</td>
                 <td>${a.hora_inicio||'-'}</td>
                 <td>${a.hora_fim||'-'}</td>
-                <td><span class="status-badge ${getStatusClass(a.estado)}">${a.estado}</span></td>
-                <td>${pode ? `<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button>
-                <button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>` : '🔒'}</td>
+                <td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td>
+                <td><span class="solucao-cell" title="${esc(solucao)}">${solucao?esc(solucao.length>30?solucao.substring(0,30)+'...':solucao):'-'}</span></td>
+                <td>${pode?`<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>`:'🔒'}</td>
             </tr>`;
         }).join('');
     }
 
-    // ---------- CRUD ATIVIDADES (com cache otimista) ----------
-    function openActivityModal(atv=null) {
+    // Modal atividade com solução dinâmica
+    function openActivityModal(atv=null){
         document.getElementById('atvId').value='';
         document.getElementById('atvServico').value='';
         document.getElementById('atvSolicitante').value='';
+        document.getElementById('atvHoraFim').value='';
+        document.getElementById('atvSolucao').value='';
         document.getElementById('atvEstado').value='Aberto';
         document.getElementById('atvData').value=hojeLocal();
-        document.getElementById('atvHoraFim').value='';
         const now=new Date();
         document.getElementById('atvHoraInicio').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        document.getElementById('solucaoGroup').style.display='none';
         document.getElementById('modalAtividadeTitulo').textContent='➕ Nova Atividade';
         if(atv){
             document.getElementById('atvId').value=atv.id;
@@ -436,11 +309,25 @@
             document.getElementById('atvSolicitante').value=atv.solicitante;
             document.getElementById('atvEstado').value=atv.estado;
             document.getElementById('atvData').value=normalizeDate(atv.data);
+            document.getElementById('atvSolucao').value=atv.solucao_aplicada||'';
+            if(atv.estado==='Finalizado')document.getElementById('solucaoGroup').style.display='block';
             document.getElementById('modalAtividadeTitulo').textContent='✏️ Editar Atividade';
         }
         document.getElementById('modalAtividadeOverlay').style.display='flex';
     }
     function closeActivityModal(){document.getElementById('modalAtividadeOverlay').style.display='none';}
+
+    document.getElementById('atvEstado').addEventListener('change',function(){
+        const solGroup=document.getElementById('solucaoGroup');
+        if(this.value==='Finalizado'){
+            solGroup.style.display='block';
+            const hf=document.getElementById('atvHoraFim');
+            if(!hf.value){hf.focus();toast('⚠️ Informe a hora de finalização.');}
+        }else{
+            solGroup.style.display='none';
+            document.getElementById('atvSolucao').value='';
+        }
+    });
 
     async function salvarAtividade(){
         const id=document.getElementById('atvId').value;
@@ -450,11 +337,16 @@
         const solicitante=document.getElementById('atvSolicitante').value.trim();
         const estado=document.getElementById('atvEstado').value;
         const data=document.getElementById('atvData').value;
-        if(!servico||!inicio||!solicitante){showToast('⚠️ Preencha os campos obrigatórios.');return;}
-        if(estado==='Finalizado'&&!fim){showToast('⚠️ Informe a hora fim para finalizar.');return;}
+        const solucao=document.getElementById('atvSolucao').value.trim();
 
-        if(id) {
-            const idx = dataCache.activities.findIndex(a=>a.id===id);
+        if(!servico||!inicio||!solicitante){toast('⚠️ Preencha campos obrigatórios.');return;}
+        if(estado==='Finalizado'){
+            if(!fim){toast('⚠️ Hora fim é obrigatória para finalizar.');document.getElementById('atvHoraFim').focus();return;}
+            // Solução não obrigatória, mas pode ser vazia
+        }
+
+        if(id){
+            const idx=dataCache.activities.findIndex(a=>a.id===id);
             if(idx>=0){
                 dataCache.activities[idx].servico_realizado=servico;
                 dataCache.activities[idx].hora_inicio=inicio;
@@ -462,200 +354,123 @@
                 dataCache.activities[idx].solicitante=solicitante;
                 dataCache.activities[idx].estado=estado;
                 dataCache.activities[idx].data=data;
+                dataCache.activities[idx].solucao_aplicada=solucao;
                 dataCache.activities[idx].atualizadoEm=agoraISO();
             }
-        } else {
+        }else{
             dataCache.activities.push({
-                id:generateId(), usuarioId:currentUser.id, usuarioNome:currentUser.nome,
-                servico_realizado:servico, hora_inicio:inicio, hora_fim:fim,
-                solicitante, estado, data, criadoEm:agoraISO(), atualizadoEm:agoraISO()
+                id:genId(),usuarioId:currentUser.id,usuarioNome:currentUser.nome,
+                servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,
+                solicitante,estado,data,solucao_aplicada:solucao,
+                criadoEm:agoraISO(),atualizadoEm:agoraISO()
             });
         }
-
-        // Atualiza o dashboard imediatamente (cache otimista)
         renderDashboard();
         closeActivityModal();
-        showToast(id?'✅ Atividade atualizada!':'✅ Atividade adicionada!');
-
-        // Dispara sincronização em segundo plano
-        syncData('activities', dataCache.activities);
+        toast(id?'✅ Atividade atualizada!':'✅ Atividade adicionada!');
+        syncData('activities',dataCache.activities);
     }
 
     async function excluirAtividade(id){
         if(!confirm('Excluir atividade?'))return;
-        dataCache.activities = dataCache.activities.filter(a => a.id !== id);
+        dataCache.activities=dataCache.activities.filter(a=>a.id!==id);
         renderDashboard();
-        showToast('🗑️ Excluída.');
-        syncData('activities', dataCache.activities);
+        toast('🗑️ Excluída.');
+        syncData('activities',dataCache.activities);
     }
-
     function editarAtividade(id){
-        const a = dataCache.activities.find(a => a.id === id);
-        if(!a) return showToast('⚠️ Não encontrada.');
-        if(currentUser.nivel!=='admin' && a.usuarioId !== currentUser.id) return showToast('⛔ Sem permissão.');
+        const a=dataCache.activities.find(a=>a.id===id);
+        if(!a)return toast('⚠️ Não encontrada.');
+        if(currentUser.nivel!=='admin'&&a.usuarioId!==currentUser.id)return toast('⛔ Sem permissão.');
         openActivityModal(a);
     }
 
-    // ---------- RELATÓRIO ----------
-    function setupRelatorio(){
-        document.getElementById('relDataInicio').value=hojeLocal();
-        document.getElementById('relDataFim').value=hojeLocal();
-        carregarRelatorio();
-    }
-
+    // Relatório
+    function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
     function carregarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value;
-        const fim=document.getElementById('relDataFim').value;
+        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
         if(!ini||!fim)return;
-        let acts = dataCache.activities.filter(a=>a.data>=ini && a.data<=fim);
-        if(currentUser.nivel!=='admin') acts = acts.filter(a=>a.usuarioId===currentUser.id);
+        let acts=dataCache.activities.filter(a=>a.data>=ini&&a.data<=fim);
+        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
         acts.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-        const tbody=document.getElementById('tbodyRelatorio');
-        const summary=document.getElementById('reportSummary');
-        if(!acts.length){
-            tbody.innerHTML='<tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>';
-            summary.innerHTML='';
-            return;
-        }
-        let totalMin=0, finalizados=0;
+        const tbody=document.getElementById('tbodyRelatorio'),summary=document.getElementById('reportSummary');
+        if(!acts.length){tbody.innerHTML='<tr><td colspan="8" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>';summary.innerHTML='';return;}
+        let totalMin=0,finalizados=0;
         tbody.innerHTML=acts.map(a=>{
-            const dur=calcularDuracao(a.hora_inicio,a.hora_fim);
+            const dur=calcDur(a.hora_inicio,a.hora_fim);
             if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
-            return `<tr><td>${formatarData(a.data)}</td><td>${escapeHtml(a.servico_realizado)}</td><td>${escapeHtml(a.solicitante)}</td><td>${excelSerialToTime(a.hora_inicio)||'-'}</td><td>${excelSerialToTime(a.hora_fim)||'-'}</td><td><strong>${formatarDuracao(dur)}</strong></td><td><span class="status-badge ${getStatusClass(a.estado)}">${a.estado}</span></td></tr>`;
+            const sol=a.solucao_aplicada||'';
+            return `<tr><td>${fmtData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td><td>${excelSerialToTime(a.hora_inicio)||'-'}</td><td>${excelSerialToTime(a.hora_fim)||'-'}</td><td><strong>${fmtDur(dur)}</strong></td><td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td><td><span class="solucao-cell" title="${esc(sol)}">${sol?esc(sol.length>30?sol.substring(0,30)+'...':sol):'-'}</span></td></tr>`;
         }).join('');
-        const h=Math.floor(totalMin/60), m=totalMin%60;
+        const h=Math.floor(totalMin/60),m=totalMin%60;
         summary.innerHTML=`<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados ✅</div></div><div class="summary-card" style="background:linear-gradient(135deg,#fefce8,#fef9c3);"><div class="summary-value" style="color:#b45309;">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
     }
-
     async function exportarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value;
-        const fim=document.getElementById('relDataFim').value;
-        let acts = dataCache.activities;
-        if(ini&&fim) acts = acts.filter(a=>a.data>=ini && a.data<=fim);
-        if(currentUser.nivel!=='admin') acts = acts.filter(a=>a.usuarioId===currentUser.id);
-        const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado']];
-        acts.forEach(a=>{
-            const dur=calcularDuracao(a.hora_inicio,a.hora_fim);
-            excel.push([formatarData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',formatarDuracao(dur),a.estado]);
-        });
+        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
+        let acts=dataCache.activities;
+        if(ini&&fim)acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
+        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
+        const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado','Solução']];
+        acts.forEach(a=>{const dur=calcDur(a.hora_inicio,a.hora_fim);excel.push([fmtData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',fmtDur(dur),a.estado,a.solucao_aplicada||'']);});
         const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(excel);
-        ws['!cols']=[{wch:12},{wch:30},{wch:20},{wch:10},{wch:10},{wch:12},{wch:12}];
-        XLSX.utils.book_append_sheet(wb,ws,'Relatório');
-        XLSX.writeFile(wb,`relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
-        showToast('📥 Exportado!');
+        ws['!cols']=[{wch:12},{wch:30},{wch:20},{wch:10},{wch:10},{wch:12},{wch:12},{wch:25}];
+        XLSX.utils.book_append_sheet(wb,ws,'Relatório');XLSX.writeFile(wb,`relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
+        toast('📥 Exportado!');
     }
 
-    // ---------- MINHA CONTA ----------
-    function renderMinhaConta(){
-        document.getElementById('contaNome').value=currentUser.nome;
-        document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum';
-        document.getElementById('contaNovaSenha').value='';
-        document.getElementById('contaConfirmarSenha').value='';
-    }
-
+    // Minha Conta
+    function renderMinhaConta(){document.getElementById('contaNome').value=currentUser.nome;document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum';}
     async function alterarMinhaSenha(){
-        const nova=document.getElementById('contaNovaSenha').value.trim();
-        const conf=document.getElementById('contaConfirmarSenha').value.trim();
-        if(!nova||nova.length<4)return showToast('⚠️ Mínimo 4 caracteres.');
-        if(nova!==conf)return showToast('⚠️ Senhas não conferem.');
-        const idx = dataCache.users.findIndex(u=>u.id===currentUser.id);
-        if(idx>=0){
-            dataCache.users[idx].senha = hashPassword(nova);
-            setCurrentUser(dataCache.users[idx]);
-            await syncData('users', dataCache.users);
-            showToast('🔒 Senha alterada!');
-        }
+        const n=document.getElementById('contaNovaSenha').value.trim(),c=document.getElementById('contaConfirmarSenha').value.trim();
+        if(!n||n.length<4)return toast('⚠️ Mínimo 4 caracteres.');
+        if(n!==c)return toast('⚠️ Senhas não conferem.');
+        const idx=dataCache.users.findIndex(u=>u.id===currentUser.id);
+        if(idx>=0){dataCache.users[idx].senha=hashPassword(n);setUser(dataCache.users[idx]);await syncData('users',dataCache.users);toast('🔒 Senha alterada!');}
     }
 
-    // ---------- ADMIN ----------
+    // Admin
     function renderAdmin(){
-        if(currentUser.nivel!=='admin') return navigateTo('dashboard');
-        const users = dataCache.users;
-        document.getElementById('tbodyUsuarios').innerHTML = users.map(u => `
-            <tr><td><strong>${escapeHtml(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td>
-            <td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td>
-            <td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
+        if(currentUser.nivel!=='admin')return navigateTo('dashboard');
+        document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td><strong>${esc(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td><td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
     }
-
     function openUserModal(u=null){
-        document.getElementById('userId').value='';
-        document.getElementById('userNome').value='';
-        document.getElementById('userSenha').value='';
-        document.getElementById('userNivel').value='comum';
+        document.getElementById('userId').value='';document.getElementById('userNome').value='';document.getElementById('userSenha').value='';document.getElementById('userNivel').value='comum';
         document.getElementById('modalUserTitulo').textContent='➕ Novo Usuário';
-        if(u){
-            document.getElementById('userId').value=u.id;
-            document.getElementById('userNome').value=u.nome;
-            document.getElementById('userSenha').placeholder='Deixe em branco';
-            document.getElementById('userNivel').value=u.nivel;
-            document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário';
-        }
+        if(u){document.getElementById('userId').value=u.id;document.getElementById('userNome').value=u.nome;document.getElementById('userSenha').placeholder='Deixe em branco';document.getElementById('userNivel').value=u.nivel;document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário';}
         document.getElementById('modalUserOverlay').style.display='flex';
     }
     function closeUserModal(){document.getElementById('modalUserOverlay').style.display='none';}
-
     async function salvarUsuario(){
-        const id=document.getElementById('userId').value;
-        const nome=document.getElementById('userNome').value.trim();
-        const senha=document.getElementById('userSenha').value.trim();
-        const nivel=document.getElementById('userNivel').value;
-        if(!nome||nome.length<2)return showToast('⚠️ Nome curto.');
-        if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase() && u.id!==id)) return showToast('⚠️ Nome já existe.');
-
-        if(id){
-            const idx = dataCache.users.findIndex(u=>u.id===id);
-            dataCache.users[idx].nome=nome;
-            dataCache.users[idx].nivel=nivel;
-            if(senha.length>=4) dataCache.users[idx].senha = hashPassword(senha);
-        } else {
-            if(!senha||senha.length<4)return showToast('⚠️ Senha mínima 4.');
-            dataCache.users.push({ id:generateId(), nome, senha:hashPassword(senha), nivel, criadoEm:agoraISO() });
-        }
-        await syncData('users', dataCache.users);
-        closeUserModal();
-        renderAdmin();
-        showToast(id?'✅ Usuário atualizado!':'✅ Usuário criado!');
+        const id=document.getElementById('userId').value,nome=document.getElementById('userNome').value.trim(),senha=document.getElementById('userSenha').value.trim(),nivel=document.getElementById('userNivel').value;
+        if(!nome||nome.length<2)return toast('⚠️ Nome curto.');
+        if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()&&u.id!==id))return toast('⚠️ Nome já existe.');
+        if(id){const idx=dataCache.users.findIndex(u=>u.id===id);dataCache.users[idx].nome=nome;dataCache.users[idx].nivel=nivel;if(senha.length>=4)dataCache.users[idx].senha=hashPassword(senha);}
+        else{if(!senha||senha.length<4)return toast('⚠️ Senha mínima 4.');dataCache.users.push({id:genId(),nome,senha:hashPassword(senha),nivel,criadoEm:agoraISO()});}
+        await syncData('users',dataCache.users);closeUserModal();renderAdmin();toast(id?'✅ Usuário atualizado!':'✅ Usuário criado!');
     }
+    async function excluirUsuario(id){if(!confirm('Excluir?'))return;dataCache.users=dataCache.users.filter(u=>u.id!==id);await syncData('users',dataCache.users);renderAdmin();toast('🗑️ Excluído.');}
+    function editarUsuario(id){const u=dataCache.users.find(u=>u.id===id);if(u)openUserModal(u);}
 
-    async function excluirUsuario(id){
-        if(!confirm('Excluir?'))return;
-        dataCache.users = dataCache.users.filter(u=>u.id!==id);
-        await syncData('users', dataCache.users);
-        renderAdmin();
-        showToast('🗑️ Excluído.');
-    }
-
-    function editarUsuario(id){
-        const u = dataCache.users.find(u=>u.id===id);
-        if(u) openUserModal(u);
-    }
-
-    // ---------- EVENTOS ----------
+    // Eventos globais
     document.addEventListener('click',e=>{if(e.target.id==='modalAtividadeOverlay')closeActivityModal();if(e.target.id==='modalUserOverlay')closeUserModal();});
     document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginContainer').style.display!=='none')doLogin();if(e.key==='Escape'){closeActivityModal();closeUserModal();}});
-    document.getElementById('atvEstado').addEventListener('change',function(){if(this.value==='Finalizado'&&!document.getElementById('atvHoraFim').value){document.getElementById('atvHoraFim').focus();showToast('⚠️ Informe a hora de finalização.');}});
 
-    // ---------- INICIALIZAÇÃO ----------
-    window.addEventListener('load', async () => {
-        const user = await restoreSession();
-        if (user) {
-            setCurrentUser(user);
-            showApp();
-        } else {
-            hideApp();
-        }
-        document.getElementById('relDataInicio').value = hojeLocal();
-        document.getElementById('relDataFim').value = hojeLocal();
+    // Início
+    window.addEventListener('load',async()=>{
+        const u=await restoreSession();
+        if(u){setUser(u);showApp();}else hideApp();
+        document.getElementById('relDataInicio').value=hojeLocal();
+        document.getElementById('relDataFim').value=hojeLocal();
     });
 
-    window.doLogin=doLogin; window.logout=logout; window.navigateTo=navigateTo;
-    window.openActivityModal=openActivityModal; window.closeActivityModal=closeActivityModal;
-    window.editarAtividade=editarAtividade; window.salvarAtividade=salvarAtividade;
-    window.excluirAtividade=excluirAtividade; window.carregarRelatorio=carregarRelatorio;
-    window.exportarRelatorio=exportarRelatorio; window.alterarMinhaSenha=alterarMinhaSenha;
-    window.openUserModal=openUserModal; window.closeUserModal=closeUserModal;
-    window.editarUsuario=editarUsuario; window.salvarUsuario=salvarUsuario;
-    window.excluirUsuario=excluirUsuario; window.showToast=showToast;
+    window.doLogin=doLogin;window.logout=logout;window.navigateTo=navigateTo;
+    window.openActivityModal=openActivityModal;window.closeActivityModal=closeActivityModal;
+    window.editarAtividade=editarAtividade;window.salvarAtividade=salvarAtividade;
+    window.excluirAtividade=excluirAtividade;window.carregarRelatorio=carregarRelatorio;
+    window.exportarRelatorio=exportarRelatorio;window.alterarMinhaSenha=alterarMinhaSenha;
+    window.openUserModal=openUserModal;window.closeUserModal=closeUserModal;
+    window.editarUsuario=editarUsuario;window.salvarUsuario=salvarUsuario;
+    window.excluirUsuario=excluirUsuario;window.showToast=toast;
 })();
 </script>
 </body>
