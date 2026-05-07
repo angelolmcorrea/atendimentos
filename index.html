@@ -1,480 +1,886 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Atendimentos</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <style>
-        :root { --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --primary-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-lg: 0 10px 25px rgba(0,0,0,0.12); --radius: 10px; }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI', system-ui, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; line-height:1.5; }
-        .app-container { width:100%; max-width:1300px; min-height:85vh; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-lg); display:flex; flex-direction:column; overflow:hidden; }
-        .app-header { background:var(--primary); color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
-        .logo { font-size:1.3rem; font-weight:700; display:flex; align-items:center; gap:8px; }
-        .header-actions { display:flex; gap:8px; align-items:center; }
-        .user-tag { background:rgba(255,255,255,0.2); padding:6px 14px; border-radius:20px; font-size:0.9rem; display:flex; align-items:center; gap:6px; }
-        .admin-badge { background:#fbbf24; color:#1e293b; font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:700; }
-        .nav-bar { display:flex; gap:2px; padding:12px 24px; background:#f8fafc; border-bottom:1px solid var(--border); flex-wrap:wrap; }
-        .nav-btn { padding:9px 18px; border:none; background:transparent; color:var(--text-light); cursor:pointer; border-radius:20px; font-weight:500; font-size:0.9rem; display:flex; align-items:center; gap:6px; transition:.2s; }
-        .nav-btn:hover { background:#e2e8f0; color:var(--text); }
-        .nav-btn.active { background:var(--primary); color:#fff; font-weight:600; }
-        .main-content { flex:1; padding:24px; overflow-y:auto; max-height:70vh; }
-        .page { display:none; animation:fadeIn .25s; }
-        .page.active { display:block; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
-        .btn { padding:10px 20px; border:none; border-radius:20px; cursor:pointer; font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:6px; transition:.2s; }
-        .btn-primary { background:var(--primary); color:#fff; }
-        .btn-primary:hover { background:var(--primary-dark); }
-        .btn-success { background:var(--success); color:#fff; }
-        .btn-danger { background:var(--danger); color:#fff; }
-        .btn-outline { background:transparent; border:2px solid var(--primary); color:var(--primary); }
-        .btn-outline:hover { background:var(--primary); color:#fff; }
-        .btn-sm { padding:6px 14px; font-size:0.8rem; border-radius:16px; }
-        .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); }
-        .card-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
-        .card-title { font-size:1.1rem; font-weight:700; }
-        table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-        th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); }
-        th { background:#f8fafc; font-weight:700; color:var(--text-light); text-transform:uppercase; font-size:0.75rem; }
-        tr:hover td { background:#f1f5f9; }
-        .status-badge { display:inline-block; padding:4px 10px; border-radius:14px; font-size:0.75rem; font-weight:600; }
-        .status-aberto { background:#fef3c7; color:#92400e; }
-        .status-em-andamento { background:#dbeafe; color:#1e40af; }
-        .status-finalizado { background:#d1fae5; color:#065f46; }
-        .empty-state { text-align:center; padding:40px 20px; color:var(--text-light); }
-        .form-group { margin-bottom:14px; }
-        .form-group label { display:block; font-weight:600; margin-bottom:4px; font-size:0.85rem; color:var(--text-light); }
-        .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 14px; border:2px solid var(--border); border-radius:6px; font-size:0.95rem; transition:.2s; background:#fafbfc; font-family:inherit; }
-        .form-group textarea { resize:vertical; min-height:60px; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,0.1); background:#fff; }
-        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        @media(max-width:600px){ .form-row{grid-template-columns:1fr;} }
-        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
-        .modal { background:var(--surface); border-radius:var(--radius); padding:24px; width:100%; max-width:550px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); position:relative; }
-        .modal-close { position:absolute; top:12px; right:16px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-light); }
-        .login-container { max-width:420px; width:100%; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:40px 32px; text-align:center; }
-        .login-error { color:var(--danger); font-size:0.85rem; margin-top:8px; display:none; }
-        .report-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:20px; }
-        .summary-card { background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border-radius:var(--radius); padding:16px; text-align:center; border:1px solid #bae6fd; }
-        .summary-value { font-size:1.8rem; font-weight:700; color:var(--primary); }
-        .toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:14px 22px; border-radius:25px; font-weight:500; z-index:2000; animation:slideUp .3s,fadeOut .3s 2.5s forwards; font-size:0.9rem; }
-        @keyframes slideUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
-        @keyframes fadeOut { to{opacity:0;transform:translateY(10px);} }
-        .solucao-cell { max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; vertical-align:middle; }
-        @media(max-width:768px){ .app-container{border-radius:0;min-height:100vh;} .nav-bar{padding:8px 12px;overflow-x:auto;} .main-content{padding:16px;max-height:none;} table{font-size:0.7rem;} }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerenciador de Atendimentos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #18181c;
+    --surface2: #222228;
+    --border: #2e2e38;
+    --accent: #f0c040;
+    --accent2: #e07d3c;
+    --green: #3ecf8e;
+    --blue: #5b9cf6;
+    --red: #f26b6b;
+    --text: #e8e8ec;
+    --muted: #7a7a8e;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: flex; flex-direction: column; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(0.7); } }
+
+  .header-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  main {
+    flex: 1;
+    padding: 32px;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .page-title {
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .page-title span { color: var(--accent); }
+
+  .btn-group { display: flex; gap: 10px; }
+
+  .btn {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.18s ease;
+    text-transform: uppercase;
+  }
+
+  .btn-primary { background: var(--accent); color: #0f0f11; }
+  .btn-primary:hover { background: #f5d060; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(240,192,64,0.25); }
+
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); transform: translateY(-1px); }
+
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(242,107,107,0.3); }
+  .btn-danger:hover { background: rgba(242,107,107,0.1); }
+
+  .btn-success {
+    background: var(--green);
+    color: #0f0f11;
+    border: none;
+  }
+  .btn-success:hover { background: #2db574; }
+
+  .btn-sm { padding: 6px 12px; font-size: 0.72rem; }
+
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent-line, var(--border));
+  }
+  .stat-card.green { --accent-line: var(--green); }
+  .stat-card.blue { --accent-line: var(--blue); }
+  .stat-card.amber { --accent-line: var(--accent); }
+  .stat-card.orange { --accent-line: var(--accent2); }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .empty-state {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-text { font-size: 0.9rem; }
+
+  .activity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 18px;
+    transition: all 0.18s ease;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+  .activity-card:hover { border-color: var(--muted); transform: translateX(2px); }
+
+  .status-badge { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:2px; }
+  .status-badge.aberto { background:var(--accent); box-shadow:0 0 8px rgba(240,192,64,0.5); }
+  .status-badge.andamento { background:var(--blue); box-shadow:0 0 8px rgba(91,156,246,0.5); animation:blink 1.5s ease infinite; }
+  .status-badge.finalizado { background:var(--green); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .activity-info { min-width:0; }
+
+  .activity-service {
+    font-weight:700;
+    font-size:0.95rem;
+    margin-bottom:4px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .activity-meta { display:flex; gap:14px; flex-wrap:wrap; }
+  .meta-item { font-family:'DM Mono', monospace; font-size:0.73rem; color:var(--muted); display:flex; align-items:center; gap:4px; }
+
+  .activity-status-ctrl { display:flex; flex-direction:column; gap:5px; min-width:130px; }
+  .status-option { display:flex; align-items:center; gap:7px; cursor:pointer; font-size:0.78rem; font-weight:600; letter-spacing:0.03em; padding:4px 8px; border-radius:6px; transition:background 0.15s; user-select:none; }
+  .status-option:hover { background:var(--surface2); }
+
+  .status-option input[type=radio] {
+    appearance:none;
+    width:14px; height:14px;
+    border-radius:50%;
+    border:2px solid var(--border);
+    cursor:pointer;
+    flex-shrink:0;
+    transition:all 0.15s;
+  }
+  .status-option.opt-aberto input:checked { border-color:var(--accent); background:var(--accent); }
+  .status-option.opt-andamento input:checked { border-color:var(--blue); background:var(--blue); }
+  .status-option.opt-finalizado input:checked { border-color:var(--green); background:var(--green); }
+
+  .activity-actions { display:flex; gap:6px; }
+
+  .duration-tag { font-family:'DM Mono', monospace; font-size:0.72rem; padding:3px 8px; border-radius:20px; background:rgba(62,207,142,0.1); color:var(--green); border:1px solid rgba(62,207,142,0.2); }
+
+  /* MODAL */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(10,10,12,0.85); backdrop-filter:blur(6px);
+    z-index:1000; display:flex; align-items:center; justify-content:center; animation:fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  .modal {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:32px; width:100%; max-width:480px; animation:slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from{opacity:0; transform:translateY(20px);} to{opacity:1; transform:translateY(0);} }
+
+  .modal-title { font-size:1.2rem; font-weight:800; margin-bottom:24px; display:flex; align-items:center; gap:10px; }
+  .modal-title .icon { width:32px; height:32px; border-radius:8px; background:rgba(240,192,64,0.15); display:flex; align-items:center; justify-content:center; font-size:1rem; }
+
+  .form-group { margin-bottom:18px; }
+  label { display:block; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
+  input[type=text], input[type=time], input[type=date], select {
+    width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px;
+    color:var(--text); font-family:'DM Mono', monospace; font-size:0.88rem; outline:none; transition:border-color 0.15s;
+  }
+  input:focus, select:focus { border-color:var(--accent); }
+
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+  .status-selector { display:flex; gap:8px; }
+  .status-pill {
+    flex:1; padding:8px 10px; border:1.5px solid var(--border); border-radius:8px; text-align:center;
+    font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.15s; letter-spacing:0.05em;
+    text-transform:uppercase; color:var(--muted); user-select:none;
+  }
+  .status-pill.sel-aberto.active { border-color:var(--accent); color:var(--accent); background:rgba(240,192,64,0.08); }
+  .status-pill.sel-andamento.active { border-color:var(--blue); color:var(--blue); background:rgba(91,156,246,0.08); }
+  .status-pill.sel-finalizado.active { border-color:var(--green); color:var(--green); background:rgba(62,207,142,0.08); }
+
+  .modal-actions { display:flex; gap:10px; margin-top:24px; justify-content:flex-end; }
+
+  /* REPORT */
+  .back-btn {
+    display:flex; align-items:center; gap:6px; font-size:0.78rem; font-weight:700; letter-spacing:0.04em;
+    color:var(--muted); cursor:pointer; border:none; background:none; font-family:'Syne', sans-serif;
+    text-transform:uppercase; transition:color 0.15s; margin-bottom:24px;
+  }
+  .back-btn:hover { color:var(--text); }
+
+  .report-filters {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:22px; margin-bottom:24px; display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap;
+  }
+  .report-filters .form-group { margin-bottom:0; flex:1; min-width:150px; }
+
+  .report-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+
+  .report-table-wrap {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-top:16px;
+  }
+
+  table { width:100%; border-collapse:collapse; }
+  thead { background:var(--surface2); border-bottom:1px solid var(--border); }
+  th {
+    padding:13px 18px; text-align:left; font-size:0.7rem; font-weight:700; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  td {
+    padding:14px 18px; font-size:0.85rem; border-bottom:1px solid var(--border); font-family:'DM Mono', monospace;
+  }
+  tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:rgba(255,255,255,0.02); }
+  .td-service { font-family:'Syne', sans-serif; font-weight:600; }
+
+  tfoot td { background:var(--surface2); font-weight:700; color:var(--accent); border-top:1px solid var(--border); border-bottom:none; }
+
+  .no-results { padding:48px 20px; text-align:center; color:var(--muted); font-size:0.88rem; }
+
+  .tag {
+    display:inline-flex; align-items:center; gap:4px; font-size:0.7rem; font-weight:700;
+    padding:2px 8px; border-radius:20px; text-transform:uppercase; letter-spacing:0.05em;
+  }
+  .tag-aberto { background:rgba(240,192,64,0.1); color:var(--accent); }
+  .tag-andamento { background:rgba(91,156,246,0.1); color:var(--blue); }
+  .tag-finalizado { background:rgba(62,207,142,0.1); color:var(--green); }
+
+  .mini-modal { max-width:360px; }
+
+  .report-actions { display:flex; gap:8px; align-items:center; }
+
+  @media (max-width:700px) {
+    main { padding:20px; }
+    .stats-bar { grid-template-columns: repeat(2,1fr); }
+    .report-summary { grid-template-columns:1fr 1fr; }
+    .activity-card { grid-template-columns: auto 1fr; }
+    .activity-status-ctrl, .activity-actions { grid-column:2; }
+  }
+</style>
 </head>
 <body>
-<div id="loginContainer" class="login-container">
-    <div class="login-icon">📋</div>
-    <h2>Gerenciador de Atendimentos</h2>
-    <p class="subtitle">Conectado ao Google Sheets &amp; Jira</p>
-    <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="Usuário"></div>
-    <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha"></div>
-    <p class="login-error" id="loginError">Usuário ou senha inválidos.</p>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">🔐 Entrar</button>
-</div>
-<div id="appContainer" class="app-container" style="display:none;">
-    <header class="app-header">
-        <div class="logo"><span>📋</span> Atendimentos</div>
-        <div class="header-actions">
-            <span class="user-tag" id="headerUserTag">👤 Usuário</span>
-            <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;" onclick="logout()">🚪 Sair</button>
-        </div>
-    </header>
-    <nav class="nav-bar" id="navBar">
-        <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">📅 Fila do Dia</button>
-        <button class="nav-btn" data-page="jira" onclick="navigateTo('jira')">🐛 Fila do Jira</button>
-        <button class="nav-btn" data-page="relatorio" onclick="navigateTo('relatorio')">📊 Relatório</button>
-        <button class="nav-btn" data-page="minhaconta" onclick="navigateTo('minhaconta')">👤 Minha Conta</button>
-        <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">⚙️ Admin</button>
-    </nav>
-    <main class="main-content">
-        <div class="page active" id="page-dashboard">
-            <div class="card">
-                <div class="card-header"><span class="card-title">📅 Atendimentos do Dia</span><button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Adicionar Atividade</button></div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Solução</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
-            </div>
-        </div>
-        <div class="page" id="page-jira">
-            <div class="card">
-                <div class="card-header"><span class="card-title">🐛 Fila do Jira</span><button class="btn btn-primary btn-sm" onclick="sincronizarJira()">🔄 Sincronizar com Jira</button></div>
-                <p style="font-size:0.8rem;color:var(--text-light);margin-bottom:10px;">As alterações de status aqui são locais e não afetam o Jira.</p>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Chave</th><th>Título</th><th>Resumo</th><th>Solicitante</th><th>Status Local</th><th>Ações</th></tr></thead><tbody id="tbodyJira"></tbody></table></div>
-            </div>
-        </div>
-        <div class="page" id="page-relatorio">
-            <div class="card">
-                <div class="card-header"><span class="card-title">📊 Relatório</span><button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button></div>
-                <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div><div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div></div>
-                <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
-                <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th><th>Solução</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
-            </div>
-        </div>
-        <div class="page" id="page-minhaconta">
-            <div class="card" style="max-width:500px;">
-                <div class="card-header"><span class="card-title">👤 Minha Conta</span></div>
-                <div class="form-group"><label>Usuário</label><input type="text" id="contaNome" disabled></div>
-                <div class="form-group"><label>Nível</label><input type="text" id="contaNivel" disabled></div>
-                <div class="form-group"><label>Nova Senha</label><input type="password" id="contaNovaSenha" placeholder="Mín. 4 caracteres"></div>
-                <div class="form-group"><label>Confirmar Senha</label><input type="password" id="contaConfirmarSenha"></div>
-                <button class="btn btn-primary" onclick="alterarMinhaSenha()">🔒 Alterar Senha</button>
-            </div>
-        </div>
-        <div class="page" id="page-admin">
-            <div class="card">
-                <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span><button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button></div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table></div>
-            </div>
-        </div>
-    </main>
+
+<!-- PAGE MAIN -->
+<div id="page-main" class="page active">
+  <header>
+    <div class="logo"><div class="logo-dot"></div>AtendLog</div>
+    <div class="header-date" id="header-date"></div>
+  </header>
+  <main>
+    <div class="top-bar">
+      <div class="page-title">Atendimentos de <span id="today-label">hoje</span></div>
+      <div class="btn-group">
+        <button class="btn btn-ghost" onclick="goReport()">📊 Relatório</button>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Adicionar Atividade</button>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card amber"><div class="stat-label">Total Hoje</div><div class="stat-value" id="stat-total">0</div></div>
+      <div class="stat-card green"><div class="stat-label">Finalizados</div><div class="stat-value" id="stat-fin">0</div></div>
+      <div class="stat-card blue"><div class="stat-label">Em Andamento</div><div class="stat-value" id="stat-and">0</div></div>
+      <div class="stat-card orange"><div class="stat-label">Tempo Total</div><div class="stat-value" id="stat-time" style="font-size:1.1rem">—</div></div>
+    </div>
+
+    <div class="activity-list" id="activity-list"></div>
+  </main>
 </div>
 
-<div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
-        <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
-        <div class="form-group"><label>Serviço *</label><input type="text" id="atvServico"></div>
-        <div class="form-row"><div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div><div class="form-group"><label>Hora Fim</label><input type="time" id="atvHoraFim"></div></div>
-        <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
-        <div class="form-group"><label>Estado</label><select id="atvEstado"><option value="Aberto">🔓 Aberto</option><option value="Em andamento">🔄 Em andamento</option><option value="Finalizado">✅ Finalizado</option></select></div>
-        <div class="form-group" id="solucaoGroup" style="display:none;"><label>Solução Aplicada</label><textarea id="atvSolucao" placeholder="Descreva a solução..."></textarea></div>
-        <div class="form-group"><label>Data</label><input type="date" id="atvData"></div>
-        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
+<!-- PAGE REPORT -->
+<div id="page-report" class="page">
+  <header>
+    <div class="logo"><div class="logo-dot"></div>AtendLog</div>
+    <div class="header-date" id="header-date-r"></div>
+  </header>
+  <main>
+    <button class="back-btn" onclick="goMain()">← Voltar</button>
+    <div class="top-bar" style="margin-bottom:20px;">
+      <div class="page-title">📊 Relatório de <span>Atendimentos</span></div>
+      <div class="report-actions">
+        <button class="btn btn-ghost btn-sm" onclick="runReport()">🔄 Atualizar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleReportList()">👁️‍🗨️ Ocultar lista</button>
+        <button class="btn btn-primary btn-sm" onclick="exportCSV()">📥 Exportar CSV</button>
+      </div>
     </div>
+
+    <div class="report-filters">
+      <div class="form-group"><label>Data Início</label><input type="date" id="filter-start"></div>
+      <div class="form-group"><label>Data Fim</label><input type="date" id="filter-end"></div>
+      <div class="form-group" style="min-width:130px;"><label>Status</label>
+        <select id="filter-status">
+          <option value="">Todos</option>
+          <option value="aberto">Aberto</option>
+          <option value="andamento">Em Andamento</option>
+          <option value="finalizado">Finalizado</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="runReport()">Filtrar</button>
+    </div>
+
+    <div class="report-summary" id="report-summary"></div>
+    <div class="report-table-wrap" id="report-table-wrap">
+      <div id="report-body"></div>
+    </div>
+  </main>
 </div>
 
-<div class="modal-overlay" id="modalUserOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
-        <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
-        <div class="form-group"><label>Nome *</label><input type="text" id="userNome"></div>
-        <div class="form-group"><label>Senha *</label><input type="password" id="userSenha" placeholder="Mín. 4 caracteres"></div>
-        <div class="form-group"><label>Nível</label><select id="userNivel"><option value="comum">👤 Comum</option><option value="admin">👑 Admin</option></select></div>
-        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarUsuario()">💾 Salvar</button></div>
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="modal-add" style="display:none;" onclick="closeModalAdd(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title"><div class="icon">📋</div><span id="modal-title-text">Nova Atividade</span></div>
+    <div class="form-group"><label>Serviço Realizado *</label><input type="text" id="f-service" placeholder="Descreva o serviço..."></div>
+    <div class="form-group"><label>Solicitante *</label><input type="text" id="f-requester" placeholder="Nome do solicitante..."></div>
+    <div class="form-row">
+      <div class="form-group"><label>Hora Início</label><input type="time" id="f-start"></div>
+      <div class="form-group"><label>Hora Fim</label><input type="time" id="f-end"></div>
     </div>
+    <div class="form-group"><label>Data</label><input type="date" id="f-date"></div>
+    <div class="form-group"><label>Status</label>
+      <div class="status-selector">
+        <div class="status-pill sel-aberto active" data-val="aberto" onclick="selectStatus(this)">Aberto</div>
+        <div class="status-pill sel-andamento" data-val="andamento" onclick="selectStatus(this)">Em Andamento</div>
+        <div class="status-pill sel-finalizado" data-val="finalizado" onclick="selectStatus(this)">Finalizado</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAdd()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveActivity()">Salvar</button>
+    </div>
+  </div>
 </div>
-<div id="toastContainer"></div>
+
+<!-- MODAL END TIME -->
+<div class="modal-overlay" id="modal-endtime" style="display:none;" onclick="closeEndTimeModal(event)">
+  <div class="modal mini-modal" onclick="event.stopPropagation()">
+    <div class="modal-title"><div class="icon" style="background:rgba(62,207,142,0.15);">✅</div>Finalizar Atendimento</div>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:20px;">Informe a hora de término para concluir o atendimento.</p>
+    <div class="form-group"><label>Hora Fim *</label><input type="time" id="et-time"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="cancelEndTime()">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--green);color:#0f0f11;" onclick="confirmEndTime()">Finalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS BAR -->
+<div style="background:var(--surface); border-bottom:1px solid var(--border); padding:6px 32px; font-size:0.72rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+  <span style="color:var(--muted);">🔗 API Google Sheets:</span>
+  <input type="text" id="api-url" placeholder="Cole a URL do Apps Script..." style="flex:1; background:var(--bg); border:1px solid var(--border); padding:4px 10px; color:var(--text); border-radius:6px; font-family:monospace;">
+  <button class="btn btn-sm btn-primary" onclick="saveApiUrl()">Salvar URL</button>
+  <span id="api-status" style="color:var(--muted); font-size:0.7rem;"></span>
+</div>
 
 <script>
-(function() {
-    // URL ATUALIZADA
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzDIXxvNLmM7xQw_IQoUTnqgRnz0CNXPE0jIzFLXDKejIIM0ll1kMWfE0BBVHkXeLsG4w/exec';
-    const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
-    let currentUser = null;
+// ─── API CONFIG ───────────────────────────────────────────────
+const STORAGE_KEY = 'atendlog_v2';
+const API_URL_KEY = 'api_url';
 
-    function normalizeDate(v){if(!v)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;if(v.includes('T'))return v.split('T')[0];return String(v).trim();}
-    function excelSerialToTime(v){
-        if(v==null||v==='')return'';
-        if(typeof v==='string'){
-            if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v))return v.substring(0,5);
-            if(v.includes('T')){const t=v.split('T')[1];return t?t.substring(0,5):'';}
-            return v;
-        }
-        if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');}
-        return'';
-    }
-    function hojeLocal(){return new Date().toLocaleDateString('en-CA');}
-    function agoraISO(){return new Date().toISOString();}
+let activities = [];
+let editingId = null;
+let pendingFinishId = null;
+let selectedStatus = 'aberto';
+let reportVisible = true; // controle de visibilidade da tabela do relatório
 
-    async function loadData(){
-        try{
-            const r=await fetch(`${API_URL}?action=load`);const d=await r.json();
-            if(d.error){console.error('API error:', d.error);return false;}
-            dataCache.users=d.users||[];
-            dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim)}));
-            dataCache.jiraIssues=(d.jiraIssues||[]).map(j=>({...j,status_local:j.status_local||'Aberto'}));
-            dataCache.lastLoad=Date.now();
-            return true;
-        }catch(e){console.error(e);return false;}
-    }
-    async function syncData(type,payload){
-        try{await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',type,payload})});return true;}catch(e){return false;}
-    }
+function getApiUrl() {
+  return localStorage.getItem(API_URL_KEY) || '';
+}
 
-    function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
-    function verifyPassword(pwd, stored){
-        const spwd = String(pwd);
-        const sstored = String(stored);
-        return spwd === sstored || hashPassword(spwd) === sstored;
-    }
-    function genId(){return'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
-    function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-    function fmtData(s){if(!s)return'-';const[a,m,d]=s.split('-');return`${d}/${m}/${a}`;}
-    function calcDur(hi,hf){
-        hi=excelSerialToTime(hi);hf=excelSerialToTime(hf);
-        if(!hi||!hf)return 0;
-        const[h1,m1]=hi.split(':').map(Number);const[h2,m2]=hf.split(':').map(Number);
-        let min=(h2*60+m2)-(h1*60+m1);if(min<0)min+=24*60;
-        return Math.max(0,min);
-    }
-    function fmtDur(m){if(m<=0)return'-';const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}min`:`${min}min`;}
-    function statusClass(e){return e==='Aberto'?'status-aberto':e==='Em andamento'?'status-em-andamento':'status-finalizado';}
-    function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
+function setApiUrl(url) {
+  localStorage.setItem(API_URL_KEY, url);
+  document.getElementById('api-url').value = url;
+}
 
-    function setUser(u){
-        currentUser=u;
-        if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel}));}
-        else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}
-    }
-    async function restoreSession(){
-        const uid=sessionStorage.getItem('app_uid');
-        if(!uid)return null;
-        let cached=null;
-        try{cached=JSON.parse(sessionStorage.getItem('app_cache'));}catch(e){}
-        if(cached&&cached.id===uid){
-            loadData().then(()=>{const fresh=dataCache.users.find(u=>u.id===uid);if(fresh)setUser(fresh);if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();});
-            return cached;
-        }
-        await loadData();
-        return dataCache.users.find(u=>u.id===uid)||null;
-    }
+function saveApiUrl() {
+  const url = document.getElementById('api-url').value.trim();
+  if (!url) { alert('Insira uma URL válida.'); return; }
+  setApiUrl(url);
+  document.getElementById('api-status').textContent = '✅ Conectado!';
+  loadActivities();
+}
 
-    async function doLogin(){
-        const n=document.getElementById('loginUser').value.trim();
-        const p=document.getElementById('loginPass').value.trim();
-        const e=document.getElementById('loginError');e.style.display='none';
-        if(!n||!p){e.textContent='Preencha todos os campos.';e.style.display='block';return;}
-        if(!dataCache.users.length||Date.now()-dataCache.lastLoad>300000)await loadData();
-        const u=dataCache.users.find(u=>u.nome.toLowerCase()===n.toLowerCase());
-        if(!u||!verifyPassword(p,u.senha)){e.textContent='Usuário ou senha inválidos.';e.style.display='block';return;}
-        setUser(u);showApp();toast('✅ Bem-vindo, '+u.nome+'!');
-    }
-    function logout(){if(confirm('Sair?')){setUser(null);hideApp();}}
-    function showApp(){document.getElementById('loginContainer').style.display='none';document.getElementById('appContainer').style.display='flex';updateHeader();updateNav();navigateTo('dashboard');}
-    function hideApp(){document.getElementById('loginContainer').style.display='block';document.getElementById('appContainer').style.display='none';}
-    function updateHeader(){
-        if(!currentUser)return;
-        const t=document.getElementById('headerUserTag');
-        t.innerHTML=currentUser.nivel==='admin'?`👑 ${currentUser.nome} <span class="admin-badge">Admin</span>`:`👤 ${currentUser.nome}`;
-    }
-    function updateNav(){document.getElementById('navAdmin').style.display=currentUser&&currentUser.nivel==='admin'?'flex':'none';}
-    function navigateTo(p){
-        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-        const el=document.getElementById('page-'+p);if(el)el.classList.add('active');
-        const btn=document.querySelector(`.nav-btn[data-page="${p}"]`);if(btn)btn.classList.add('active');
-        if(p==='dashboard')renderDashboard();
-        else if(p==='jira')renderJira();
-        else if(p==='relatorio')setupRelatorio();
-        else if(p==='minhaconta')renderMinhaConta();
-        else if(p==='admin')renderAdmin();
-    }
+// ─── COMMUNICATION WITH GOOGLE SHEETS ────────────────────────
+async function loadActivities() {
+  const url = getApiUrl();
+  if (!url) {
+    activities = [];
+    renderMain();
+    return;
+  }
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    activities = Array.isArray(data) ? data : [];
+    renderMain();
+    document.getElementById('api-status').textContent = '✅ Conectado';
+  } catch (e) {
+    console.error(e);
+    document.getElementById('api-status').textContent = '❌ Erro ao carregar';
+    activities = [];
+    renderMain();
+  }
+}
 
-    function renderDashboard(){
-        const hoje=hojeLocal();
-        const acts=dataCache.activities;
-        let filtradas=currentUser.nivel==='admin'?acts.filter(a=>a.data===hoje):acts.filter(a=>a.data===hoje&&a.usuarioId===currentUser.id);
-        filtradas.sort((a,b)=>(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-        const tbody=document.getElementById('tbodyAtividades');
-        if(!filtradas.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade hoje.</td></tr>';return;}
-        tbody.innerHTML=filtradas.map(a=>{
-            const pode=currentUser.nivel==='admin'||a.usuarioId===currentUser.id;
-            const solucao=a.solucao_aplicada||'';
-            return `<tr><td><strong>${esc(a.servico_realizado)}</strong></td><td>${esc(a.solicitante)}</td><td>${a.hora_inicio||'-'}</td><td>${a.hora_fim||'-'}</td><td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td><td><span class="solucao-cell" title="${esc(solucao)}">${solucao?esc(solucao.length>30?solucao.substring(0,30)+'...':solucao):'-'}</span></td><td>${pode?`<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>`:'🔒'}</td></tr>`;
-        }).join('');
+async function syncToSheet(activity, action = 'upsert') {
+  const url = getApiUrl();
+  if (!url) {
+    alert('Configure a URL da API primeiro.');
+    return false;
+  }
+  try {
+    if (action === 'delete') {
+      await fetch(url + '?action=delete&id=' + encodeURIComponent(activity.id), { method: 'POST' });
+    } else {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(activity)
+      });
     }
+    return true;
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao salvar na planilha.');
+    return false;
+  }
+}
 
-    function openActivityModal(atv=null){
-        document.getElementById('atvId').value='';document.getElementById('atvServico').value='';document.getElementById('atvSolicitante').value='';document.getElementById('atvHoraFim').value='';document.getElementById('atvSolucao').value='';
-        document.getElementById('atvEstado').value='Aberto';
-        document.getElementById('atvData').value=hojeLocal();
-        const now=new Date();document.getElementById('atvHoraInicio').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-        document.getElementById('solucaoGroup').style.display='none';
-        document.getElementById('modalAtividadeTitulo').textContent='➕ Nova Atividade';
-        if(atv){
-            document.getElementById('atvId').value=atv.id;
-            document.getElementById('atvServico').value=atv.servico_realizado;
-            document.getElementById('atvHoraInicio').value=excelSerialToTime(atv.hora_inicio);
-            document.getElementById('atvHoraFim').value=excelSerialToTime(atv.hora_fim);
-            document.getElementById('atvSolicitante').value=atv.solicitante;
-            document.getElementById('atvEstado').value=atv.estado;
-            document.getElementById('atvData').value=normalizeDate(atv.data);
-            document.getElementById('atvSolucao').value=atv.solucao_aplicada||'';
-            if(atv.estado==='Finalizado')document.getElementById('solucaoGroup').style.display='block';
-            document.getElementById('modalAtividadeTitulo').textContent='✏️ Editar Atividade';
-        }
-        document.getElementById('modalAtividadeOverlay').style.display='flex';
-    }
-    function closeActivityModal(){document.getElementById('modalAtividadeOverlay').style.display='none';}
-    document.getElementById('atvEstado').addEventListener('change',function(){
-        const solGroup=document.getElementById('solucaoGroup');
-        if(this.value==='Finalizado'){
-            solGroup.style.display='block';
-            const hf=document.getElementById('atvHoraFim');
-            if(!hf.value){hf.focus();toast('⚠️ Informe a hora de finalização.');}
-        }else{solGroup.style.display='none';document.getElementById('atvSolucao').value='';}
-    });
-    async function salvarAtividade(){
-        const id=document.getElementById('atvId').value;
-        const servico=document.getElementById('atvServico').value.trim();
-        const inicio=document.getElementById('atvHoraInicio').value;
-        const fim=document.getElementById('atvHoraFim').value;
-        const solicitante=document.getElementById('atvSolicitante').value.trim();
-        const estado=document.getElementById('atvEstado').value;
-        const data=document.getElementById('atvData').value;
-        const solucao=document.getElementById('atvSolucao').value.trim();
-        if(!servico||!inicio||!solicitante){toast('⚠️ Preencha campos obrigatórios.');return;}
-        if(estado==='Finalizado'&&!fim){toast('⚠️ Hora fim é obrigatória para finalizar.');document.getElementById('atvHoraFim').focus();return;}
-        if(id){
-            const idx=dataCache.activities.findIndex(a=>a.id===id);
-            if(idx>=0){
-                dataCache.activities[idx].servico_realizado=servico;dataCache.activities[idx].hora_inicio=inicio;dataCache.activities[idx].hora_fim=fim;
-                dataCache.activities[idx].solicitante=solicitante;dataCache.activities[idx].estado=estado;dataCache.activities[idx].data=data;
-                dataCache.activities[idx].solucao_aplicada=solucao;dataCache.activities[idx].atualizadoEm=agoraISO();
-            }
-        }else{
-            dataCache.activities.push({id:genId(),usuarioId:currentUser.id,usuarioNome:currentUser.nome,servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,solicitante,estado,data,solucao_aplicada:solucao,criadoEm:agoraISO(),atualizadoEm:agoraISO()});
-        }
-        renderDashboard();closeActivityModal();toast(id?'✅ Atividade atualizada!':'✅ Atividade adicionada!');
-        syncData('activities',dataCache.activities);
-    }
-    async function excluirAtividade(id){
-        if(!confirm('Excluir atividade?'))return;
-        dataCache.activities=dataCache.activities.filter(a=>a.id!==id);
-        renderDashboard();toast('🗑️ Excluída.');
-        syncData('activities',dataCache.activities);
-    }
-    function editarAtividade(id){
-        const a=dataCache.activities.find(a=>a.id===id);
-        if(!a)return toast('⚠️ Não encontrada.');
-        if(currentUser.nivel!=='admin'&&a.usuarioId!==currentUser.id)return toast('⛔ Sem permissão.');
-        openActivityModal(a);
-    }
+// ─── UTILS ────────────────────────────────────────────────────
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 
-    async function sincronizarJira(){
-        toast('🔄 Buscando issues do Jira...');
-        try{
-            const resp=await fetch(`${API_URL}?action=jira`);
-            const data=await resp.json();
-            if(data.error){toast('❌ Erro: '+JSON.stringify(data.error));return;}
-            const novasIssues=data.issues;
-            const mapaExistente={};
-            dataCache.jiraIssues.forEach(j=>{mapaExistente[j.issue_id]=j;});
-            const merged=novasIssues.map(issue=>{
-                const existente=mapaExistente[issue.issue_id];
-                if(existente){
-                    return {...existente,summary:issue.summary,description:issue.description,reporter:issue.reporter,issue_key:issue.issue_key};
-                }else{
-                    return {id:genId(),issue_id:issue.issue_id,issue_key:issue.issue_key,summary:issue.summary,description:issue.description,reporter:issue.reporter,status_local:'Aberto',hora_inicio:'',hora_fim:'',data:hojeLocal(),usuarioId:currentUser.id,usuarioNome:currentUser.nome,solucao_aplicada:'',criadoEm:agoraISO(),atualizadoEm:agoraISO()};
-                }
-            });
-            dataCache.jiraIssues=merged;
-            await syncData('jira_issues',dataCache.jiraIssues);
-            renderJira();
-            toast('✅ '+novasIssues.length+' issues sincronizadas.');
-        }catch(e){toast('❌ Falha ao sincronizar com Jira.');console.error(e);}
-    }
+const today = () => new Date().toISOString().split('T')[0];
 
-    function renderJira(){
-        const issues=dataCache.jiraIssues;
-        const tbody=document.getElementById('tbodyJira');
-        if(!issues.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state"><span class="empty-icon">🐛</span>Nenhuma issue. Clique em "Sincronizar com Jira".</td></tr>';return;}
-        tbody.innerHTML=issues.map(j=>{
-            const status=j.status_local||'Aberto';
-            const podeEditar=currentUser.nivel==='admin'||j.usuarioId===currentUser.id;
-            return `<tr><td><strong>${esc(j.issue_key)}</strong></td><td>${esc(j.summary)}</td><td>${esc(j.description?j.description.substring(0,80):'')}</td><td>${esc(j.reporter)}</td><td><select onchange="atualizarStatusJira('${j.id}', this.value)" ${podeEditar?'':'disabled'}><option value="Aberto" ${status==='Aberto'?'selected':''}>🔓 Aberto</option><option value="Em andamento" ${status==='Em andamento'?'selected':''}>🔄 Em andamento</option><option value="Finalizado" ${status==='Finalizado'?'selected':''}>✅ Finalizado</option></select></td><td>${podeEditar?`<button class="btn btn-outline btn-sm" onclick="editarJira('${j.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirJira('${j.id}')">🗑️</button>`:'🔒'}</td></tr>`;
-        }).join('');
-    }
+const fmtDate = s => {
+  if (!s) return '';
+  const [y,m,d] = s.split('-');
+  return `${d}/${m}/${y}`;
+};
 
-    async function atualizarStatusJira(id,novoStatus){
-        const idx=dataCache.jiraIssues.findIndex(j=>j.id===id);
-        if(idx>=0){dataCache.jiraIssues[idx].status_local=novoStatus;dataCache.jiraIssues[idx].atualizadoEm=agoraISO();renderJira();await syncData('jira_issues',dataCache.jiraIssues);toast('Status atualizado para '+novoStatus);}
-    }
-    function editarJira(id){toast('Funcionalidade de edição completa em breve.');}
-    async function excluirJira(id){
-        if(!confirm('Remover issue da fila local? (Não afeta o Jira)'))return;
-        dataCache.jiraIssues=dataCache.jiraIssues.filter(j=>j.id!==id);
-        renderJira();await syncData('jira_issues',dataCache.jiraIssues);toast('Issue removida da fila local.');
-    }
+const minutesBetween = (t1, t2) => {
+  if (!t1 || !t2) return null;
+  const [h1,m1] = t1.split(':').map(Number);
+  const [h2,m2] = t2.split(':').map(Number);
+  const diff = (h2*60+m2) - (h1*60+m1);
+  return diff >= 0 ? diff : null;
+};
 
-    function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
-    function carregarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
-        if(!ini||!fim)return;
-        let acts=dataCache.activities.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
-        acts.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-        const tbody=document.getElementById('tbodyRelatorio'),summary=document.getElementById('reportSummary');
-        if(!acts.length){tbody.innerHTML='<tr><td colspan="8" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>';summary.innerHTML='';return;}
-        let totalMin=0,finalizados=0;
-        tbody.innerHTML=acts.map(a=>{
-            const dur=calcDur(a.hora_inicio,a.hora_fim);
-            if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
-            const sol=a.solucao_aplicada||'';
-            return `<tr><td>${fmtData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td><td>${excelSerialToTime(a.hora_inicio)||'-'}</td><td>${excelSerialToTime(a.hora_fim)||'-'}</td><td><strong>${fmtDur(dur)}</strong></td><td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td><td><span class="solucao-cell" title="${esc(sol)}">${sol?esc(sol.length>30?sol.substring(0,30)+'...':sol):'-'}</span></td></tr>`;
-        }).join('');
-        const h=Math.floor(totalMin/60),m=totalMin%60;
-        summary.innerHTML=`<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados ✅</div></div><div class="summary-card" style="background:linear-gradient(135deg,#fefce8,#fef9c3);"><div class="summary-value" style="color:#b45309;">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
-    }
-    async function exportarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
-        let acts=dataCache.activities;
-        if(ini&&fim)acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
-        const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado','Solução']];
-        acts.forEach(a=>{const dur=calcDur(a.hora_inicio,a.hora_fim);excel.push([fmtData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',fmtDur(dur),a.estado,a.solucao_aplicada||'']);});
-        const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(excel);
-        ws['!cols']=[{wch:12},{wch:30},{wch:20},{wch:10},{wch:10},{wch:12},{wch:12},{wch:25}];
-        XLSX.utils.book_append_sheet(wb,ws,'Relatório');XLSX.writeFile(wb,`relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
-        toast('📥 Exportado!');
-    }
+const fmtDuration = mins => {
+  if (mins === null || mins === undefined) return '—';
+  if (mins < 60) return `${mins}min`;
+  const h = Math.floor(mins/60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}min` : `${h}h`;
+};
 
-    function renderMinhaConta(){
-        document.getElementById('contaNome').value=currentUser.nome;
-        document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum';
-        document.getElementById('contaNovaSenha').value='';document.getElementById('contaConfirmarSenha').value='';
-    }
-    async function alterarMinhaSenha(){
-        const n=document.getElementById('contaNovaSenha').value.trim(),c=document.getElementById('contaConfirmarSenha').value.trim();
-        if(!n||n.length<4)return toast('⚠️ Mínimo 4 caracteres.');
-        if(n!==c)return toast('⚠️ Senhas não conferem.');
-        const idx=dataCache.users.findIndex(u=>u.id===currentUser.id);
-        if(idx>=0){dataCache.users[idx].senha=hashPassword(n);setUser(dataCache.users[idx]);await syncData('users',dataCache.users);toast('🔒 Senha alterada!');}
-    }
-    function renderAdmin(){
-        if(currentUser.nivel!=='admin')return navigateTo('dashboard');
-        document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td><strong>${esc(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td><td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
-    }
-    function openUserModal(u=null){
-        document.getElementById('userId').value='';document.getElementById('userNome').value='';document.getElementById('userSenha').value='';document.getElementById('userNivel').value='comum';
-        document.getElementById('modalUserTitulo').textContent='➕ Novo Usuário';
-        if(u){document.getElementById('userId').value=u.id;document.getElementById('userNome').value=u.nome;document.getElementById('userSenha').placeholder='Deixe em branco';document.getElementById('userNivel').value=u.nivel;document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário';}
-        document.getElementById('modalUserOverlay').style.display='flex';
-    }
-    function closeUserModal(){document.getElementById('modalUserOverlay').style.display='none';}
-    async function salvarUsuario(){
-        const id=document.getElementById('userId').value,nome=document.getElementById('userNome').value.trim(),senha=document.getElementById('userSenha').value.trim(),nivel=document.getElementById('userNivel').value;
-        if(!nome||nome.length<2)return toast('⚠️ Nome curto.');
-        if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()&&u.id!==id))return toast('⚠️ Nome já existe.');
-        if(id){const idx=dataCache.users.findIndex(u=>u.id===id);dataCache.users[idx].nome=nome;dataCache.users[idx].nivel=nivel;if(senha.length>=4)dataCache.users[idx].senha=hashPassword(senha);}
-        else{if(!senha||senha.length<4)return toast('⚠️ Senha mínima 4.');dataCache.users.push({id:genId(),nome,senha:hashPassword(senha),nivel,criadoEm:agoraISO()});}
-        await syncData('users',dataCache.users);closeUserModal();renderAdmin();toast(id?'✅ Usuário atualizado!':'✅ Usuário criado!');
-    }
-    async function excluirUsuario(id){if(!confirm('Excluir?'))return;dataCache.users=dataCache.users.filter(u=>u.id!==id);await syncData('users',dataCache.users);renderAdmin();toast('🗑️ Excluído.');}
-    function editarUsuario(id){const u=dataCache.users.find(u=>u.id===id);if(u)openUserModal(u);}
+const fmtTotal = mins => {
+  if (!mins) return '—';
+  const h = Math.floor(mins/60);
+  const m = mins % 60;
+  return m ? `${h}h ${m}min` : `${h}h`;
+};
 
-    document.addEventListener('click',e=>{if(e.target.id==='modalAtividadeOverlay')closeActivityModal();if(e.target.id==='modalUserOverlay')closeUserModal();});
-    document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginContainer').style.display!=='none')doLogin();if(e.key==='Escape'){closeActivityModal();closeUserModal();}});
+function updateDates() {
+  const now = new Date();
+  const opts = { weekday:'long', day:'numeric', month:'long', year:'numeric' };
+  document.getElementById('header-date').textContent = now.toLocaleDateString('pt-BR', opts);
+  const r = document.getElementById('header-date-r');
+  if (r) r.textContent = now.toLocaleDateString('pt-BR', opts);
+  document.getElementById('today-label').textContent = now.toLocaleDateString('pt-BR', {day:'numeric', month:'long'});
+}
 
-    window.addEventListener('load',async()=>{
-        const u=await restoreSession();
-        if(u){setUser(u);showApp();}else hideApp();
-        document.getElementById('relDataInicio').value=hojeLocal();
-        document.getElementById('relDataFim').value=hojeLocal();
-    });
+// ─── PAGES ────────────────────────────────────────────────────
+function goReport() {
+  document.getElementById('page-main').classList.remove('active');
+  document.getElementById('page-report').classList.add('active');
+  const t = today();
+  document.getElementById('filter-start').value = t;
+  document.getElementById('filter-end').value = t;
+  runReport();
+}
 
-    window.doLogin=doLogin;window.logout=logout;window.navigateTo=navigateTo;
-    window.openActivityModal=openActivityModal;window.closeActivityModal=closeActivityModal;
-    window.editarAtividade=editarAtividade;window.salvarAtividade=salvarAtividade;
-    window.excluirAtividade=excluirAtividade;window.carregarRelatorio=carregarRelatorio;
-    window.exportarRelatorio=exportarRelatorio;window.alterarMinhaSenha=alterarMinhaSenha;
-    window.openUserModal=openUserModal;window.closeUserModal=closeUserModal;
-    window.editarUsuario=editarUsuario;window.salvarUsuario=salvarUsuario;
-    window.excluirUsuario=excluirUsuario;window.showToast=toast;
-    window.sincronizarJira=sincronizarJira;window.atualizarStatusJira=atualizarStatusJira;
-    window.editarJira=editarJira;window.excluirJira=excluirJira;
-})();
+function goMain() {
+  document.getElementById('page-report').classList.remove('active');
+  document.getElementById('page-main').classList.add('active');
+}
+
+// ─── RENDER MAIN ──────────────────────────────────────────────
+function renderMain() {
+  const todayActivities = activities.filter(a => a.date === today());
+
+  document.getElementById('stat-total').textContent = todayActivities.length;
+  document.getElementById('stat-fin').textContent = todayActivities.filter(a=>a.status==='finalizado').length;
+  document.getElementById('stat-and').textContent = todayActivities.filter(a=>a.status==='andamento').length;
+
+  const totalMins = todayActivities
+    .filter(a => a.status === 'finalizado' && a.timeStart && a.timeEnd)
+    .reduce((acc, a) => acc + (minutesBetween(a.timeStart, a.timeEnd) || 0), 0);
+  document.getElementById('stat-time').textContent = totalMins ? fmtTotal(totalMins) : '—';
+
+  const list = document.getElementById('activity-list');
+  if (!todayActivities.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Nenhum atendimento registrado hoje.<br>Clique em <strong>+ Adicionar Atividade</strong> para começar.</div></div>`;
+    return;
+  }
+
+  list.innerHTML = todayActivities.map(a => {
+    const isOpenOrProgress = a.status === 'aberto' || a.status === 'andamento';
+    const mins = minutesBetween(a.timeStart, a.timeEnd);
+    const durTag = mins !== null ? `<span class="duration-tag">⏱ ${fmtDuration(mins)}</span>` : '';
+    return `<div class="activity-card" id="card-${a.id}">
+      <div class="status-badge ${a.status}"></div>
+      <div class="activity-info">
+        <div class="activity-service">${a.service}</div>
+        <div class="activity-meta">
+          <span class="meta-item">👤 ${a.requester}</span>
+          ${a.timeStart ? `<span class="meta-item">🕐 ${a.timeStart}</span>` : ''}
+          ${a.timeEnd ? `<span class="meta-item">🕔 ${a.timeEnd}</span>` : ''}
+          ${durTag}
+        </div>
+      </div>
+      <div class="activity-status-ctrl">
+        ${['aberto','andamento','finalizado'].map(s => `
+          <label class="status-option opt-${s}">
+            <input type="radio" name="status-${a.id}" value="${s}" ${a.status===s?'checked':''} onchange="changeStatus('${a.id}','${s}')">
+            ${s==='aberto'?'Aberto':s==='andamento'?'Em Andamento':'Finalizado'}
+          </label>`).join('')}
+      </div>
+      <div class="activity-actions">
+        ${isOpenOrProgress ? `<button class="btn btn-success btn-sm" onclick="handleCloseActivity('${a.id}')">✅ Fechar</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${a.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteActivity('${a.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── HANDLE CLOSE ACTIVITY (via "Fechar" button) ─────────────
+function handleCloseActivity(id) {
+  pendingFinishId = id;
+  document.getElementById('et-time').value = '';
+  document.getElementById('modal-endtime').style.display = 'flex';
+}
+
+// ─── STATUS CHANGE (radios) ──────────────────────────────────
+async function changeStatus(id, newStatus) {
+  if (newStatus === 'finalizado') {
+    handleCloseActivity(id);
+  } else {
+    const act = activities.find(a => a.id === id);
+    if (act) {
+      act.status = newStatus;
+      if (await syncToSheet(act)) {
+        await loadActivities();
+      }
+    }
+  }
+}
+
+function cancelEndTime() {
+  document.getElementById('modal-endtime').style.display = 'none';
+  pendingFinishId = null;
+  loadActivities();
+}
+
+function closeEndTimeModal(e) {
+  if (e.target === document.getElementById('modal-endtime')) cancelEndTime();
+}
+
+async function confirmEndTime() {
+  const t = document.getElementById('et-time').value;
+  if (!t) { alert('Por favor, informe a hora fim.'); return; }
+  const act = activities.find(a => a.id === pendingFinishId);
+  if (act) {
+    act.status = 'finalizado';
+    act.timeEnd = t;
+    if (await syncToSheet(act)) {
+      document.getElementById('modal-endtime').style.display = 'none';
+      pendingFinishId = null;
+      await loadActivities();
+    }
+  }
+}
+
+// ─── ADD / EDIT MODAL ─────────────────────────────────────────
+function openAddModal() {
+  editingId = null;
+  selectedStatus = 'aberto';
+  document.getElementById('modal-title-text').textContent = 'Nova Atividade';
+  document.getElementById('f-service').value = '';
+  document.getElementById('f-requester').value = '';
+  document.getElementById('f-start').value = new Date().toTimeString().slice(0,5);
+  document.getElementById('f-end').value = '';
+  document.getElementById('f-date').value = today();
+  setStatusPills('aberto');
+  document.getElementById('modal-add').style.display = 'flex';
+}
+
+function openEditModal(id) {
+  const act = activities.find(a => a.id === id);
+  if (!act) return;
+  editingId = id;
+  selectedStatus = act.status;
+  document.getElementById('modal-title-text').textContent = 'Editar Atividade';
+  document.getElementById('f-service').value = act.service;
+  document.getElementById('f-requester').value = act.requester;
+  document.getElementById('f-start').value = act.timeStart || '';
+  document.getElementById('f-end').value = act.timeEnd || '';
+  document.getElementById('f-date').value = act.date;
+  setStatusPills(act.status);
+  document.getElementById('modal-add').style.display = 'flex';
+}
+
+function closeAdd() { document.getElementById('modal-add').style.display = 'none'; }
+function closeModalAdd(e) { if (e.target === document.getElementById('modal-add')) closeAdd(); }
+
+function selectStatus(el) {
+  document.querySelectorAll('.status-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  selectedStatus = el.dataset.val;
+}
+function setStatusPills(val) {
+  document.querySelectorAll('.status-pill').forEach(p => p.classList.toggle('active', p.dataset.val === val));
+  selectedStatus = val;
+}
+
+async function saveActivity() {
+  const service = document.getElementById('f-service').value.trim();
+  const requester = document.getElementById('f-requester').value.trim();
+  const timeStart = document.getElementById('f-start').value;
+  const timeEnd = document.getElementById('f-end').value;
+  const date = document.getElementById('f-date').value;
+
+  if (!service) { document.getElementById('f-service').focus(); return; }
+  if (!requester) { document.getElementById('f-requester').focus(); return; }
+
+  let activity;
+  if (editingId) {
+    activity = activities.find(a => a.id === editingId);
+    if (activity) Object.assign(activity, { service, requester, timeStart, timeEnd, date, status: selectedStatus });
+    else return;
+  } else {
+    activity = { id: uid(), service, requester, timeStart, timeEnd, date, status: selectedStatus };
+  }
+
+  if (await syncToSheet(activity)) {
+    closeAdd();
+    await loadActivities();
+  }
+}
+
+async function deleteActivity(id) {
+  if (!confirm('Remover este atendimento?')) return;
+  if (await syncToSheet({ id }, 'delete')) {
+    await loadActivities();
+  }
+}
+
+// ─── REPORT ────────────────────────────────────────────────────
+let lastReportData = [];
+
+async function runReport() {
+  const start = document.getElementById('filter-start').value;
+  const end = document.getElementById('filter-end').value;
+  const status = document.getElementById('filter-status').value;
+
+  await loadActivities(); // sempre carrega os dados mais recentes
+
+  let filtered = activities;
+  if (start) filtered = filtered.filter(a => a.date >= start);
+  if (end) filtered = filtered.filter(a => a.date <= end);
+  if (status) filtered = filtered.filter(a => a.status === status);
+
+  filtered.sort((a,b) => {
+    if (a.date !== b.date) return a.date > b.date ? 1 : -1;
+    return (a.timeStart||'') > (b.timeStart||'') ? 1 : -1;
+  });
+
+  lastReportData = filtered;
+
+  const total = filtered.length;
+  const fin = filtered.filter(a=>a.status==='finalizado').length;
+  const totalMins = filtered
+    .filter(a => a.status==='finalizado' && a.timeStart && a.timeEnd)
+    .reduce((acc,a) => acc + (minutesBetween(a.timeStart,a.timeEnd)||0), 0);
+
+  document.getElementById('report-summary').innerHTML = `
+    <div class="stat-card amber"><div class="stat-label">Total no Período</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card green"><div class="stat-label">Finalizados</div><div class="stat-value">${fin}</div></div>
+    <div class="stat-card orange"><div class="stat-label">Tempo Total</div><div class="stat-value" style="font-size:1.1rem">${fmtTotal(totalMins)}</div></div>
+  `;
+
+  const body = document.getElementById('report-body');
+  if (!filtered.length) {
+    body.innerHTML = `<div class="no-results">Nenhum atendimento encontrado para os filtros selecionados.</div>`;
+    return;
+  }
+
+  const rows = filtered.map(a => {
+    const mins = minutesBetween(a.timeStart, a.timeEnd);
+    const statusMap = { aberto:'tag-aberto', andamento:'tag-andamento', finalizado:'tag-finalizado' };
+    const statusLabel = { aberto:'Aberto', andamento:'Em Andamento', finalizado:'Finalizado' };
+    return `<tr>
+      <td>${fmtDate(a.date)}</td>
+      <td class="td-service">${a.service}</td>
+      <td>${a.requester}</td>
+      <td>${a.timeStart||'—'}</td>
+      <td>${a.timeEnd||'—'}</td>
+      <td>${fmtDuration(mins)}</td>
+      <td><span class="tag ${statusMap[a.status]}">${statusLabel[a.status]}</span></td>
+    </tr>`;
+  }).join('');
+
+  body.innerHTML = `
+    <table>
+      <thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Status</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td colspan="5" style="text-align:right; color:var(--muted);">TEMPO TOTAL</td><td colspan="2">${fmtTotal(totalMins)}</td></tr></tfoot>
+    </table>`;
+
+  // Garante que a tabela fique visível quando atualizar
+  if (!reportVisible) {
+    toggleReportList(); // se estava oculto, reexibe
+  }
+}
+
+function toggleReportList() {
+  const wrap = document.getElementById('report-table-wrap');
+  const btn = document.querySelector('.page.active .report-actions button:nth-child(2)');
+  reportVisible = !reportVisible;
+  wrap.style.display = reportVisible ? '' : 'none';
+  btn.textContent = reportVisible ? '👁️‍🗨️ Ocultar lista' : '👁️ Mostrar lista';
+}
+
+// ─── EXPORT CSV ───────────────────────────────────────────────
+function exportCSV() {
+  if (!lastReportData.length) {
+    alert('Nenhum dado para exportar. Aplique os filtros primeiro.');
+    return;
+  }
+  const headers = ['Data', 'Serviço', 'Solicitante', 'Início', 'Fim', 'Duração (min)', 'Status'];
+  const rows = lastReportData.map(a => {
+    const mins = minutesBetween(a.timeStart, a.timeEnd);
+    return [
+      fmtDate(a.date),
+      a.service,
+      a.requester,
+      a.timeStart || '',
+      a.timeEnd || '',
+      mins || '',
+      a.status
+    ];
+  });
+
+  let csv = '\uFEFF';
+  csv += headers.join(';') + '\n';
+  rows.forEach(r => csv += r.join(';') + '\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `relatorio_atendimentos_${today()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── INIT ──────────────────────────────────────────────────────
+updateDates();
+document.getElementById('api-url').value = getApiUrl();
+if (getApiUrl()) {
+  loadActivities();
+} else {
+  renderMain();
+}
 </script>
 </body>
 </html>
