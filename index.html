@@ -92,7 +92,6 @@
         <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">⚙️ Admin</button>
     </nav>
     <main class="main-content">
-        <!-- Fila do Dia -->
         <div class="page active" id="page-dashboard">
             <div class="card">
                 <div class="card-header">
@@ -102,8 +101,6 @@
                 <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Solução</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
             </div>
         </div>
-
-        <!-- Fila do Jira -->
         <div class="page" id="page-jira">
             <div class="card">
                 <div class="card-header">
@@ -116,8 +113,6 @@
                 <div style="overflow-x:auto;" id="jiraTableContainer"><table><thead><tr><th>Chave</th><th>Título</th><th>Resumo</th><th>Solicitante</th><th>Status Local</th><th>Ações</th></tr></thead><tbody id="tbodyJira"></tbody></table></div>
             </div>
         </div>
-
-        <!-- Relatório, Minha Conta, Admin (mantidos) -->
         <div class="page" id="page-relatorio">
             <div class="card">
                 <div class="card-header"><span class="card-title">📊 Relatório</span><button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button></div>
@@ -146,7 +141,6 @@
     </main>
 </div>
 
-<!-- MODAIS -->
 <div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
     <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
         <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
@@ -173,8 +167,7 @@
 
 <script>
 (function() {
-    // NOVA URL DA API
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzB4SBAuQ3Of_NSHqfALIOWfbRXegg3REOA8IZXQt9QgLsZnT3fPnH09c903me0xukPZQ/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwJ24rw1ASkCXf4O7TyDehZiPGpNmtMGlbZam7Ud5-DvXwXNJIe0pHwbRyNEp-nuePxDA/exec';
     const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
     let currentUser = null;
     let jiraVisivel = true;
@@ -190,7 +183,7 @@
         if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');}
         return'';
     }
-    function hojeLocal(){return new Date().toLocaleDateString('en-CA');}
+    function hojeLocal(){return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });}
     function agoraISO(){return new Date().toISOString();}
 
     async function loadData(){
@@ -277,7 +270,6 @@
         else if(p==='admin')renderAdmin();
     }
 
-    // ---- DASHBOARD ----
     function renderDashboard(){
         const hoje=hojeLocal();
         const acts=dataCache.activities;
@@ -305,7 +297,6 @@
         }).join('');
     }
 
-    // Função dedicada para fechar
     window.finalizarAtividade = function(id){
         const a = dataCache.activities.find(a=>a.id===id);
         if(!a) return toast('⚠️ Atividade não encontrada.');
@@ -421,7 +412,6 @@
         openActivityModal(a);
     }
 
-    // ---- JIRA ----
     function atualizarJira(){ sincronizarJira(); }
     window.ocultarJira = function(){
         const container = document.getElementById('jiraTableContainer');
@@ -517,7 +507,6 @@
         toast('Issue removida da fila local.');
     }
 
-    // Relatório, Minha Conta, Admin
     function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
     function carregarRelatorio(){
         const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
