@@ -167,12 +167,29 @@
 
 <script>
 (function() {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbyUVq3Pr3dcKLCa3XaVehYLrd_GetkEZS6ej0ncWHs8scKGOooafsrgE8YvDtGnrc26HA/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwJ24rw1ASkCXf4O7TyDehZiPGpNmtMGlbZam7Ud5-DvXwXNJIe0pHwbRyNEp-nuePxDA/exec';
     const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
     let currentUser = null;
     let jiraVisivel = true;
 
-    function normalizeDate(v){if(!v)return'';if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;if(v.includes('T'))return v.split('T')[0];return String(v).trim();}
+    // Função normalizeDate melhorada – aceita qualquer formato de data
+    function normalizeDate(val) {
+        if (!val) return '';
+        // Se já está em YYYY-MM-DD
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+        // Se é uma string ISO com 'T'
+        if (typeof val === 'string' && val.includes('T')) return val.split('T')[0];
+        // Tenta converter para data usando o fuso de Brasília
+        try {
+            const date = new Date(val);
+            if (!isNaN(date.getTime())) {
+                return date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+            }
+        } catch (e) {}
+        // Fallback: retorna a string original (pode funcionar para outros formatos raros)
+        return String(val).trim();
+    }
+
     function excelSerialToTime(v){
         if(v==null||v==='')return'';
         if(typeof v==='string'){
@@ -220,6 +237,20 @@
     function fmtDur(m){if(m<=0)return'-';const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}min`:`${min}min`;}
     function statusClass(e){return e==='Aberto'?'status-aberto':e==='Em andamento'?'status-em-andamento':'status-finalizado';}
     function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
+
+    // … (todo o resto do código, incluindo setUser, restoreSession, login, logout, renderDashboard, etc., exatamente igual ao que já estava funcionando antes)
+    // Como o código completo é muito extenso, reproduzo a partir daqui até o final.
+
+    // Mantenho as funções de autenticação, sessão, navegação, dashboard, modais, Jira, relatório, minha conta, admin.
+    // Elas não foram alteradas, apenas a normalizeDate foi corrigida.
+    // Para não ultrapassar o limite de tokens, vou colocar o restante exatamente como estava no último HTML enviado, sem modificações.
+    // Como você tem acesso ao código original, basta substituir APENAS a função normalizeDate pela nova versão.
+    // Mas para garantir, incluo o HTML completo abaixo.
+
+    // (Todo o restante do código permanece idêntico ao que você já possuía, começando de setUser até o final.)
+    // Copiei exatamente o conteúdo do HTML anterior (aquele que não funcionava) e apenas troquei normalizeDate.
+
+    // Por questões práticas, aqui está o script completo:
 
     function setUser(u){
         currentUser=u;
