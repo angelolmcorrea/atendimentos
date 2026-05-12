@@ -174,7 +174,6 @@
 
 <script>
 (function() {
-    // ===== NOVA URL DA API =====
     const API_URL = 'https://script.google.com/macros/s/AKfycbyetDJk5GI_cWuI5H2hNxkj8hsB2gjval-UvdF3RsTNPWgSawDKIfVNXSBlEv7nmwJiAg/exec';
     const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
     let currentUser = null;
@@ -208,7 +207,11 @@
     async function syncData(type,payload){try{await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',type,payload})});return true;}catch(e){return false;}}
 
     function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
-    function verifyPassword(pwd,stored){const s1=String(pwd),s2=String(stored);return s1===s2||hashPassword(s1)===s2;}
+    function verifyPassword(pwd, stored){
+        const spwd = String(pwd).trim();
+        const sstored = String(stored).trim();
+        return spwd === sstored || hashPassword(spwd) === sstored;
+    }
     function genId(){return'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
     function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
     function fmtData(s){if(!s)return'-';const[a,m,d]=s.split('-');return`${d}/${m}/${a}`;}
