@@ -6,122 +6,116 @@
     <title>Gerenciador de Atendimentos</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root { --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --primary-dark: #1d4ed8; --danger: #dc2626; --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-lg: 0 10px 25px rgba(0,0,0,0.12); --radius: 10px; }
+        :root { --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --danger: #dc2626; --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --radius: 10px; }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Segoe UI', system-ui, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; line-height:1.5; }
-        .app-container { width:100%; max-width:1300px; min-height:85vh; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-lg); display:flex; flex-direction:column; overflow:hidden; }
-        .app-header { background:var(--primary); color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+        body { font-family:'Segoe UI', system-ui, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+        .app-container { width:100%; max-width:1300px; background:var(--surface); border-radius:var(--radius); box-shadow:0 10px 25px rgba(0,0,0,0.12); display:flex; flex-direction:column; overflow:hidden; }
+        .app-header { background:var(--primary); color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
         .logo { font-size:1.3rem; font-weight:700; display:flex; align-items:center; gap:8px; }
         .header-actions { display:flex; gap:8px; align-items:center; }
-        .user-tag { background:rgba(255,255,255,0.2); padding:6px 14px; border-radius:20px; font-size:0.9rem; display:flex; align-items:center; gap:6px; }
-        .admin-badge { background:#fbbf24; color:#1e293b; font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:700; }
-        .nav-bar { display:flex; gap:2px; padding:12px 24px; background:#f8fafc; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+        .user-tag { background:rgba(255,255,255,0.2); padding:6px 14px; border-radius:20px; font-size:0.9rem; }
+        .admin-badge { background:#fbbf24; color:#1e293b; font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:700; margin-left:6px; }
+        .nav-bar { display:flex; padding:12px 24px; background:#f8fafc; border-bottom:1px solid var(--border); gap:4px; flex-wrap:wrap; }
         .nav-btn { padding:9px 18px; border:none; background:transparent; color:var(--text-light); cursor:pointer; border-radius:20px; font-weight:500; font-size:0.9rem; display:flex; align-items:center; gap:6px; transition:.2s; }
-        .nav-btn:hover { background:#e2e8f0; color:var(--text); }
+        .nav-btn:hover { background:#e2e8f0; }
         .nav-btn.active { background:var(--primary); color:#fff; font-weight:600; }
         .main-content { flex:1; padding:24px; overflow-y:auto; max-height:70vh; }
-        .page { display:none; animation:fadeIn .25s; }
+        .page { display:none; }
         .page.active { display:block; }
-        @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
         .btn { padding:10px 20px; border:none; border-radius:20px; cursor:pointer; font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:6px; transition:.2s; }
         .btn-primary { background:var(--primary); color:#fff; }
-        .btn-primary:hover { background:var(--primary-dark); }
         .btn-success { background:var(--success); color:#fff; }
         .btn-danger { background:var(--danger); color:#fff; }
         .btn-outline { background:transparent; border:2px solid var(--primary); color:var(--primary); }
-        .btn-outline:hover { background:var(--primary); color:#fff; }
         .btn-sm { padding:6px 14px; font-size:0.8rem; border-radius:16px; }
-        .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
         .card-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
-        .card-title { font-size:1.1rem; font-weight:700; }
         table { width:100%; border-collapse:collapse; font-size:0.85rem; }
         th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); }
         th { background:#f8fafc; font-weight:700; color:var(--text-light); text-transform:uppercase; font-size:0.75rem; }
-        tr:hover td { background:#f1f5f9; }
-        .status-badge { display:inline-block; padding:4px 10px; border-radius:14px; font-size:0.75rem; font-weight:600; }
-        .status-aberto { background:#fef3c7; color:#92400e; }
-        .status-em-andamento { background:#dbeafe; color:#1e40af; }
-        .status-finalizado { background:#d1fae5; color:#065f46; }
-        .empty-state { text-align:center; padding:40px 20px; color:var(--text-light); }
+        .dot { display:inline-block; width:14px; height:14px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+        .dot-verde { background:var(--success); }
+        .dot-amarelo { background:var(--warning); }
+        .dot-vermelho { background:var(--danger); }
+        .empty-state { text-align:center; padding:40px; color:var(--text-light); }
         .form-group { margin-bottom:14px; }
         .form-group label { display:block; font-weight:600; margin-bottom:4px; font-size:0.85rem; color:var(--text-light); }
-        .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 14px; border:2px solid var(--border); border-radius:6px; font-size:0.95rem; transition:.2s; background:#fafbfc; font-family:inherit; }
+        .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 14px; border:2px solid var(--border); border-radius:6px; font-size:0.95rem; background:#fafbfc; font-family:inherit; }
         .form-group textarea { resize:vertical; min-height:60px; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,0.1); background:#fff; }
         .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        @media(max-width:600px){ .form-row{grid-template-columns:1fr;} }
         .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
-        .modal { background:var(--surface); border-radius:var(--radius); padding:24px; width:100%; max-width:550px; max-height:90vh; overflow-y:auto; box-shadow:var(--shadow-lg); position:relative; }
-        .modal-close { position:absolute; top:12px; right:16px; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-light); }
-        .login-container { max-width:420px; width:100%; background:var(--surface); border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:40px 32px; text-align:center; }
+        .modal { background:var(--surface); border-radius:var(--radius); padding:24px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; position:relative; }
+        .modal-close { position:absolute; top:12px; right:16px; background:none; border:none; font-size:1.5rem; cursor:pointer; }
+        .login-container { max-width:420px; width:100%; background:var(--surface); border-radius:var(--radius); box-shadow:0 10px 25px rgba(0,0,0,0.12); padding:40px 32px; text-align:center; }
         .login-error { color:var(--danger); font-size:0.85rem; margin-top:8px; display:none; }
-        .report-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin-bottom:20px; }
-        .summary-card { background:linear-gradient(135deg,#f0f9ff,#e0f2fe); border-radius:var(--radius); padding:16px; text-align:center; border:1px solid #bae6fd; }
-        .summary-value { font-size:1.8rem; font-weight:700; color:var(--primary); }
-        .toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:14px 22px; border-radius:25px; font-weight:500; z-index:2000; animation:slideUp .3s,fadeOut .3s 2.5s forwards; font-size:0.9rem; }
+        .toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:14px 22px; border-radius:25px; z-index:2000; animation:slideUp .3s,fadeOut .3s 2.5s forwards; font-size:0.9rem; }
         @keyframes slideUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
         @keyframes fadeOut { to{opacity:0;transform:translateY(10px);} }
-        .solucao-cell, .pendencia-cell { max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; vertical-align:middle; }
-        .hidden { display: none; }
-        @media(max-width:768px){ .app-container{border-radius:0;min-height:100vh;} .nav-bar{padding:8px 12px;overflow-x:auto;} .main-content{padding:16px;max-height:none;} table{font-size:0.7rem;} }
+        .hidden { display:none; }
+        @media(max-width:768px){ .nav-bar{overflow-x:auto;} }
     </style>
 </head>
 <body>
 <div id="loginContainer" class="login-container">
     <div class="login-icon">📋</div>
     <h2>Gerenciador de Atendimentos</h2>
-    <p class="subtitle">Conectado ao Google Sheets &amp; Jira</p>
     <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="Usuário"></div>
     <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha"></div>
-    <p class="login-error" id="loginError">Usuário ou senha inválidos.</p>
+    <p class="login-error" id="loginError"></p>
     <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">🔐 Entrar</button>
 </div>
 <div id="appContainer" class="app-container" style="display:none;">
     <header class="app-header">
         <div class="logo"><span>📋</span> Atendimentos</div>
         <div class="header-actions">
-            <span class="user-tag" id="headerUserTag">👤 Usuário</span>
+            <span class="user-tag" id="headerUserTag"></span>
             <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;" onclick="logout()">🚪 Sair</button>
         </div>
     </header>
     <nav class="nav-bar" id="navBar">
         <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">📅 Fila do Dia</button>
-        <button class="nav-btn" data-page="jira" onclick="navigateTo('jira')">🐛 Fila do Jira</button>
         <button class="nav-btn" data-page="relatorio" onclick="navigateTo('relatorio')">📊 Relatório</button>
         <button class="nav-btn" data-page="minhaconta" onclick="navigateTo('minhaconta')">👤 Minha Conta</button>
         <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">⚙️ Admin</button>
     </nav>
     <main class="main-content">
+        <!-- Dashboard -->
         <div class="page active" id="page-dashboard">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">📅 Atendimentos do Dia</span>
-                    <button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Adicionar Atividade</button>
+                    <span class="card-title">📅 Fila do Dia</span>
+                    <button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Nova Atividade</button>
                 </div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Solução</th><th>Pendência</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead><tr><th></th><th>Título</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Ações</th></tr></thead>
+                        <tbody id="tbodyAtividades"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
-        <div class="page" id="page-jira">
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">🐛 Fila do Jira</span>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn btn-primary btn-sm" onclick="atualizarJira()">🔄 Atualizar</button>
-                        <button class="btn btn-outline btn-sm" id="btnOcultarJira" onclick="ocultarJira()">👁️ Ocultar tickets Jira</button>
-                    </div>
-                </div>
-                <div style="overflow-x:auto;" id="jiraTableContainer"><table><thead><tr><th>Chave</th><th>Título</th><th>Resumo</th><th>Solicitante</th><th>Status Local</th><th>Ações</th></tr></thead><tbody id="tbodyJira"></tbody></table></div>
-            </div>
-        </div>
+
+        <!-- Relatório -->
         <div class="page" id="page-relatorio">
             <div class="card">
-                <div class="card-header"><span class="card-title">📊 Relatório</span><button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button></div>
-                <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div><div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div></div>
+                <div class="card-header">
+                    <span class="card-title">📊 Relatório</span>
+                    <button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div>
+                    <div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div>
+                </div>
                 <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
                 <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th><th>Solução</th><th>Pendência</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
+                <table>
+                    <thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead>
+                    <tbody id="tbodyRelatorio"></tbody>
+                </table>
             </div>
         </div>
+
+        <!-- Minha Conta -->
         <div class="page" id="page-minhaconta">
             <div class="card" style="max-width:500px;">
                 <div class="card-header"><span class="card-title">👤 Minha Conta</span></div>
@@ -132,40 +126,48 @@
                 <button class="btn btn-primary" onclick="alterarMinhaSenha()">🔒 Alterar Senha</button>
             </div>
         </div>
+
+        <!-- Admin -->
         <div class="page" id="page-admin">
             <div class="card">
                 <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span><button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button></div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table></div>
+                <table><thead><tr><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table>
             </div>
         </div>
     </main>
 </div>
 
+<!-- Modal de Atividade -->
 <div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
     <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
         <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
-        <div class="form-group"><label>Serviço *</label><input type="text" id="atvServico"></div>
+        <div class="form-group"><label>Título da Solicitação *</label><input type="text" id="atvServico" placeholder="Resumo do atendimento"></div>
+        <div class="form-group"><label>Descrição detalhada</label><textarea id="atvDescricao" placeholder="Relate os detalhes da solicitação..."></textarea></div>
         <div class="form-row"><div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div><div class="form-group"><label>Hora Fim <span id="obrigatorioFim" style="color:var(--danger);display:none;">*</span></label><input type="time" id="atvHoraFim"></div></div>
         <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
         <div class="form-group"><label>Estado</label><select id="atvEstado"><option value="Aberto">🔓 Aberto</option><option value="Em andamento">🔄 Em andamento</option><option value="Finalizado">✅ Finalizado</option></select></div>
-        <div class="form-group" id="solucaoGroup" style="display:none;"><label>Solução Aplicada</label><textarea id="atvSolucao" placeholder="Descreva a solução..."></textarea></div>
-        <div class="form-group" id="checkPendenciaGroup" style="display:none;">
-            <label><input type="checkbox" id="atvComPendencia"> Com Pendência</label>
-        </div>
-        <div class="form-group" id="pendenciaGroup" style="display:none;">
-            <label>Descreva a pendência</label>
-            <textarea id="atvPendencia" placeholder="Qual a pendência?"></textarea>
-        </div>
+        <div class="form-group" id="solucaoGroup" style="display:none;"><label>Solução Aplicada</label><textarea id="atvSolucao"></textarea></div>
+        <div class="form-group" id="checkPendenciaGroup" style="display:none;"><label><input type="checkbox" id="atvComPendencia"> Com Pendência</label></div>
+        <div class="form-group" id="pendenciaGroup" style="display:none;"><label>Descreva a pendência</label><textarea id="atvPendencia"></textarea></div>
         <div class="form-group"><label>Data</label><input type="date" id="atvData"></div>
         <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
     </div>
 </div>
 
+<!-- Modal de Visualização -->
+<div class="modal-overlay" id="modalVisualizarOverlay" style="display:none;">
+    <div class="modal"><button class="modal-close" onclick="document.getElementById('modalVisualizarOverlay').style.display='none'">✕</button>
+        <h3 id="modalVisualizarTitulo">Detalhes do Atendimento</h3>
+        <div id="visualizarConteudo"></div>
+    </div>
+</div>
+
+<!-- Modal de Usuário -->
 <div class="modal-overlay" id="modalUserOverlay" style="display:none;">
     <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
         <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
         <div class="form-group"><label>Nome *</label><input type="text" id="userNome"></div>
-        <div class="form-group"><label>Senha *</label><input type="password" id="userSenha" placeholder="Mín. 4 caracteres"></div>
+        <div class="form-group"><label>Senha *</label><input type="password" id="userSenha"></div>
         <div class="form-group"><label>Nível</label><select id="userNivel"><option value="comum">👤 Comum</option><option value="admin">👑 Admin</option></select></div>
         <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarUsuario()">💾 Salvar</button></div>
     </div>
@@ -174,32 +176,25 @@
 
 <script>
 (function() {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxCh652VeNJCu38sbcEq-dOFJrXLFZDpw6sBK_QBszHn3bIeHYtGe4fFAgPyHfZDkdx_Q/exec';
-    const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwd1xNJDoEMnvR6-5XBWVQyLK_TfWtKn_i4q_ueVTsQ9MMbqLswna2KcEiBCiPB7U_2qA/exec';
+    const dataCache = { users: [], activities: [], lastLoad: 0 };
     let currentUser = null;
-    let jiraVisivel = true;
 
+    // ---------- HELPERS ----------
     function normalizeDate(v) { if(!v) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); if(!isNaN(d.getTime())) return d.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); return String(v).trim(); }
-    function excelSerialToTime(v){
-        if(v==null||v==='')return'';
-        if(typeof v==='string'){
-            if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v))return v.substring(0,5);
-            if(v.includes('T')){const t=v.split('T')[1];return t?t.substring(0,5):'';}
-            return v;
-        }
-        if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');}
-        return'';
-    }
+    function excelSerialToTime(v){ if(v==null||v==='')return''; if(typeof v==='string'){ if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v))return v.substring(0,5); if(v.includes('T')){const t=v.split('T')[1];return t?t.substring(0,5):'';} return v; } if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');} return''; }
     function hojeLocal(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});}
     function agoraISO(){return new Date().toISOString();}
+    function genId(){return'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
+    function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+    function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
 
     async function loadData(){
         try{
             const r=await fetch(`${API_URL}?action=load`);const d=await r.json();
-            if(d.error){console.error('API error:',d.error);return false;}
+            if(d.error){console.error(d.error);return false;}
             dataCache.users=d.users||[];
-            dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim),pendencia:a.pendencia||''}));
-            dataCache.jiraIssues=(d.jiraIssues||[]).map(j=>({...j,status_local:j.status_local||'Aberto'}));
+            dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim),pendencia:a.pendencia||'',descricao:a.descricao||''}));
             dataCache.lastLoad=Date.now();
             return true;
         }catch(e){console.error(e);return false;}
@@ -207,48 +202,21 @@
     async function syncData(type,payload){try{await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',type,payload})});return true;}catch(e){return false;}}
 
     function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
-    function verifyPassword(pwd, stored){
-        const spwd = String(pwd).trim();
-        const sstored = String(stored).trim();
-        return spwd === sstored || hashPassword(spwd) === sstored;
-    }
-    function genId(){return'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
-    function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-    function fmtData(s){if(!s)return'-';const[a,m,d]=s.split('-');return`${d}/${m}/${a}`;}
-    function calcDur(hi,hf){
-        hi=excelSerialToTime(hi);hf=excelSerialToTime(hf);
-        if(!hi||!hf)return 0;
-        const[h1,m1]=hi.split(':').map(Number);const[h2,m2]=hf.split(':').map(Number);
-        let min=(h2*60+m2)-(h1*60+m1);if(min<0)min+=24*60;
-        return Math.max(0,min);
-    }
-    function fmtDur(m){if(m<=0)return'-';const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}min`:`${min}min`;}
-    function statusClass(e){return e==='Aberto'?'status-aberto':(e==='Em andamento'?'status-em-andamento':'status-finalizado');}
-    function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
+    function verifyPassword(pwd,stored){return String(pwd).trim()===String(stored).trim()||hashPassword(pwd)===String(stored).trim();}
 
-    function setUser(u){
-        currentUser=u;
-        if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel}));}
-        else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}
-    }
+    // ---------- SESSÃO ----------
+    function setUser(u){currentUser=u;if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel}));}else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}}
     async function restoreSession(){
-        const uid=sessionStorage.getItem('app_uid');
-        if(!uid)return null;
-        let cached=null;
-        try{cached=JSON.parse(sessionStorage.getItem('app_cache'));}catch(e){}
-        if(cached&&cached.id===uid){
-            loadData().then(()=>{const fresh=dataCache.users.find(u=>u.id===uid);if(fresh)setUser(fresh);if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();});
-            return cached;
-        }
-        await loadData();
-        return dataCache.users.find(u=>u.id===uid)||null;
+        const uid=sessionStorage.getItem('app_uid');if(!uid)return null;
+        let cached=null;try{cached=JSON.parse(sessionStorage.getItem('app_cache'));}catch(e){}
+        if(cached&&cached.id===uid){loadData().then(()=>{const fresh=dataCache.users.find(u=>u.id===uid);if(fresh)setUser(fresh);if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();});return cached;}
+        await loadData();return dataCache.users.find(u=>u.id===uid)||null;
     }
-
     async function doLogin(){
         const n=document.getElementById('loginUser').value.trim();
         const p=document.getElementById('loginPass').value.trim();
         const e=document.getElementById('loginError');e.style.display='none';
-        if(!n||!p){e.textContent='Preencha todos os campos.';e.style.display='block';return;}
+        if(!n||!p){e.textContent='Preencha os campos.';e.style.display='block';return;}
         if(!dataCache.users.length||Date.now()-dataCache.lastLoad>300000)await loadData();
         const u=dataCache.users.find(u=>u.nome.toLowerCase()===n.toLowerCase());
         if(!u||!verifyPassword(p,u.senha)){e.textContent='Usuário ou senha inválidos.';e.style.display='block';return;}
@@ -269,358 +237,188 @@
         const el=document.getElementById('page-'+p);if(el)el.classList.add('active');
         const btn=document.querySelector(`.nav-btn[data-page="${p}"]`);if(btn)btn.classList.add('active');
         if(p==='dashboard')renderDashboard();
-        else if(p==='jira')renderJira();
         else if(p==='relatorio')setupRelatorio();
         else if(p==='minhaconta')renderMinhaConta();
         else if(p==='admin')renderAdmin();
     }
 
+    // ---------- DASHBOARD ----------
     function renderDashboard(){
         const hoje=hojeLocal();
         const acts=dataCache.activities;
         let filtradas=currentUser.nivel==='admin'?acts.filter(a=>a.data===hoje):acts.filter(a=>a.data===hoje&&a.usuarioId===currentUser.id);
-        const prioridade = { 'Aberto': 1, 'Em andamento': 2, 'Finalizado': 3 };
-        filtradas.sort((a, b) => {
-            const pa = prioridade[a.estado] || 4;
-            const pb = prioridade[b.estado] || 4;
-            if (pa !== pb) return pa - pb;
-            return (a.hora_inicio || '').localeCompare(b.hora_inicio || '');
-        });
+        const prioridade={'Aberto':1,'Em andamento':2,'Finalizado':3};
+        filtradas.sort((a,b)=>(prioridade[a.estado]||4)-(prioridade[b.estado]||4)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
         const tbody=document.getElementById('tbodyAtividades');
-        if(!filtradas.length){tbody.innerHTML='<tr><td colspan="8" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade hoje.</td></tr>';return;}
+        if(!filtradas.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">Nenhuma atividade hoje.</td></tr>';return;}
         tbody.innerHTML=filtradas.map(a=>{
             const pode=currentUser.nivel==='admin'||a.usuarioId===currentUser.id;
-            const solucao=a.solucao_aplicada||'';
-            const pendencia=a.pendencia||'';
-            const podeFechar=pode&&(a.estado==='Aberto'||a.estado==='Em andamento');
+            const dotColor=a.estado==='Finalizado'?'dot-verde':a.estado==='Em andamento'?'dot-amarelo':'dot-vermelho';
             return `<tr>
+                <td><span class="dot ${dotColor}"></span></td>
                 <td><strong>${esc(a.servico_realizado)}</strong></td>
                 <td>${esc(a.solicitante)}</td>
                 <td>${a.hora_inicio||'-'}</td>
                 <td>${a.hora_fim||'-'}</td>
-                <td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td>
-                <td><span class="solucao-cell" title="${esc(solucao)}">${solucao?esc(solucao.length>30?solucao.substring(0,30)+'...':solucao):'-'}</span></td>
-                <td><span class="pendencia-cell" title="${esc(pendencia)}">${pendencia?esc(pendencia.length>30?pendencia.substring(0,30)+'...':pendencia):'-'}</span></td>
-                <td style="display:flex; gap:4px; flex-wrap:wrap;">
-                    ${podeFechar?`<button class="btn btn-success btn-sm" onclick="finalizarAtividade('${a.id}')" title="Fechar">✅</button>`:''}
-                    ${pode?`<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>`:'🔒'}
+                <td><span class="status-badge" style="background:${a.estado==='Finalizado'?'#d1fae5':a.estado==='Em andamento'?'#dbeafe':'#fef3c7'}">${a.estado}</span></td>
+                <td style="display:flex; gap:4px;">
+                    <button class="btn btn-outline btn-sm" onclick="visualizarAtividade('${a.id}')" title="Visualizar">👁️</button>
+                    ${pode?`<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>`:''}
+                    ${pode&&(a.estado==='Aberto'||a.estado==='Em andamento')?`<button class="btn btn-success btn-sm" onclick="finalizarAtividade('${a.id}')">✅</button>`:''}
                 </td>
             </tr>`;
         }).join('');
     }
 
-    window.finalizarAtividade = function(id){
+    // ---------- VISUALIZAR ----------
+    window.visualizarAtividade = function(id){
         const a = dataCache.activities.find(a=>a.id===id);
-        if(!a) return toast('⚠️ Atividade não encontrada.');
-        if(currentUser.nivel!=='admin' && a.usuarioId!==currentUser.id) return toast('⛔ Sem permissão.');
-        document.getElementById('atvId').value = a.id;
-        document.getElementById('atvServico').value = a.servico_realizado;
-        document.getElementById('atvHoraInicio').value = excelSerialToTime(a.hora_inicio) || '';
-        document.getElementById('atvHoraFim').value = excelSerialToTime(a.hora_fim) || '';
-        document.getElementById('atvSolicitante').value = a.solicitante;
-        document.getElementById('atvData').value = normalizeDate(a.data);
-        document.getElementById('atvSolucao').value = a.solucao_aplicada || '';
-        document.getElementById('atvEstado').value = 'Finalizado';
-        document.getElementById('solucaoGroup').style.display = 'block';
-        document.getElementById('obrigatorioFim').style.display = 'inline';
-        document.getElementById('checkPendenciaGroup').style.display = 'none';
-        document.getElementById('pendenciaGroup').style.display = 'none';
-        document.getElementById('atvComPendencia').checked = false;
-        document.getElementById('atvPendencia').value = '';
-        document.getElementById('modalAtividadeTitulo').textContent = '✅ Finalizar Atendimento';
-        document.getElementById('modalAtividadeOverlay').style.display = 'flex';
+        if(!a) return toast('Atividade não encontrada.');
+        const estado = a.estado || '';
+        const dotColor = estado==='Finalizado'?'dot-verde':estado==='Em andamento'?'dot-amarelo':'dot-vermelho';
+        const html = `
+            <p><strong><span class="dot ${dotColor}"></span> ${esc(estado)}</strong></p>
+            <p><strong>Título:</strong> ${esc(a.servico_realizado)}</p>
+            <p><strong>Solicitante:</strong> ${esc(a.solicitante)}</p>
+            <p><strong>Data:</strong> ${esc(a.data)}</p>
+            <p><strong>Hora Início:</strong> ${a.hora_inicio||'-'}</p>
+            <p><strong>Hora Fim:</strong> ${a.hora_fim||'-'}</p>
+            <p><strong>Solução:</strong> ${esc(a.solucao_aplicada||'-')}</p>
+            <p><strong>Pendência:</strong> ${esc(a.pendencia||'-')}</p>
+            <p><strong>Descrição detalhada:</strong><br>${esc(a.descricao||'Nenhuma descrição fornecida.')}</p>
+        `;
+        document.getElementById('visualizarConteudo').innerHTML = html;
+        document.getElementById('modalVisualizarTitulo').textContent = '🔍 ' + esc(a.servico_realizado);
+        document.getElementById('modalVisualizarOverlay').style.display = 'flex';
     };
 
+    // ---------- MODAL ATIVIDADE ----------
     function openActivityModal(atv=null){
-        document.getElementById('atvId').value='';
-        document.getElementById('atvServico').value='';
-        document.getElementById('atvSolicitante').value='';
-        document.getElementById('atvHoraFim').value='';
-        document.getElementById('atvSolucao').value='';
-        document.getElementById('atvPendencia').value='';
+        document.getElementById('atvId').value=''; document.getElementById('atvServico').value=''; document.getElementById('atvSolicitante').value=''; document.getElementById('atvHoraFim').value=''; document.getElementById('atvSolucao').value=''; document.getElementById('atvPendencia').value=''; document.getElementById('atvDescricao').value='';
         document.getElementById('atvComPendencia').checked=false;
         document.getElementById('atvEstado').value='Aberto';
         document.getElementById('atvData').value=hojeLocal();
-        const now=new Date();
-        document.getElementById('atvHoraInicio').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-        document.getElementById('solucaoGroup').style.display='none';
-        document.getElementById('checkPendenciaGroup').style.display='none';
-        document.getElementById('pendenciaGroup').style.display='none';
-        document.getElementById('obrigatorioFim').style.display='none';
-        document.getElementById('modalAtividadeTitulo').textContent='➕ Nova Atividade';
+        const now=new Date(); document.getElementById('atvHoraInicio').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        document.getElementById('solucaoGroup').style.display='none'; document.getElementById('checkPendenciaGroup').style.display='none'; document.getElementById('pendenciaGroup').style.display='none'; document.getElementById('obrigatorioFim').style.display='none';
         if(atv){
-            document.getElementById('atvId').value=atv.id;
-            document.getElementById('atvServico').value=atv.servico_realizado;
-            document.getElementById('atvHoraInicio').value=excelSerialToTime(atv.hora_inicio);
-            document.getElementById('atvHoraFim').value=excelSerialToTime(atv.hora_fim);
-            document.getElementById('atvSolicitante').value=atv.solicitante;
-            document.getElementById('atvEstado').value=atv.estado;
-            document.getElementById('atvData').value=normalizeDate(atv.data);
-            document.getElementById('atvSolucao').value=atv.solucao_aplicada||'';
-            if(atv.estado==='Finalizado'){
-                document.getElementById('solucaoGroup').style.display='block';
-                document.getElementById('obrigatorioFim').style.display='inline';
-                document.getElementById('checkPendenciaGroup').style.display='none';
-                document.getElementById('pendenciaGroup').style.display='none';
-            } else if(atv.estado==='Em andamento'){
-                document.getElementById('solucaoGroup').style.display='none';
-                document.getElementById('obrigatorioFim').style.display='none';
-                document.getElementById('checkPendenciaGroup').style.display='block';
-                const temPendencia = atv.pendencia && atv.pendencia.trim().length > 0;
-                document.getElementById('atvComPendencia').checked = temPendencia;
-                document.getElementById('atvPendencia').value = atv.pendencia || '';
-                document.getElementById('pendenciaGroup').style.display = temPendencia ? 'block' : 'none';
-            } else {
-                document.getElementById('solucaoGroup').style.display='none';
-                document.getElementById('obrigatorioFim').style.display='none';
-                document.getElementById('checkPendenciaGroup').style.display='none';
-                document.getElementById('pendenciaGroup').style.display='none';
-            }
+            document.getElementById('atvId').value=atv.id; document.getElementById('atvServico').value=atv.servico_realizado; document.getElementById('atvHoraInicio').value=excelSerialToTime(atv.hora_inicio); document.getElementById('atvHoraFim').value=excelSerialToTime(atv.hora_fim); document.getElementById('atvSolicitante').value=atv.solicitante; document.getElementById('atvEstado').value=atv.estado; document.getElementById('atvData').value=normalizeDate(atv.data); document.getElementById('atvSolucao').value=atv.solucao_aplicada||''; document.getElementById('atvPendencia').value=atv.pendencia||''; document.getElementById('atvDescricao').value=atv.descricao||'';
+            if(atv.estado==='Finalizado'){ document.getElementById('solucaoGroup').style.display='block'; document.getElementById('obrigatorioFim').style.display='inline'; }
+            else if(atv.estado==='Em andamento'){ document.getElementById('checkPendenciaGroup').style.display='block'; const temPend=atv.pendencia&&atv.pendencia.trim().length>0; document.getElementById('atvComPendencia').checked=temPend; document.getElementById('pendenciaGroup').style.display=temPend?'block':'none'; }
             document.getElementById('modalAtividadeTitulo').textContent='✏️ Editar Atividade';
+        } else {
+            document.getElementById('modalAtividadeTitulo').textContent='➕ Nova Atividade';
         }
         document.getElementById('modalAtividadeOverlay').style.display='flex';
     }
     function closeActivityModal(){document.getElementById('modalAtividadeOverlay').style.display='none';}
     document.getElementById('atvEstado').addEventListener('change',function(){
-        const solGroup=document.getElementById('solucaoGroup');
-        const checkPendGroup=document.getElementById('checkPendenciaGroup');
-        const pendGroup=document.getElementById('pendenciaGroup');
-        const obrigatorio=document.getElementById('obrigatorioFim');
-        if(this.value==='Finalizado'){
-            solGroup.style.display='block';
-            obrigatorio.style.display='inline';
-            checkPendGroup.style.display='none';
-            pendGroup.style.display='none';
-            document.getElementById('atvComPendencia').checked=false;
-            document.getElementById('atvPendencia').value='';
-            const hf=document.getElementById('atvHoraFim');
-            if(!hf.value){hf.focus();toast('⚠️ Informe a hora de finalização.');}
-        } else if(this.value==='Em andamento'){
-            solGroup.style.display='none';
-            obrigatorio.style.display='none';
-            checkPendGroup.style.display='block';
-            const chk=document.getElementById('atvComPendencia');
-            pendGroup.style.display=chk.checked?'block':'none';
-        } else {
-            solGroup.style.display='none';
-            obrigatorio.style.display='none';
-            checkPendGroup.style.display='none';
-            pendGroup.style.display='none';
-            document.getElementById('atvComPendencia').checked=false;
-            document.getElementById('atvPendencia').value='';
-        }
+        const solGroup=document.getElementById('solucaoGroup'); const checkPendGroup=document.getElementById('checkPendenciaGroup'); const pendGroup=document.getElementById('pendenciaGroup'); const obrigatorio=document.getElementById('obrigatorioFim');
+        if(this.value==='Finalizado'){ solGroup.style.display='block'; obrigatorio.style.display='inline'; checkPendGroup.style.display='none'; pendGroup.style.display='none'; }
+        else if(this.value==='Em andamento'){ solGroup.style.display='none'; obrigatorio.style.display='none'; checkPendGroup.style.display='block'; pendGroup.style.display=document.getElementById('atvComPendencia').checked?'block':'none'; }
+        else{ solGroup.style.display='none'; obrigatorio.style.display='none'; checkPendGroup.style.display='none'; pendGroup.style.display='none'; }
     });
-    document.getElementById('atvComPendencia').addEventListener('change',function(){
-        document.getElementById('pendenciaGroup').style.display=this.checked?'block':'none';
-        if(!this.checked)document.getElementById('atvPendencia').value='';
-    });
+    document.getElementById('atvComPendencia').addEventListener('change',function(){ document.getElementById('pendenciaGroup').style.display=this.checked?'block':'none'; });
     async function salvarAtividade(){
-        const id=document.getElementById('atvId').value;
-        const servico=document.getElementById('atvServico').value.trim();
-        const inicio=document.getElementById('atvHoraInicio').value;
-        const fim=document.getElementById('atvHoraFim').value;
-        const solicitante=document.getElementById('atvSolicitante').value.trim();
-        const estado=document.getElementById('atvEstado').value;
-        const data=document.getElementById('atvData').value;
-        const solucao=document.getElementById('atvSolucao').value.trim();
-        const pendencia=document.getElementById('atvPendencia').value.trim();
-        if(!servico||!inicio||!solicitante){toast('⚠️ Preencha campos obrigatórios.');return;}
-        if(estado==='Finalizado'&&!fim){toast('⚠️ Hora fim é obrigatória para finalizar.');document.getElementById('atvHoraFim').focus();return;}
+        const id=document.getElementById('atvId').value; const servico=document.getElementById('atvServico').value.trim(); const inicio=document.getElementById('atvHoraInicio').value; const fim=document.getElementById('atvHoraFim').value; const solicitante=document.getElementById('atvSolicitante').value.trim(); const estado=document.getElementById('atvEstado').value; const data=document.getElementById('atvData').value; const solucao=document.getElementById('atvSolucao').value.trim(); const pendencia=document.getElementById('atvPendencia').value.trim(); const descricao=document.getElementById('atvDescricao').value.trim();
+        if(!servico||!inicio||!solicitante){toast('Preencha os campos obrigatórios.');return;}
+        if(estado==='Finalizado'&&!fim){toast('Informe a hora fim.');return;}
         if(id){
             const idx=dataCache.activities.findIndex(a=>a.id===id);
-            if(idx>=0){
-                dataCache.activities[idx].servico_realizado=servico;
-                dataCache.activities[idx].hora_inicio=inicio;
-                dataCache.activities[idx].hora_fim=fim;
-                dataCache.activities[idx].solicitante=solicitante;
-                dataCache.activities[idx].estado=estado;
-                dataCache.activities[idx].data=data;
-                dataCache.activities[idx].solucao_aplicada=solucao;
-                dataCache.activities[idx].pendencia=pendencia;
-                dataCache.activities[idx].atualizadoEm=agoraISO();
-            }
+            if(idx>=0){ Object.assign(dataCache.activities[idx],{servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,solicitante,estado,data,solucao_aplicada:solucao,pendencia,descricao,atualizadoEm:agoraISO()}); }
         }else{
-            dataCache.activities.push({
-                id:genId(),usuarioId:currentUser.id,usuarioNome:currentUser.nome,
-                servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,
-                solicitante,estado,data,solucao_aplicada:solucao,
-                pendencia:pendencia,criadoEm:agoraISO(),atualizadoEm:agoraISO()
-            });
+            dataCache.activities.push({id:genId(),usuarioId:currentUser.id,usuarioNome:currentUser.nome,servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,solicitante,estado,data,solucao_aplicada:solucao,pendencia,descricao,criadoEm:agoraISO(),atualizadoEm:agoraISO()});
         }
-        renderDashboard();
-        closeActivityModal();
-        toast(id?'✅ Atividade atualizada!':'✅ Atividade adicionada!');
-        syncData('activities',dataCache.activities);
+        renderDashboard(); closeActivityModal(); toast(id?'Atividade atualizada!':'Atividade criada!'); syncData('activities',dataCache.activities);
     }
-    async function excluirAtividade(id){
-        if(!confirm('Excluir atividade?'))return;
-        dataCache.activities=dataCache.activities.filter(a=>a.id!==id);
-        renderDashboard();toast('🗑️ Excluída.');
-        syncData('activities',dataCache.activities);
-    }
-    function editarAtividade(id){
-        const a=dataCache.activities.find(a=>a.id===id);
-        if(!a)return toast('⚠️ Não encontrada.');
-        if(currentUser.nivel!=='admin'&&a.usuarioId!==currentUser.id)return toast('⛔ Sem permissão.');
-        openActivityModal(a);
-    }
-
-    function atualizarJira(){sincronizarJira();}
-    window.ocultarJira = function(){
-        const container=document.getElementById('jiraTableContainer');
-        const btn=document.getElementById('btnOcultarJira');
-        if(jiraVisivel){container.classList.add('hidden');btn.textContent='👁️ Mostrar tickets Jira';jiraVisivel=false;}
-        else{container.classList.remove('hidden');btn.textContent='👁️ Ocultar tickets Jira';jiraVisivel=true;}
+    async function excluirAtividade(id){ if(!confirm('Excluir?'))return; dataCache.activities=dataCache.activities.filter(a=>a.id!==id); renderDashboard(); toast('Excluída.'); syncData('activities',dataCache.activities); }
+    function editarAtividade(id){ const a=dataCache.activities.find(a=>a.id===id); if(a) openActivityModal(a); }
+    window.finalizarAtividade = function(id){
+        const a=dataCache.activities.find(a=>a.id===id); if(!a)return;
+        document.getElementById('atvId').value=a.id; document.getElementById('atvServico').value=a.servico_realizado; document.getElementById('atvHoraInicio').value=excelSerialToTime(a.hora_inicio); document.getElementById('atvHoraFim').value=excelSerialToTime(a.hora_fim)||''; document.getElementById('atvSolicitante').value=a.solicitante; document.getElementById('atvData').value=normalizeDate(a.data); document.getElementById('atvSolucao').value=a.solucao_aplicada||''; document.getElementById('atvEstado').value='Finalizado'; document.getElementById('atvDescricao').value=a.descricao||'';
+        document.getElementById('solucaoGroup').style.display='block'; document.getElementById('obrigatorioFim').style.display='inline'; document.getElementById('checkPendenciaGroup').style.display='none'; document.getElementById('pendenciaGroup').style.display='none';
+        document.getElementById('modalAtividadeTitulo').textContent='✅ Finalizar Atendimento'; document.getElementById('modalAtividadeOverlay').style.display='flex';
     };
-    async function sincronizarJira(){
-        toast('🔄 Buscando issues do Jira...');
-        try{
-            const resp=await fetch(`${API_URL}?action=jira`);
-            const data=await resp.json();
-            if(data.error){toast('❌ Erro: '+JSON.stringify(data.error));return;}
-            const novasIssues=data.issues;
-            const mapaExistente={};
-            dataCache.jiraIssues.forEach(j=>{mapaExistente[j.issue_id]=j;});
-            const merged=novasIssues.map(issue=>{
-                const existente=mapaExistente[issue.issue_id];
-                if(existente) return {...existente,summary:issue.summary,description:issue.description,reporter:issue.reporter,issue_key:issue.issue_key};
-                else return {
-                    id:genId(),issue_id:issue.issue_id,issue_key:issue.issue_key,
-                    summary:issue.summary,description:issue.description,
-                    reporter:issue.reporter,status_local:'Aberto',
-                    hora_inicio:'',hora_fim:'',data:hojeLocal(),
-                    usuarioId:currentUser.id,usuarioNome:currentUser.nome,
-                    solucao_aplicada:'',criadoEm:agoraISO(),atualizadoEm:agoraISO()
-                };
-            });
-            dataCache.jiraIssues=merged;
-            await syncData('jira_issues',dataCache.jiraIssues);
-            renderJira();
-            toast('✅ '+novasIssues.length+' issues sincronizadas.');
-        }catch(e){toast('❌ Falha ao sincronizar com Jira.');console.error(e);}
-    }
 
-    function renderJira(){
-        const issues=dataCache.jiraIssues;
-        const tbody=document.getElementById('tbodyJira');
-        if(!issues.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state"><span class="empty-icon">🐛</span>Nenhuma issue. Clique em "Atualizar".</td></tr>';return;}
-        tbody.innerHTML=issues.map(j=>{
-            const status=j.status_local||'Aberto';
-            const podeEditar=currentUser.nivel==='admin'||j.usuarioId===currentUser.id;
-            return `<tr>
-                <td><strong>${esc(j.issue_key)}</strong></td><td>${esc(j.summary)}</td><td>${esc(j.description?j.description.substring(0,80):'')}</td><td>${esc(j.reporter)}</td>
-                <td><select onchange="atualizarStatusJira('${j.id}', this.value)" ${podeEditar?'':'disabled'}>
-                    <option value="Aberto" ${status==='Aberto'?'selected':''}>🔓 Aberto</option>
-                    <option value="Em andamento" ${status==='Em andamento'?'selected':''}>🔄 Em andamento</option>
-                    <option value="Finalizado" ${status==='Finalizado'?'selected':''}>✅ Finalizado</option>
-                </select></td>
-                <td>${podeEditar?`<button class="btn btn-outline btn-sm" onclick="editarJira('${j.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirJira('${j.id}')">🗑️</button>`:'🔒'}</td>
-            </tr>`;
-        }).join('');
-    }
-
-    async function atualizarStatusJira(id,novoStatus){
-        const idx=dataCache.jiraIssues.findIndex(j=>j.id===id);
-        if(idx>=0){dataCache.jiraIssues[idx].status_local=novoStatus;dataCache.jiraIssues[idx].atualizadoEm=agoraISO();renderJira();await syncData('jira_issues',dataCache.jiraIssues);toast('Status atualizado para '+novoStatus);}
-    }
-    function editarJira(id){toast('Funcionalidade de edição completa em breve.');}
-    async function excluirJira(id){
-        if(!confirm('Remover issue da fila local? (Não afeta o Jira)'))return;
-        dataCache.jiraIssues=dataCache.jiraIssues.filter(j=>j.id!==id);
-        renderJira();
-        await syncData('jira_issues',dataCache.jiraIssues);
-        toast('Issue removida da fila local.');
-    }
-
+    // ---------- RELATÓRIO ----------
     function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
     function carregarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
-        if(!ini||!fim)return;
+        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value; if(!ini||!fim)return;
         let acts=dataCache.activities.filter(a=>a.data>=ini&&a.data<=fim);
         if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
         acts.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
         const tbody=document.getElementById('tbodyRelatorio'),summary=document.getElementById('reportSummary');
-        if(!acts.length){tbody.innerHTML='<tr><td colspan="9" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>';summary.innerHTML='';return;}
+        if(!acts.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">Nenhum atendimento.</td></tr>';summary.innerHTML='';return;}
         let totalMin=0,finalizados=0;
         tbody.innerHTML=acts.map(a=>{
-            const dur=calcDur(a.hora_inicio,a.hora_fim);
-            if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
-            const sol=a.solucao_aplicada||'';
-            const pend=a.pendencia||'';
-            return `<tr><td>${fmtData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td><td>${excelSerialToTime(a.hora_inicio)||'-'}</td><td>${excelSerialToTime(a.hora_fim)||'-'}</td><td><strong>${fmtDur(dur)}</strong></td><td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td><td><span class="solucao-cell" title="${esc(sol)}">${sol?esc(sol.length>30?sol.substring(0,30)+'...':sol):'-'}</span></td><td><span class="pendencia-cell" title="${esc(pend)}">${pend?esc(pend.length>30?pend.substring(0,30)+'...':pend):'-'}</span></td></tr>`;
+            const dur=calcularDuracao(a.hora_inicio,a.hora_fim); if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
+            return `<tr><td>${formatarData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td><td>${a.hora_inicio||'-'}</td><td>${a.hora_fim||'-'}</td><td>${formatarDuracao(dur)}</td><td>${a.estado}</td></tr>`;
         }).join('');
         const h=Math.floor(totalMin/60),m=totalMin%60;
-        summary.innerHTML=`<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados ✅</div></div><div class="summary-card" style="background:linear-gradient(135deg,#fefce8,#fef9c3);"><div class="summary-value" style="color:#b45309;">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
+        summary.innerHTML=`<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados</div></div><div class="summary-card"><div class="summary-value">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
     }
+    function calcularDuracao(hi,hf){ hi=excelSerialToTime(hi);hf=excelSerialToTime(hf); if(!hi||!hf)return 0; const[h1,m1]=hi.split(':').map(Number), [h2,m2]=hf.split(':').map(Number); let min=(h2*60+m2)-(h1*60+m1); if(min<0)min+=24*60; return Math.max(0,min); }
+    function formatarDuracao(m){ if(m<=0)return'-'; const h=Math.floor(m/60),min=m%60; return h>0?`${h}h ${min}min`:`${min}min`; }
+    function formatarData(s){ if(!s)return'-'; const[a,m,d]=s.split('-'); return`${d}/${m}/${a}`; }
     async function exportarRelatorio(){
         const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
-        let acts=dataCache.activities;
-        if(ini&&fim)acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
+        let acts=dataCache.activities; if(ini&&fim)acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
         if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
-        const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado','Solução','Pendência']];
-        acts.forEach(a=>{const dur=calcDur(a.hora_inicio,a.hora_fim);excel.push([fmtData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',fmtDur(dur),a.estado,a.solucao_aplicada||'',a.pendencia||'']);});
+        const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado']];
+        acts.forEach(a=>{ const dur=calcularDuracao(a.hora_inicio,a.hora_fim); excel.push([formatarData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',formatarDuracao(dur),a.estado]); });
         const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(excel);
-        ws['!cols']=[{wch:12},{wch:30},{wch:20},{wch:10},{wch:10},{wch:12},{wch:12},{wch:25},{wch:25}];
-        XLSX.utils.book_append_sheet(wb,ws,'Relatório');XLSX.writeFile(wb,`relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
+        XLSX.utils.book_append_sheet(wb,ws,'Relatório'); XLSX.writeFile(wb,`relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
         toast('📥 Exportado!');
     }
 
-    function renderMinhaConta(){
-        document.getElementById('contaNome').value=currentUser.nome;
-        document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum';
-        document.getElementById('contaNovaSenha').value='';document.getElementById('contaConfirmarSenha').value='';
-    }
+    // ---------- MINHA CONTA ----------
+    function renderMinhaConta(){ document.getElementById('contaNome').value=currentUser.nome; document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum'; document.getElementById('contaNovaSenha').value=''; document.getElementById('contaConfirmarSenha').value=''; }
     async function alterarMinhaSenha(){
         const n=document.getElementById('contaNovaSenha').value.trim(),c=document.getElementById('contaConfirmarSenha').value.trim();
-        if(!n||n.length<4)return toast('⚠️ Mínimo 4 caracteres.');
-        if(n!==c)return toast('⚠️ Senhas não conferem.');
+        if(!n||n.length<4)return toast('Mínimo 4 caracteres.'); if(n!==c)return toast('Senhas não conferem.');
         const idx=dataCache.users.findIndex(u=>u.id===currentUser.id);
-        if(idx>=0){dataCache.users[idx].senha=hashPassword(n);setUser(dataCache.users[idx]);await syncData('users',dataCache.users);toast('🔒 Senha alterada!');}
+        if(idx>=0){ dataCache.users[idx].senha=hashPassword(n); setUser(dataCache.users[idx]); await syncData('users',dataCache.users); toast('Senha alterada!'); }
     }
+
+    // ---------- ADMIN ----------
     function renderAdmin(){
         if(currentUser.nivel!=='admin')return navigateTo('dashboard');
-        document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td><strong>${esc(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td><td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
+        document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td>${esc(u.nome)} ${u.id===currentUser.id?'(você)':''}</td><td>${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
     }
     function openUserModal(u=null){
-        document.getElementById('userId').value='';document.getElementById('userNome').value='';document.getElementById('userSenha').value='';document.getElementById('userNivel').value='comum';
+        document.getElementById('userId').value=''; document.getElementById('userNome').value=''; document.getElementById('userSenha').value=''; document.getElementById('userNivel').value='comum';
         document.getElementById('modalUserTitulo').textContent='➕ Novo Usuário';
-        if(u){document.getElementById('userId').value=u.id;document.getElementById('userNome').value=u.nome;document.getElementById('userSenha').placeholder='Deixe em branco';document.getElementById('userNivel').value=u.nivel;document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário';}
+        if(u){ document.getElementById('userId').value=u.id; document.getElementById('userNome').value=u.nome; document.getElementById('userSenha').placeholder='Deixe em branco'; document.getElementById('userNivel').value=u.nivel; document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário'; }
         document.getElementById('modalUserOverlay').style.display='flex';
     }
     function closeUserModal(){document.getElementById('modalUserOverlay').style.display='none';}
     async function salvarUsuario(){
         const id=document.getElementById('userId').value,nome=document.getElementById('userNome').value.trim(),senha=document.getElementById('userSenha').value.trim(),nivel=document.getElementById('userNivel').value;
-        if(!nome||nome.length<2)return toast('⚠️ Nome curto.');
-        if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()&&u.id!==id))return toast('⚠️ Nome já existe.');
-        if(id){const idx=dataCache.users.findIndex(u=>u.id===id);dataCache.users[idx].nome=nome;dataCache.users[idx].nivel=nivel;if(senha.length>=4)dataCache.users[idx].senha=hashPassword(senha);}
-        else{if(!senha||senha.length<4)return toast('⚠️ Senha mínima 4.');dataCache.users.push({id:genId(),nome,senha:hashPassword(senha),nivel,criadoEm:agoraISO()});}
-        await syncData('users',dataCache.users);closeUserModal();renderAdmin();toast(id?'✅ Usuário atualizado!':'✅ Usuário criado!');
+        if(!nome||nome.length<2)return toast('Nome curto.');
+        if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()&&u.id!==id))return toast('Nome já existe.');
+        if(id){ const idx=dataCache.users.findIndex(u=>u.id===id); dataCache.users[idx].nome=nome; dataCache.users[idx].nivel=nivel; if(senha.length>=4)dataCache.users[idx].senha=hashPassword(senha); }
+        else{ if(!senha||senha.length<4)return toast('Senha mínima 4.'); dataCache.users.push({id:genId(),nome,senha:hashPassword(senha),nivel,criadoEm:agoraISO()}); }
+        await syncData('users',dataCache.users); closeUserModal(); renderAdmin(); toast(id?'Usuário atualizado!':'Usuário criado!');
     }
-    async function excluirUsuario(id){if(!confirm('Excluir?'))return;dataCache.users=dataCache.users.filter(u=>u.id!==id);await syncData('users',dataCache.users);renderAdmin();toast('🗑️ Excluído.');}
-    function editarUsuario(id){const u=dataCache.users.find(u=>u.id===id);if(u)openUserModal(u);}
+    async function excluirUsuario(id){ if(!confirm('Excluir?'))return; dataCache.users=dataCache.users.filter(u=>u.id!==id); await syncData('users',dataCache.users); renderAdmin(); toast('Excluído.'); }
+    function editarUsuario(id){ const u=dataCache.users.find(u=>u.id===id); if(u)openUserModal(u); }
 
-    document.addEventListener('click',e=>{if(e.target.id==='modalAtividadeOverlay')closeActivityModal();if(e.target.id==='modalUserOverlay')closeUserModal();});
-    document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginContainer').style.display!=='none')doLogin();if(e.key==='Escape'){closeActivityModal();closeUserModal();}});
+    document.addEventListener('click',e=>{ if(e.target.id==='modalAtividadeOverlay')closeActivityModal(); if(e.target.id==='modalUserOverlay')closeUserModal(); if(e.target.id==='modalVisualizarOverlay')document.getElementById('modalVisualizarOverlay').style.display='none'; });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeActivityModal(); closeUserModal(); document.getElementById('modalVisualizarOverlay').style.display='none'; } });
 
     window.addEventListener('load',async()=>{
         const u=await restoreSession();
         if(u){setUser(u);showApp();}else hideApp();
-        document.getElementById('relDataInicio').value=hojeLocal();
-        document.getElementById('relDataFim').value=hojeLocal();
     });
 
-    window.doLogin=doLogin;window.logout=logout;window.navigateTo=navigateTo;
-    window.openActivityModal=openActivityModal;window.closeActivityModal=closeActivityModal;
-    window.editarAtividade=editarAtividade;window.salvarAtividade=salvarAtividade;
-    window.excluirAtividade=excluirAtividade;window.carregarRelatorio=carregarRelatorio;
-    window.exportarRelatorio=exportarRelatorio;window.alterarMinhaSenha=alterarMinhaSenha;
-    window.openUserModal=openUserModal;window.closeUserModal=closeUserModal;
-    window.editarUsuario=editarUsuario;window.salvarUsuario=salvarUsuario;
-    window.excluirUsuario=excluirUsuario;window.showToast=toast;
-    window.sincronizarJira=sincronizarJira;window.atualizarStatusJira=atualizarStatusJira;
-    window.editarJira=editarJira;window.excluirJira=excluirJira;
-    window.finalizarAtividade=finalizarAtividade;window.atualizarJira=atualizarJira;
-    window.ocultarJira=ocultarJira;
+    window.doLogin=doLogin; window.logout=logout; window.navigateTo=navigateTo;
+    window.openActivityModal=openActivityModal; window.closeActivityModal=closeActivityModal;
+    window.editarAtividade=editarAtividade; window.salvarAtividade=salvarAtividade;
+    window.excluirAtividade=excluirAtividade; window.finalizarAtividade=finalizarAtividade;
+    window.visualizarAtividade=visualizarAtividade;
+    window.carregarRelatorio=carregarRelatorio; window.exportarRelatorio=exportarRelatorio;
+    window.alterarMinhaSenha=alterarMinhaSenha;
+    window.openUserModal=openUserModal; window.closeUserModal=closeUserModal;
+    window.editarUsuario=editarUsuario; window.salvarUsuario=salvarUsuario; window.excluirUsuario=excluirUsuario;
 })();
 </script>
 </body>
