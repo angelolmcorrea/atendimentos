@@ -61,7 +61,7 @@
         .toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:14px 22px; border-radius:25px; font-weight:500; z-index:2000; animation:slideUp .3s,fadeOut .3s 2.5s forwards; font-size:0.9rem; }
         @keyframes slideUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
         @keyframes fadeOut { to{opacity:0;transform:translateY(10px);} }
-        .solucao-cell { max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; vertical-align:middle; }
+        .solucao-cell, .pendencia-cell { max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; vertical-align:middle; }
         .hidden { display: none; }
         @media(max-width:768px){ .app-container{border-radius:0;min-height:100vh;} .nav-bar{padding:8px 12px;overflow-x:auto;} .main-content{padding:16px;max-height:none;} table{font-size:0.7rem;} }
     </style>
@@ -98,7 +98,7 @@
                     <span class="card-title">📅 Atendimentos do Dia</span>
                     <button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Adicionar Atividade</button>
                 </div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Solução</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Solução</th><th>Pendência</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
             </div>
         </div>
         <div class="page" id="page-jira">
@@ -119,7 +119,7 @@
                 <div class="form-row"><div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div><div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div></div>
                 <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
                 <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
-                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th><th>Solução</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th><th>Solução</th><th>Pendência</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
             </div>
         </div>
         <div class="page" id="page-minhaconta">
@@ -149,6 +149,16 @@
         <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
         <div class="form-group"><label>Estado</label><select id="atvEstado"><option value="Aberto">🔓 Aberto</option><option value="Em andamento">🔄 Em andamento</option><option value="Finalizado">✅ Finalizado</option></select></div>
         <div class="form-group" id="solucaoGroup" style="display:none;"><label>Solução Aplicada</label><textarea id="atvSolucao" placeholder="Descreva a solução..."></textarea></div>
+        <!-- Novo grupo de pendência -->
+        <div class="form-group" id="checkPendenciaGroup" style="display:none;">
+            <label>
+                <input type="checkbox" id="atvComPendencia"> Com Pendência
+            </label>
+        </div>
+        <div class="form-group" id="pendenciaGroup" style="display:none;">
+            <label>Descreva a pendência</label>
+            <textarea id="atvPendencia" placeholder="Qual a pendência?"></textarea>
+        </div>
         <div class="form-group"><label>Data</label><input type="date" id="atvData"></div>
         <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
     </div>
@@ -167,150 +177,134 @@
 
 <script>
 (function() {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbycsAsmdBqMi0a7jqCVt2JkZPE4q5ah17vaMbrXET0YKb-78wr8UdXo061OPNrVgUQ3Bg/exec';
+    // ===== URL DA API (substitua se necessário) =====
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxr698C7joBDeS5A0dRwlN0b-sQddxiec0hSdDKOwk7YQEr_kVX3KOAL5PdGcxiRKHQYw/exec';
     const dataCache = { users: [], activities: [], jiraIssues: [], lastLoad: 0 };
     let currentUser = null;
     let jiraVisivel = true;
 
-    // Função normalizeDate melhorada – aceita qualquer formato de data
-    function normalizeDate(val) {
-        if (!val) return '';
-        // Se já está em YYYY-MM-DD
-        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-        // Se é uma string ISO com 'T'
-        if (typeof val === 'string' && val.includes('T')) return val.split('T')[0];
-        // Tenta converter para data usando o fuso de Brasília
-        try {
-            const date = new Date(val);
-            if (!isNaN(date.getTime())) {
-                return date.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
-            }
-        } catch (e) {}
-        // Fallback: retorna a string original (pode funcionar para outros formatos raros)
-        return String(val).trim();
+    // ===== FUNÇÕES AUXILIARES =====
+    function normalizeDate(v) {
+        if (!v) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+        const d = new Date(v);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        return String(v).trim();
     }
-
-    function excelSerialToTime(v){
-        if(v==null||v==='')return'';
-        if(typeof v==='string'){
-            if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v))return v.substring(0,5);
-            if(v.includes('T')){const t=v.split('T')[1];return t?t.substring(0,5):'';}
+    function excelSerialToTime(v) {
+        if (v == null || v === '') return '';
+        if (typeof v === 'string') {
+            if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(v)) return v.substring(0,5);
+            if (v.includes('T')) { const t = v.split('T')[1]; return t ? t.substring(0,5) : ''; }
             return v;
         }
-        if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');}
-        return'';
+        if (typeof v === 'number') { const m = Math.round(v*1440); const h = Math.floor(m/60); const min = m%60; return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0'); }
+        return '';
     }
-    function hojeLocal(){return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });}
-    function agoraISO(){return new Date().toISOString();}
+    function hojeLocal() { return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }); }
+    function agoraISO() { return new Date().toISOString(); }
 
-    async function loadData(){
-        try{
-            const r=await fetch(`${API_URL}?action=load`);const d=await r.json();
-            if(d.error){console.error('API error:', d.error);return false;}
-            dataCache.users=d.users||[];
-            dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim)}));
-            dataCache.jiraIssues=(d.jiraIssues||[]).map(j=>({...j,status_local:j.status_local||'Aberto'}));
-            dataCache.lastLoad=Date.now();
+    async function loadData() {
+        try {
+            const r = await fetch(`${API_URL}?action=load`); const d = await r.json();
+            if (d.error) { console.error('API error:', d.error); return false; }
+            dataCache.users = d.users || [];
+            dataCache.activities = (d.activities || []).map(a => ({
+                ...a,
+                data: normalizeDate(a.data),
+                hora_inicio: excelSerialToTime(a.hora_inicio),
+                hora_fim: excelSerialToTime(a.hora_fim),
+                pendencia: a.pendencia || ''
+            }));
+            dataCache.jiraIssues = (d.jiraIssues || []).map(j => ({...j, status_local: j.status_local || 'Aberto'}));
+            dataCache.lastLoad = Date.now();
             return true;
-        }catch(e){console.error(e);return false;}
-    }
-    async function syncData(type,payload){
-        try{await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',type,payload})});return true;}catch(e){return false;}
+        } catch(e) { console.error(e); return false; }
     }
 
-    function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
-    function verifyPassword(pwd, stored){
-        const spwd = String(pwd);
-        const sstored = String(stored);
-        return spwd === sstored || hashPassword(spwd) === sstored;
+    async function syncData(type, payload) {
+        try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'sync', type, payload }) }); return true; } catch(e) { return false; }
     }
-    function genId(){return'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
-    function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-    function fmtData(s){if(!s)return'-';const[a,m,d]=s.split('-');return`${d}/${m}/${a}`;}
-    function calcDur(hi,hf){
-        hi=excelSerialToTime(hi);hf=excelSerialToTime(hf);
-        if(!hi||!hf)return 0;
-        const[h1,m1]=hi.split(':').map(Number);const[h2,m2]=hf.split(':').map(Number);
-        let min=(h2*60+m2)-(h1*60+m1);if(min<0)min+=24*60;
+
+    function hashPassword(p) { let h=0; const s='salt_'+p+'_app'; for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;} return 'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8); }
+    function verifyPassword(pwd, stored) { const s1=String(pwd), s2=String(stored); return s1===s2 || hashPassword(s1)===s2; }
+    function genId() { return 'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9); }
+    function esc(s) { const d=document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+    function fmtData(s) { if(!s) return '-'; const [a,m,d]=s.split('-'); return `${d}/${m}/${a}`; }
+    function calcDur(hi, hf) {
+        hi=excelSerialToTime(hi); hf=excelSerialToTime(hf);
+        if(!hi||!hf) return 0;
+        const [h1,m1]=hi.split(':').map(Number), [h2,m2]=hf.split(':').map(Number);
+        let min=(h2*60+m2)-(h1*60+m1); if(min<0) min+=24*60;
         return Math.max(0,min);
     }
-    function fmtDur(m){if(m<=0)return'-';const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}min`:`${min}min`;}
-    function statusClass(e){return e==='Aberto'?'status-aberto':e==='Em andamento'?'status-em-andamento':'status-finalizado';}
-    function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
+    function fmtDur(m) { if(m<=0) return '-'; const h=Math.floor(m/60), min=m%60; return h>0?`${h}h ${min}min`:`${min}min`; }
+    function statusClass(e) { return e==='Aberto'?'status-aberto':(e==='Em andamento'?'status-em-andamento':'status-finalizado'); }
+    function toast(msg) { const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.getElementById('toastContainer').appendChild(t); setTimeout(()=>t.remove(),3000); }
 
-    // … (todo o resto do código, incluindo setUser, restoreSession, login, logout, renderDashboard, etc., exatamente igual ao que já estava funcionando antes)
-    // Como o código completo é muito extenso, reproduzo a partir daqui até o final.
-
-    // Mantenho as funções de autenticação, sessão, navegação, dashboard, modais, Jira, relatório, minha conta, admin.
-    // Elas não foram alteradas, apenas a normalizeDate foi corrigida.
-    // Para não ultrapassar o limite de tokens, vou colocar o restante exatamente como estava no último HTML enviado, sem modificações.
-    // Como você tem acesso ao código original, basta substituir APENAS a função normalizeDate pela nova versão.
-    // Mas para garantir, incluo o HTML completo abaixo.
-
-    // (Todo o restante do código permanece idêntico ao que você já possuía, começando de setUser até o final.)
-    // Copiei exatamente o conteúdo do HTML anterior (aquele que não funcionava) e apenas troquei normalizeDate.
-
-    // Por questões práticas, aqui está o script completo:
-
-    function setUser(u){
-        currentUser=u;
-        if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel}));}
-        else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}
+    // ===== SESSÃO =====
+    function setUser(u) {
+        currentUser = u;
+        if (u) { sessionStorage.setItem('app_uid', u.id); sessionStorage.setItem('app_cache', JSON.stringify({id:u.id, nome:u.nome, nivel:u.nivel})); }
+        else { sessionStorage.removeItem('app_uid'); sessionStorage.removeItem('app_cache'); }
     }
-    async function restoreSession(){
-        const uid=sessionStorage.getItem('app_uid');
-        if(!uid)return null;
-        let cached=null;
-        try{cached=JSON.parse(sessionStorage.getItem('app_cache'));}catch(e){}
-        if(cached&&cached.id===uid){
-            loadData().then(()=>{const fresh=dataCache.users.find(u=>u.id===uid);if(fresh)setUser(fresh);if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();});
+    async function restoreSession() {
+        const uid = sessionStorage.getItem('app_uid');
+        if (!uid) return null;
+        let cached = null;
+        try { cached = JSON.parse(sessionStorage.getItem('app_cache')); } catch(e) {}
+        if (cached && cached.id === uid) {
+            loadData().then(() => { const fresh = dataCache.users.find(u => u.id===uid); if (fresh) setUser(fresh); if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard(); });
             return cached;
         }
         await loadData();
-        return dataCache.users.find(u=>u.id===uid)||null;
+        return dataCache.users.find(u => u.id===uid) || null;
     }
 
-    async function doLogin(){
-        const n=document.getElementById('loginUser').value.trim();
-        const p=document.getElementById('loginPass').value.trim();
-        const e=document.getElementById('loginError');e.style.display='none';
-        if(!n||!p){e.textContent='Preencha todos os campos.';e.style.display='block';return;}
-        if(!dataCache.users.length||Date.now()-dataCache.lastLoad>300000)await loadData();
-        const u=dataCache.users.find(u=>u.nome.toLowerCase()===n.toLowerCase());
-        if(!u||!verifyPassword(p,u.senha)){e.textContent='Usuário ou senha inválidos.';e.style.display='block';return;}
-        setUser(u);showApp();toast('✅ Bem-vindo, '+u.nome+'!');
+    // ===== LOGIN / LOGOUT =====
+    async function doLogin() {
+        const n = document.getElementById('loginUser').value.trim();
+        const p = document.getElementById('loginPass').value.trim();
+        const e = document.getElementById('loginError'); e.style.display='none';
+        if (!n || !p) { e.textContent='Preencha todos os campos.'; e.style.display='block'; return; }
+        if (!dataCache.users.length || Date.now()-dataCache.lastLoad>300000) await loadData();
+        const u = dataCache.users.find(u => u.nome.toLowerCase()===n.toLowerCase());
+        if (!u || !verifyPassword(p, u.senha)) { e.textContent='Usuário ou senha inválidos.'; e.style.display='block'; return; }
+        setUser(u); showApp(); toast('✅ Bem-vindo, '+u.nome+'!');
     }
-    function logout(){if(confirm('Sair?')){setUser(null);hideApp();}}
-    function showApp(){document.getElementById('loginContainer').style.display='none';document.getElementById('appContainer').style.display='flex';updateHeader();updateNav();navigateTo('dashboard');}
-    function hideApp(){document.getElementById('loginContainer').style.display='block';document.getElementById('appContainer').style.display='none';}
-    function updateHeader(){
-        if(!currentUser)return;
-        const t=document.getElementById('headerUserTag');
-        t.innerHTML=currentUser.nivel==='admin'?`👑 ${currentUser.nome} <span class="admin-badge">Admin</span>`:`👤 ${currentUser.nome}`;
+    function logout() { if (confirm('Sair?')) { setUser(null); hideApp(); } }
+    function showApp() { document.getElementById('loginContainer').style.display='none'; document.getElementById('appContainer').style.display='flex'; updateHeader(); updateNav(); navigateTo('dashboard'); }
+    function hideApp() { document.getElementById('loginContainer').style.display='block'; document.getElementById('appContainer').style.display='none'; }
+    function updateHeader() {
+        if (!currentUser) return;
+        const t = document.getElementById('headerUserTag');
+        t.innerHTML = currentUser.nivel==='admin' ? `👑 ${currentUser.nome} <span class="admin-badge">Admin</span>` : `👤 ${currentUser.nome}`;
     }
-    function updateNav(){document.getElementById('navAdmin').style.display=currentUser&&currentUser.nivel==='admin'?'flex':'none';}
-    function navigateTo(p){
-        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-        const el=document.getElementById('page-'+p);if(el)el.classList.add('active');
-        const btn=document.querySelector(`.nav-btn[data-page="${p}"]`);if(btn)btn.classList.add('active');
-        if(p==='dashboard')renderDashboard();
-        else if(p==='jira')renderJira();
-        else if(p==='relatorio')setupRelatorio();
-        else if(p==='minhaconta')renderMinhaConta();
-        else if(p==='admin')renderAdmin();
+    function updateNav() { document.getElementById('navAdmin').style.display = (currentUser && currentUser.nivel==='admin') ? 'flex' : 'none'; }
+    function navigateTo(p) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        const el = document.getElementById('page-'+p); if (el) el.classList.add('active');
+        const btn = document.querySelector(`.nav-btn[data-page="${p}"]`); if (btn) btn.classList.add('active');
+        if (p==='dashboard') renderDashboard();
+        else if (p==='jira') renderJira();
+        else if (p==='relatorio') setupRelatorio();
+        else if (p==='minhaconta') renderMinhaConta();
+        else if (p==='admin') renderAdmin();
     }
 
-    function renderDashboard(){
-        const hoje=hojeLocal();
-        const acts=dataCache.activities;
-        let filtradas=currentUser.nivel==='admin'?acts.filter(a=>a.data===hoje):acts.filter(a=>a.data===hoje&&a.usuarioId===currentUser.id);
-        filtradas.sort((a,b)=>(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-        const tbody=document.getElementById('tbodyAtividades');
-        if(!filtradas.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade hoje.</td></tr>';return;}
-        tbody.innerHTML=filtradas.map(a=>{
-            const pode=currentUser.nivel==='admin'||a.usuarioId===currentUser.id;
-            const solucao=a.solucao_aplicada||'';
+    // ===== DASHBOARD =====
+    function renderDashboard() {
+        const hoje = hojeLocal();
+        const acts = dataCache.activities;
+        let filtradas = currentUser.nivel==='admin' ? acts.filter(a => a.data===hoje) : acts.filter(a => a.data===hoje && a.usuarioId===currentUser.id);
+        filtradas.sort((a,b) => (a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+        const tbody = document.getElementById('tbodyAtividades');
+        if (!filtradas.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="empty-icon">📭</span>Nenhuma atividade hoje.</td></tr>'; return; }
+        tbody.innerHTML = filtradas.map(a => {
+            const pode = currentUser.nivel==='admin' || a.usuarioId===currentUser.id;
+            const solucao = a.solucao_aplicada || '';
+            const pendencia = a.pendencia || '';
             const podeFechar = pode && (a.estado==='Aberto' || a.estado==='Em andamento');
             return `<tr>
                 <td><strong>${esc(a.servico_realizado)}</strong></td>
@@ -318,20 +312,21 @@
                 <td>${a.hora_inicio||'-'}</td>
                 <td>${a.hora_fim||'-'}</td>
                 <td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td>
-                <td><span class="solucao-cell" title="${esc(solucao)}">${solucao?esc(solucao.length>30?solucao.substring(0,30)+'...':solucao):'-'}</span></td>
+                <td><span class="solucao-cell" title="${esc(solucao)}">${solucao ? esc(solucao.length>30 ? solucao.substring(0,30)+'...' : solucao) : '-'}</span></td>
+                <td><span class="pendencia-cell" title="${esc(pendencia)}">${pendencia ? esc(pendencia.length>30 ? pendencia.substring(0,30)+'...' : pendencia) : '-'}</span></td>
                 <td style="display:flex; gap:4px; flex-wrap:wrap;">
                     ${podeFechar ? `<button class="btn btn-success btn-sm" onclick="finalizarAtividade('${a.id}')" title="Fechar">✅</button>` : ''}
-                    ${pode ? `<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button>
-                    <button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>` : '🔒'}
+                    ${pode ? `<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>` : '🔒'}
                 </td>
             </tr>`;
         }).join('');
     }
 
-    window.finalizarAtividade = function(id){
-        const a = dataCache.activities.find(a=>a.id===id);
-        if(!a) return toast('⚠️ Atividade não encontrada.');
-        if(currentUser.nivel!=='admin' && a.usuarioId!==currentUser.id) return toast('⛔ Sem permissão.');
+    // ===== MODAL DE ATIVIDADE (com pendência) =====
+    window.finalizarAtividade = function(id) {
+        const a = dataCache.activities.find(a => a.id===id);
+        if (!a) return toast('⚠️ Atividade não encontrada.');
+        if (currentUser.nivel!=='admin' && a.usuarioId!==currentUser.id) return toast('⛔ Sem permissão.');
         document.getElementById('atvId').value = a.id;
         document.getElementById('atvServico').value = a.servico_realizado;
         document.getElementById('atvHoraInicio').value = excelSerialToTime(a.hora_inicio) || '';
@@ -340,114 +335,170 @@
         document.getElementById('atvData').value = normalizeDate(a.data);
         document.getElementById('atvSolucao').value = a.solucao_aplicada || '';
         document.getElementById('atvEstado').value = 'Finalizado';
+        // Esconde elementos de pendência
         document.getElementById('solucaoGroup').style.display = 'block';
         document.getElementById('obrigatorioFim').style.display = 'inline';
+        document.getElementById('checkPendenciaGroup').style.display = 'none';
+        document.getElementById('pendenciaGroup').style.display = 'none';
+        document.getElementById('atvComPendencia').checked = false;
+        document.getElementById('atvPendencia').value = '';
         document.getElementById('modalAtividadeTitulo').textContent = '✅ Finalizar Atendimento';
         document.getElementById('modalAtividadeOverlay').style.display = 'flex';
     };
 
-    function openActivityModal(atv=null){
-        document.getElementById('atvId').value='';
-        document.getElementById('atvServico').value='';
-        document.getElementById('atvSolicitante').value='';
-        document.getElementById('atvHoraFim').value='';
-        document.getElementById('atvSolucao').value='';
-        document.getElementById('atvEstado').value='Aberto';
-        document.getElementById('atvData').value=hojeLocal();
-        const now=new Date();
-        document.getElementById('atvHoraInicio').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-        document.getElementById('solucaoGroup').style.display='none';
-        document.getElementById('obrigatorioFim').style.display='none';
-        document.getElementById('modalAtividadeTitulo').textContent='➕ Nova Atividade';
-        if(atv){
-            document.getElementById('atvId').value=atv.id;
-            document.getElementById('atvServico').value=atv.servico_realizado;
-            document.getElementById('atvHoraInicio').value=excelSerialToTime(atv.hora_inicio);
-            document.getElementById('atvHoraFim').value=excelSerialToTime(atv.hora_fim);
-            document.getElementById('atvSolicitante').value=atv.solicitante;
-            document.getElementById('atvEstado').value=atv.estado;
-            document.getElementById('atvData').value=normalizeDate(atv.data);
-            document.getElementById('atvSolucao').value=atv.solucao_aplicada||'';
-            if(atv.estado==='Finalizado'){
-                document.getElementById('solucaoGroup').style.display='block';
-                document.getElementById('obrigatorioFim').style.display='inline';
+    function openActivityModal(atv = null) {
+        document.getElementById('atvId').value = '';
+        document.getElementById('atvServico').value = '';
+        document.getElementById('atvSolicitante').value = '';
+        document.getElementById('atvHoraFim').value = '';
+        document.getElementById('atvSolucao').value = '';
+        document.getElementById('atvPendencia').value = '';
+        document.getElementById('atvComPendencia').checked = false;
+        document.getElementById('atvEstado').value = 'Aberto';
+        document.getElementById('atvData').value = hojeLocal();
+        const now = new Date();
+        document.getElementById('atvHoraInicio').value = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        document.getElementById('solucaoGroup').style.display = 'none';
+        document.getElementById('checkPendenciaGroup').style.display = 'none';
+        document.getElementById('pendenciaGroup').style.display = 'none';
+        document.getElementById('obrigatorioFim').style.display = 'none';
+        document.getElementById('modalAtividadeTitulo').textContent = '➕ Nova Atividade';
+
+        if (atv) {
+            document.getElementById('atvId').value = atv.id;
+            document.getElementById('atvServico').value = atv.servico_realizado;
+            document.getElementById('atvHoraInicio').value = excelSerialToTime(atv.hora_inicio);
+            document.getElementById('atvHoraFim').value = excelSerialToTime(atv.hora_fim);
+            document.getElementById('atvSolicitante').value = atv.solicitante;
+            document.getElementById('atvEstado').value = atv.estado;
+            document.getElementById('atvData').value = normalizeDate(atv.data);
+            document.getElementById('atvSolucao').value = atv.solucao_aplicada || '';
+            if (atv.estado === 'Finalizado') {
+                document.getElementById('solucaoGroup').style.display = 'block';
+                document.getElementById('obrigatorioFim').style.display = 'inline';
+                document.getElementById('checkPendenciaGroup').style.display = 'none';
+                document.getElementById('pendenciaGroup').style.display = 'none';
+            } else if (atv.estado === 'Em andamento') {
+                document.getElementById('solucaoGroup').style.display = 'none';
+                document.getElementById('obrigatorioFim').style.display = 'none';
+                document.getElementById('checkPendenciaGroup').style.display = 'block';
+                const temPendencia = atv.pendencia && atv.pendencia.trim().length > 0;
+                document.getElementById('atvComPendencia').checked = temPendencia;
+                document.getElementById('atvPendencia').value = atv.pendencia || '';
+                document.getElementById('pendenciaGroup').style.display = temPendencia ? 'block' : 'none';
             } else {
-                document.getElementById('solucaoGroup').style.display='none';
-                document.getElementById('obrigatorioFim').style.display='none';
+                document.getElementById('solucaoGroup').style.display = 'none';
+                document.getElementById('obrigatorioFim').style.display = 'none';
+                document.getElementById('checkPendenciaGroup').style.display = 'none';
+                document.getElementById('pendenciaGroup').style.display = 'none';
             }
-            document.getElementById('modalAtividadeTitulo').textContent='✏️ Editar Atividade';
+            document.getElementById('modalAtividadeTitulo').textContent = '✏️ Editar Atividade';
+        } else {
+            // Ao criar nova, se estado inicial for Aberto, não mostra pendência; mas se trocar para "Em andamento", mostra.
         }
-        document.getElementById('modalAtividadeOverlay').style.display='flex';
+        document.getElementById('modalAtividadeOverlay').style.display = 'flex';
     }
-    function closeActivityModal(){document.getElementById('modalAtividadeOverlay').style.display='none';}
-    document.getElementById('atvEstado').addEventListener('change',function(){
-        const solGroup=document.getElementById('solucaoGroup');
-        if(this.value==='Finalizado'){
-            solGroup.style.display='block';
-            document.getElementById('obrigatorioFim').style.display='inline';
-            const hf=document.getElementById('atvHoraFim');
-            if(!hf.value){hf.focus();toast('⚠️ Informe a hora de finalização.');}
-        }else{
-            solGroup.style.display='none';
-            document.getElementById('obrigatorioFim').style.display='none';
-            document.getElementById('atvSolucao').value='';
+
+    function closeActivityModal() { document.getElementById('modalAtividadeOverlay').style.display = 'none'; }
+
+    // Evento de mudança de estado
+    document.getElementById('atvEstado').addEventListener('change', function() {
+        const solGroup = document.getElementById('solucaoGroup');
+        const checkPendGroup = document.getElementById('checkPendenciaGroup');
+        const pendGroup = document.getElementById('pendenciaGroup');
+        const obrigatorio = document.getElementById('obrigatorioFim');
+        if (this.value === 'Finalizado') {
+            solGroup.style.display = 'block';
+            obrigatorio.style.display = 'inline';
+            checkPendGroup.style.display = 'none';
+            pendGroup.style.display = 'none';
+            document.getElementById('atvComPendencia').checked = false;
+            document.getElementById('atvPendencia').value = '';
+            const hf = document.getElementById('atvHoraFim');
+            if (!hf.value) { hf.focus(); toast('⚠️ Informe a hora de finalização.'); }
+        } else if (this.value === 'Em andamento') {
+            solGroup.style.display = 'none';
+            obrigatorio.style.display = 'none';
+            checkPendGroup.style.display = 'block';
+            // Mostra/oculta campo de pendência conforme checkbox
+            const chk = document.getElementById('atvComPendencia');
+            pendGroup.style.display = chk.checked ? 'block' : 'none';
+        } else { // Aberto
+            solGroup.style.display = 'none';
+            obrigatorio.style.display = 'none';
+            checkPendGroup.style.display = 'none';
+            pendGroup.style.display = 'none';
+            document.getElementById('atvComPendencia').checked = false;
+            document.getElementById('atvPendencia').value = '';
         }
     });
-    async function salvarAtividade(){
-        const id=document.getElementById('atvId').value;
-        const servico=document.getElementById('atvServico').value.trim();
-        const inicio=document.getElementById('atvHoraInicio').value;
-        const fim=document.getElementById('atvHoraFim').value;
-        const solicitante=document.getElementById('atvSolicitante').value.trim();
-        const estado=document.getElementById('atvEstado').value;
-        const data=document.getElementById('atvData').value;
-        const solucao=document.getElementById('atvSolucao').value.trim();
-        if(!servico||!inicio||!solicitante){toast('⚠️ Preencha campos obrigatórios.');return;}
-        if(estado==='Finalizado'&&!fim){toast('⚠️ Hora fim é obrigatória para finalizar.');document.getElementById('atvHoraFim').focus();return;}
-        if(id){
-            const idx=dataCache.activities.findIndex(a=>a.id===id);
-            if(idx>=0){
-                dataCache.activities[idx].servico_realizado=servico;
-                dataCache.activities[idx].hora_inicio=inicio;
-                dataCache.activities[idx].hora_fim=fim;
-                dataCache.activities[idx].solicitante=solicitante;
-                dataCache.activities[idx].estado=estado;
-                dataCache.activities[idx].data=data;
-                dataCache.activities[idx].solucao_aplicada=solucao;
-                dataCache.activities[idx].atualizadoEm=agoraISO();
+
+    // Checkbox pendência controla visibilidade do campo
+    document.getElementById('atvComPendencia').addEventListener('change', function() {
+        document.getElementById('pendenciaGroup').style.display = this.checked ? 'block' : 'none';
+        if (!this.checked) document.getElementById('atvPendencia').value = '';
+    });
+
+    async function salvarAtividade() {
+        const id = document.getElementById('atvId').value;
+        const servico = document.getElementById('atvServico').value.trim();
+        const inicio = document.getElementById('atvHoraInicio').value;
+        const fim = document.getElementById('atvHoraFim').value;
+        const solicitante = document.getElementById('atvSolicitante').value.trim();
+        const estado = document.getElementById('atvEstado').value;
+        const data = document.getElementById('atvData').value;
+        const solucao = document.getElementById('atvSolucao').value.trim();
+        const pendencia = document.getElementById('atvPendencia').value.trim();
+        if (!servico || !inicio || !solicitante) { toast('⚠️ Preencha campos obrigatórios.'); return; }
+        if (estado === 'Finalizado' && !fim) { toast('⚠️ Hora fim é obrigatória para finalizar.'); document.getElementById('atvHoraFim').focus(); return; }
+        if (id) {
+            const idx = dataCache.activities.findIndex(a => a.id===id);
+            if (idx >= 0) {
+                dataCache.activities[idx].servico_realizado = servico;
+                dataCache.activities[idx].hora_inicio = inicio;
+                dataCache.activities[idx].hora_fim = fim;
+                dataCache.activities[idx].solicitante = solicitante;
+                dataCache.activities[idx].estado = estado;
+                dataCache.activities[idx].data = data;
+                dataCache.activities[idx].solucao_aplicada = solucao;
+                dataCache.activities[idx].pendencia = pendencia;
+                dataCache.activities[idx].atualizadoEm = agoraISO();
             }
-        }else{
+        } else {
             dataCache.activities.push({
-                id:genId(),usuarioId:currentUser.id,usuarioNome:currentUser.nome,
-                servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,
-                solicitante,estado,data,solucao_aplicada:solucao,
-                criadoEm:agoraISO(),atualizadoEm:agoraISO()
+                id: genId(), usuarioId: currentUser.id, usuarioNome: currentUser.nome,
+                servico_realizado: servico, hora_inicio: inicio, hora_fim: fim,
+                solicitante, estado, data, solucao_aplicada: solucao,
+                pendencia: pendencia, criadoEm: agoraISO(), atualizadoEm: agoraISO()
             });
         }
         renderDashboard();
         closeActivityModal();
-        toast(id?'✅ Atividade atualizada!':'✅ Atividade adicionada!');
-        syncData('activities',dataCache.activities);
+        toast(id ? '✅ Atividade atualizada!' : '✅ Atividade adicionada!');
+        syncData('activities', dataCache.activities);
     }
-    async function excluirAtividade(id){
-        if(!confirm('Excluir atividade?'))return;
-        dataCache.activities=dataCache.activities.filter(a=>a.id!==id);
+
+    // ===== EXCLUIR E EDITAR =====
+    async function excluirAtividade(id) {
+        if (!confirm('Excluir atividade?')) return;
+        dataCache.activities = dataCache.activities.filter(a => a.id!==id);
         renderDashboard();
         toast('🗑️ Excluída.');
-        syncData('activities',dataCache.activities);
+        syncData('activities', dataCache.activities);
     }
-    function editarAtividade(id){
-        const a=dataCache.activities.find(a=>a.id===id);
-        if(!a)return toast('⚠️ Não encontrada.');
-        if(currentUser.nivel!=='admin'&&a.usuarioId!==currentUser.id)return toast('⛔ Sem permissão.');
+    function editarAtividade(id) {
+        const a = dataCache.activities.find(a => a.id===id);
+        if (!a) return toast('⚠️ Não encontrada.');
+        if (currentUser.nivel!=='admin' && a.usuarioId!==currentUser.id) return toast('⛔ Sem permissão.');
         openActivityModal(a);
     }
 
-    function atualizarJira(){ sincronizarJira(); }
-    window.ocultarJira = function(){
+    // ===== JIRA (mantido) =====
+    function atualizarJira() { sincronizarJira(); }
+    window.ocultarJira = function() {
         const container = document.getElementById('jiraTableContainer');
         const btn = document.getElementById('btnOcultarJira');
-        if(jiraVisivel){
+        if (jiraVisivel) {
             container.classList.add('hidden');
             btn.textContent = '👁️ Mostrar tickets Jira';
             jiraVisivel = false;
@@ -457,175 +508,176 @@
             jiraVisivel = true;
         }
     };
-
-    async function sincronizarJira(){
+    async function sincronizarJira() {
         toast('🔄 Buscando issues do Jira...');
-        try{
-            const resp=await fetch(`${API_URL}?action=jira`);
-            const data=await resp.json();
-            if(data.error){toast('❌ Erro: '+JSON.stringify(data.error));return;}
-            const novasIssues=data.issues;
-            const mapaExistente={};
-            dataCache.jiraIssues.forEach(j=>{mapaExistente[j.issue_id]=j;});
-            const merged=novasIssues.map(issue=>{
-                const existente=mapaExistente[issue.issue_id];
-                if(existente){
-                    return {...existente,summary:issue.summary,description:issue.description,reporter:issue.reporter,issue_key:issue.issue_key};
-                }else{
+        try {
+            const resp = await fetch(`${API_URL}?action=jira`);
+            const data = await resp.json();
+            if (data.error) { toast('❌ Erro: '+JSON.stringify(data.error)); return; }
+            const novasIssues = data.issues;
+            const mapaExistente = {};
+            dataCache.jiraIssues.forEach(j => { mapaExistente[j.issue_id] = j; });
+            const merged = novasIssues.map(issue => {
+                const existente = mapaExistente[issue.issue_id];
+                if (existente) {
+                    return { ...existente, summary: issue.summary, description: issue.description, reporter: issue.reporter, issue_key: issue.issue_key };
+                } else {
                     return {
-                        id:genId(),issue_id:issue.issue_id,issue_key:issue.issue_key,
-                        summary:issue.summary,description:issue.description,
-                        reporter:issue.reporter,status_local:'Aberto',
-                        hora_inicio:'',hora_fim:'',data:hojeLocal(),
-                        usuarioId:currentUser.id,usuarioNome:currentUser.nome,
-                        solucao_aplicada:'',criadoEm:agoraISO(),atualizadoEm:agoraISO()
+                        id: genId(), issue_id: issue.issue_id, issue_key: issue.issue_key,
+                        summary: issue.summary, description: issue.description,
+                        reporter: issue.reporter, status_local: 'Aberto',
+                        hora_inicio: '', hora_fim: '', data: hojeLocal(),
+                        usuarioId: currentUser.id, usuarioNome: currentUser.nome,
+                        solucao_aplicada: '', criadoEm: agoraISO(), atualizadoEm: agoraISO()
                     };
                 }
             });
-            dataCache.jiraIssues=merged;
-            await syncData('jira_issues',dataCache.jiraIssues);
+            dataCache.jiraIssues = merged;
+            await syncData('jira_issues', dataCache.jiraIssues);
             renderJira();
             toast('✅ '+novasIssues.length+' issues sincronizadas.');
-        }catch(e){toast('❌ Falha ao sincronizar com Jira.');console.error(e);}
+        } catch(e) { toast('❌ Falha ao sincronizar com Jira.'); console.error(e); }
     }
-
-    function renderJira(){
-        const issues=dataCache.jiraIssues;
-        const tbody=document.getElementById('tbodyJira');
-        if(!issues.length){
-            tbody.innerHTML='<tr><td colspan="6" class="empty-state"><span class="empty-icon">🐛</span>Nenhuma issue. Clique em "Atualizar".</td></tr>';
-            return;
-        }
-        tbody.innerHTML=issues.map(j=>{
-            const status=j.status_local||'Aberto';
-            const podeEditar=currentUser.nivel==='admin'||j.usuarioId===currentUser.id;
+    function renderJira() {
+        const issues = dataCache.jiraIssues;
+        const tbody = document.getElementById('tbodyJira');
+        if (!issues.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><span class="empty-icon">🐛</span>Nenhuma issue. Clique em "Atualizar".</td></tr>'; return; }
+        tbody.innerHTML = issues.map(j => {
+            const status = j.status_local || 'Aberto';
+            const podeEditar = currentUser.nivel==='admin' || j.usuarioId===currentUser.id;
             return `<tr>
                 <td><strong>${esc(j.issue_key)}</strong></td>
                 <td>${esc(j.summary)}</td>
-                <td>${esc(j.description?j.description.substring(0,80):'')}</td>
+                <td>${esc(j.description ? j.description.substring(0,80) : '')}</td>
                 <td>${esc(j.reporter)}</td>
-                <td>
-                    <select onchange="atualizarStatusJira('${j.id}', this.value)" ${podeEditar?'':'disabled'}>
-                        <option value="Aberto" ${status==='Aberto'?'selected':''}>🔓 Aberto</option>
-                        <option value="Em andamento" ${status==='Em andamento'?'selected':''}>🔄 Em andamento</option>
-                        <option value="Finalizado" ${status==='Finalizado'?'selected':''}>✅ Finalizado</option>
-                    </select>
-                </td>
-                <td>
-                    ${podeEditar?`<button class="btn btn-outline btn-sm" onclick="editarJira('${j.id}')">✏️</button>
-                    <button class="btn btn-danger btn-sm" onclick="excluirJira('${j.id}')">🗑️</button>`:'🔒'}
-                </td>
+                <td><select onchange="atualizarStatusJira('${j.id}', this.value)" ${podeEditar?'':'disabled'}>
+                    <option value="Aberto" ${status==='Aberto'?'selected':''}>🔓 Aberto</option>
+                    <option value="Em andamento" ${status==='Em andamento'?'selected':''}>🔄 Em andamento</option>
+                    <option value="Finalizado" ${status==='Finalizado'?'selected':''}>✅ Finalizado</option>
+                </select></td>
+                <td>${podeEditar ? `<button class="btn btn-outline btn-sm" onclick="editarJira('${j.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirJira('${j.id}')">🗑️</button>` : '🔒'}</td>
             </tr>`;
         }).join('');
     }
-
-    async function atualizarStatusJira(id,novoStatus){
-        const idx=dataCache.jiraIssues.findIndex(j=>j.id===id);
-        if(idx>=0){
-            dataCache.jiraIssues[idx].status_local=novoStatus;
-            dataCache.jiraIssues[idx].atualizadoEm=agoraISO();
+    async function atualizarStatusJira(id, novoStatus) {
+        const idx = dataCache.jiraIssues.findIndex(j => j.id===id);
+        if (idx >= 0) {
+            dataCache.jiraIssues[idx].status_local = novoStatus;
+            dataCache.jiraIssues[idx].atualizadoEm = agoraISO();
             renderJira();
-            await syncData('jira_issues',dataCache.jiraIssues);
+            await syncData('jira_issues', dataCache.jiraIssues);
             toast('Status atualizado para '+novoStatus);
         }
     }
-    function editarJira(id){toast('Funcionalidade de edição completa em breve.');}
-    async function excluirJira(id){
-        if(!confirm('Remover issue da fila local? (Não afeta o Jira)'))return;
-        dataCache.jiraIssues=dataCache.jiraIssues.filter(j=>j.id!==id);
+    function editarJira(id) { toast('Funcionalidade de edição completa em breve.'); }
+    async function excluirJira(id) {
+        if (!confirm('Remover issue da fila local? (Não afeta o Jira)')) return;
+        dataCache.jiraIssues = dataCache.jiraIssues.filter(j => j.id!==id);
         renderJira();
-        await syncData('jira_issues',dataCache.jiraIssues);
+        await syncData('jira_issues', dataCache.jiraIssues);
         toast('Issue removida da fila local.');
     }
 
-    function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
-    function carregarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
-        if(!ini||!fim)return;
-        let acts=dataCache.activities.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
-        acts.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-        const tbody=document.getElementById('tbodyRelatorio'),summary=document.getElementById('reportSummary');
-        if(!acts.length){tbody.innerHTML='<tr><td colspan="8" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>';summary.innerHTML='';return;}
-        let totalMin=0,finalizados=0;
-        tbody.innerHTML=acts.map(a=>{
-            const dur=calcDur(a.hora_inicio,a.hora_fim);
-            if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
-            const sol=a.solucao_aplicada||'';
-            return `<tr><td>${fmtData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td><td>${excelSerialToTime(a.hora_inicio)||'-'}</td><td>${excelSerialToTime(a.hora_fim)||'-'}</td><td><strong>${fmtDur(dur)}</strong></td><td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td><td><span class="solucao-cell" title="${esc(sol)}">${sol?esc(sol.length>30?sol.substring(0,30)+'...':sol):'-'}</span></td></tr>`;
+    // ===== RELATÓRIO =====
+    function setupRelatorio() { document.getElementById('relDataInicio').value = hojeLocal(); document.getElementById('relDataFim').value = hojeLocal(); carregarRelatorio(); }
+    function carregarRelatorio() {
+        const ini = document.getElementById('relDataInicio').value, fim = document.getElementById('relDataFim').value;
+        if (!ini || !fim) return;
+        let acts = dataCache.activities.filter(a => a.data >= ini && a.data <= fim);
+        if (currentUser.nivel !== 'admin') acts = acts.filter(a => a.usuarioId === currentUser.id);
+        acts.sort((a,b) => a.data.localeCompare(b.data) || (a.hora_inicio||'').localeCompare(b.hora_inicio||''));
+        const tbody = document.getElementById('tbodyRelatorio'), summary = document.getElementById('reportSummary');
+        if (!acts.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="empty-icon">📭</span>Nenhum atendimento.</td></tr>'; summary.innerHTML = ''; return; }
+        let totalMin = 0, finalizados = 0;
+        tbody.innerHTML = acts.map(a => {
+            const dur = calcDur(a.hora_inicio, a.hora_fim);
+            if (a.estado === 'Finalizado') { totalMin += dur; finalizados++; }
+            const sol = a.solucao_aplicada || '';
+            const pend = a.pendencia || '';
+            return `<tr>
+                <td>${fmtData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td>
+                <td>${excelSerialToTime(a.hora_inicio)||'-'}</td><td>${excelSerialToTime(a.hora_fim)||'-'}</td>
+                <td><strong>${fmtDur(dur)}</strong></td><td><span class="status-badge ${statusClass(a.estado)}">${a.estado}</span></td>
+                <td><span class="solucao-cell" title="${esc(sol)}">${sol ? esc(sol.length>30 ? sol.substring(0,30)+'...' : sol) : '-'}</span></td>
+                <td><span class="pendencia-cell" title="${esc(pend)}">${pend ? esc(pend.length>30 ? pend.substring(0,30)+'...' : pend) : '-'}</span></td>
+            </tr>`;
         }).join('');
-        const h=Math.floor(totalMin/60),m=totalMin%60;
-        summary.innerHTML=`<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados ✅</div></div><div class="summary-card" style="background:linear-gradient(135deg,#fefce8,#fef9c3);"><div class="summary-value" style="color:#b45309;">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
+        const h = Math.floor(totalMin/60), m = totalMin%60;
+        summary.innerHTML = `<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados ✅</div></div><div class="summary-card" style="background:linear-gradient(135deg,#fefce8,#fef9c3);"><div class="summary-value" style="color:#b45309;">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
     }
-    async function exportarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
-        let acts=dataCache.activities;
-        if(ini&&fim)acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
-        const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado','Solução']];
-        acts.forEach(a=>{const dur=calcDur(a.hora_inicio,a.hora_fim);excel.push([fmtData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',fmtDur(dur),a.estado,a.solucao_aplicada||'']);});
-        const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(excel);
-        ws['!cols']=[{wch:12},{wch:30},{wch:20},{wch:10},{wch:10},{wch:12},{wch:12},{wch:25}];
-        XLSX.utils.book_append_sheet(wb,ws,'Relatório');XLSX.writeFile(wb,`relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
+    async function exportarRelatorio() {
+        const ini = document.getElementById('relDataInicio').value, fim = document.getElementById('relDataFim').value;
+        let acts = dataCache.activities;
+        if (ini && fim) acts = acts.filter(a => a.data >= ini && a.data <= fim);
+        if (currentUser.nivel !== 'admin') acts = acts.filter(a => a.usuarioId === currentUser.id);
+        const excel = [['Data','Serviço','Solicitante','Início','Fim','Duração','Estado','Solução','Pendência']];
+        acts.forEach(a => {
+            const dur = calcDur(a.hora_inicio, a.hora_fim);
+            excel.push([fmtData(a.data), a.servico_realizado, a.solicitante, excelSerialToTime(a.hora_inicio)||'', excelSerialToTime(a.hora_fim)||'', fmtDur(dur), a.estado, a.solucao_aplicada||'', a.pendencia||'']);
+        });
+        const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(excel);
+        ws['!cols'] = [{wch:12},{wch:30},{wch:20},{wch:10},{wch:10},{wch:12},{wch:12},{wch:25},{wch:25}];
+        XLSX.utils.book_append_sheet(wb, ws, 'Relatório'); XLSX.writeFile(wb, `relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
         toast('📥 Exportado!');
     }
 
-    function renderMinhaConta(){
-        document.getElementById('contaNome').value=currentUser.nome;
-        document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum';
-        document.getElementById('contaNovaSenha').value='';document.getElementById('contaConfirmarSenha').value='';
+    // ===== MINHA CONTA E ADMIN (mantidos) =====
+    function renderMinhaConta() {
+        document.getElementById('contaNome').value = currentUser.nome;
+        document.getElementById('contaNivel').value = currentUser.nivel==='admin' ? 'Administrador' : 'Usuário Comum';
+        document.getElementById('contaNovaSenha').value = ''; document.getElementById('contaConfirmarSenha').value = '';
     }
-    async function alterarMinhaSenha(){
-        const n=document.getElementById('contaNovaSenha').value.trim(),c=document.getElementById('contaConfirmarSenha').value.trim();
-        if(!n||n.length<4)return toast('⚠️ Mínimo 4 caracteres.');
-        if(n!==c)return toast('⚠️ Senhas não conferem.');
-        const idx=dataCache.users.findIndex(u=>u.id===currentUser.id);
-        if(idx>=0){dataCache.users[idx].senha=hashPassword(n);setUser(dataCache.users[idx]);await syncData('users',dataCache.users);toast('🔒 Senha alterada!');}
+    async function alterarMinhaSenha() {
+        const n = document.getElementById('contaNovaSenha').value.trim(), c = document.getElementById('contaConfirmarSenha').value.trim();
+        if (!n || n.length<4) return toast('⚠️ Mínimo 4 caracteres.');
+        if (n !== c) return toast('⚠️ Senhas não conferem.');
+        const idx = dataCache.users.findIndex(u => u.id===currentUser.id);
+        if (idx >= 0) { dataCache.users[idx].senha = hashPassword(n); setUser(dataCache.users[idx]); await syncData('users', dataCache.users); toast('🔒 Senha alterada!'); }
     }
-    function renderAdmin(){
-        if(currentUser.nivel!=='admin')return navigateTo('dashboard');
-        document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td><strong>${esc(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td><td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
+    function renderAdmin() {
+        if (currentUser.nivel !== 'admin') return navigateTo('dashboard');
+        document.getElementById('tbodyUsuarios').innerHTML = dataCache.users.map(u => `<tr><td><strong>${esc(u.nome)}</strong> ${u.id===currentUser.id?'(você)':''}</td><td><span class="status-badge ${u.nivel==='admin'?'status-em-andamento':'status-aberto'}">${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</span></td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
     }
-    function openUserModal(u=null){
-        document.getElementById('userId').value='';document.getElementById('userNome').value='';document.getElementById('userSenha').value='';document.getElementById('userNivel').value='comum';
-        document.getElementById('modalUserTitulo').textContent='➕ Novo Usuário';
-        if(u){document.getElementById('userId').value=u.id;document.getElementById('userNome').value=u.nome;document.getElementById('userSenha').placeholder='Deixe em branco';document.getElementById('userNivel').value=u.nivel;document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário';}
-        document.getElementById('modalUserOverlay').style.display='flex';
+    function openUserModal(u=null) {
+        document.getElementById('userId').value=''; document.getElementById('userNome').value=''; document.getElementById('userSenha').value=''; document.getElementById('userNivel').value='comum';
+        document.getElementById('modalUserTitulo').textContent = '➕ Novo Usuário';
+        if (u) { document.getElementById('userId').value=u.id; document.getElementById('userNome').value=u.nome; document.getElementById('userSenha').placeholder='Deixe em branco'; document.getElementById('userNivel').value=u.nivel; document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário'; }
+        document.getElementById('modalUserOverlay').style.display = 'flex';
     }
-    function closeUserModal(){document.getElementById('modalUserOverlay').style.display='none';}
-    async function salvarUsuario(){
-        const id=document.getElementById('userId').value,nome=document.getElementById('userNome').value.trim(),senha=document.getElementById('userSenha').value.trim(),nivel=document.getElementById('userNivel').value;
-        if(!nome||nome.length<2)return toast('⚠️ Nome curto.');
-        if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()&&u.id!==id))return toast('⚠️ Nome já existe.');
-        if(id){const idx=dataCache.users.findIndex(u=>u.id===id);dataCache.users[idx].nome=nome;dataCache.users[idx].nivel=nivel;if(senha.length>=4)dataCache.users[idx].senha=hashPassword(senha);}
-        else{if(!senha||senha.length<4)return toast('⚠️ Senha mínima 4.');dataCache.users.push({id:genId(),nome,senha:hashPassword(senha),nivel,criadoEm:agoraISO()});}
-        await syncData('users',dataCache.users);closeUserModal();renderAdmin();toast(id?'✅ Usuário atualizado!':'✅ Usuário criado!');
+    function closeUserModal() { document.getElementById('modalUserOverlay').style.display = 'none'; }
+    async function salvarUsuario() {
+        const id = document.getElementById('userId').value, nome = document.getElementById('userNome').value.trim(), senha = document.getElementById('userSenha').value.trim(), nivel = document.getElementById('userNivel').value;
+        if (!nome || nome.length<2) return toast('⚠️ Nome curto.');
+        if (dataCache.users.some(u => u.nome.toLowerCase()===nome.toLowerCase() && u.id!==id)) return toast('⚠️ Nome já existe.');
+        if (id) { const idx = dataCache.users.findIndex(u => u.id===id); dataCache.users[idx].nome=nome; dataCache.users[idx].nivel=nivel; if (senha.length>=4) dataCache.users[idx].senha = hashPassword(senha); }
+        else { if (!senha || senha.length<4) return toast('⚠️ Senha mínima 4.'); dataCache.users.push({ id: genId(), nome, senha: hashPassword(senha), nivel, criadoEm: agoraISO() }); }
+        await syncData('users', dataCache.users); closeUserModal(); renderAdmin(); toast(id?'✅ Usuário atualizado!':'✅ Usuário criado!');
     }
-    async function excluirUsuario(id){if(!confirm('Excluir?'))return;dataCache.users=dataCache.users.filter(u=>u.id!==id);await syncData('users',dataCache.users);renderAdmin();toast('🗑️ Excluído.');}
-    function editarUsuario(id){const u=dataCache.users.find(u=>u.id===id);if(u)openUserModal(u);}
+    async function excluirUsuario(id) { if (!confirm('Excluir?')) return; dataCache.users = dataCache.users.filter(u => u.id!==id); await syncData('users', dataCache.users); renderAdmin(); toast('🗑️ Excluído.'); }
+    function editarUsuario(id) { const u = dataCache.users.find(u => u.id===id); if (u) openUserModal(u); }
 
-    document.addEventListener('click',e=>{if(e.target.id==='modalAtividadeOverlay')closeActivityModal();if(e.target.id==='modalUserOverlay')closeUserModal();});
-    document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginContainer').style.display!=='none')doLogin();if(e.key==='Escape'){closeActivityModal();closeUserModal();}});
+    document.addEventListener('click', e => { if (e.target.id==='modalAtividadeOverlay') closeActivityModal(); if (e.target.id==='modalUserOverlay') closeUserModal(); });
+    document.addEventListener('keydown', e => { if (e.key==='Enter' && document.getElementById('loginContainer').style.display!=='none') doLogin(); if (e.key==='Escape') { closeActivityModal(); closeUserModal(); } });
 
-    window.addEventListener('load',async()=>{
-        const u=await restoreSession();
-        if(u){setUser(u);showApp();}else hideApp();
-        document.getElementById('relDataInicio').value=hojeLocal();
-        document.getElementById('relDataFim').value=hojeLocal();
+    window.addEventListener('load', async () => {
+        const u = await restoreSession();
+        if (u) { setUser(u); showApp(); } else hideApp();
+        document.getElementById('relDataInicio').value = hojeLocal();
+        document.getElementById('relDataFim').value = hojeLocal();
     });
 
-    window.doLogin=doLogin;window.logout=logout;window.navigateTo=navigateTo;
-    window.openActivityModal=openActivityModal;window.closeActivityModal=closeActivityModal;
-    window.editarAtividade=editarAtividade;window.salvarAtividade=salvarAtividade;
-    window.excluirAtividade=excluirAtividade;window.carregarRelatorio=carregarRelatorio;
-    window.exportarRelatorio=exportarRelatorio;window.alterarMinhaSenha=alterarMinhaSenha;
-    window.openUserModal=openUserModal;window.closeUserModal=closeUserModal;
-    window.editarUsuario=editarUsuario;window.salvarUsuario=salvarUsuario;
-    window.excluirUsuario=excluirUsuario;window.showToast=toast;
-    window.sincronizarJira=sincronizarJira;window.atualizarStatusJira=atualizarStatusJira;
-    window.editarJira=editarJira;window.excluirJira=excluirJira;
-    window.finalizarAtividade=finalizarAtividade;window.atualizarJira=atualizarJira;
-    window.ocultarJira=ocultarJira;
+    window.doLogin = doLogin; window.logout = logout; window.navigateTo = navigateTo;
+    window.openActivityModal = openActivityModal; window.closeActivityModal = closeActivityModal;
+    window.editarAtividade = editarAtividade; window.salvarAtividade = salvarAtividade;
+    window.excluirAtividade = excluirAtividade; window.carregarRelatorio = carregarRelatorio;
+    window.exportarRelatorio = exportarRelatorio; window.alterarMinhaSenha = alterarMinhaSenha;
+    window.openUserModal = openUserModal; window.closeUserModal = closeUserModal;
+    window.editarUsuario = editarUsuario; window.salvarUsuario = salvarUsuario;
+    window.excluirUsuario = excluirUsuario; window.showToast = toast;
+    window.sincronizarJira = sincronizarJira; window.atualizarStatusJira = atualizarStatusJira;
+    window.editarJira = editarJira; window.excluirJira = excluirJira;
+    window.finalizarAtividade = finalizarAtividade; window.atualizarJira = atualizarJira;
+    window.ocultarJira = ocultarJira;
 })();
 </script>
 </body>
