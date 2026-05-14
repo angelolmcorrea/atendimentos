@@ -53,6 +53,7 @@
         @keyframes slideUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
         @keyframes fadeOut { to{opacity:0;transform:translateY(10px);} }
         .hidden { display:none; }
+        .readonly-field { background-color: #e9ecef; }
         @media(max-width:768px){ .nav-bar{overflow-x:auto;} }
     </style>
 </head>
@@ -140,7 +141,14 @@
             <div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div>
             <div class="form-group" id="fimGroup"><label>Hora Fim <span id="obrigatorioFim" style="color:var(--danger);display:none;">*</span></label><input type="time" id="atvHoraFim"></div>
         </div>
-        <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
+        <!-- Solicitante com checkbox "outra pessoa" para cliente -->
+        <div class="form-group">
+            <label>Solicitante *</label>
+            <input type="text" id="atvSolicitante">
+            <div id="outraPessoaGroup" style="margin-top:4px; display:none;">
+                <label><input type="checkbox" id="chkOutraPessoa"> Estou abrindo para outra pessoa</label>
+            </div>
+        </div>
         <div class="form-group" id="estadoGroup">
             <label>Estado</label>
             <select id="atvEstado">
@@ -338,15 +346,34 @@
         document.getElementById('atvComPendencia').checked=false;
         document.getElementById('atvData').value=hojeLocal();
         
-        // Hora início sempre preenchida, mas readonly para cliente
+        // Hora início
         const now=new Date();
         const horaAtual = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
         const horaInicioInput = document.getElementById('atvHoraInicio');
         horaInicioInput.value = atv ? excelSerialToTime(atv.hora_inicio) : horaAtual;
         horaInicioInput.readOnly = isCliente;
-        horaInicioInput.style.backgroundColor = isCliente ? '#e9ecef' : '#fafbfc';
+        horaInicioInput.className = isCliente ? 'readonly-field' : '';
 
-        // Esconde ou mostra campos conforme nível
+        // Solicitante
+        const solicitanteInput = document.getElementById('atvSolicitante');
+        const outraPessoaGroup = document.getElementById('outraPessoaGroup');
+        const chkOutraPessoa = document.getElementById('chkOutraPessoa');
+        
+        if(isCliente){
+            solicitanteInput.value = currentUser.nome;
+            solicitanteInput.readOnly = true;
+            solicitanteInput.className = 'readonly-field';
+            outraPessoaGroup.style.display = 'block';
+            chkOutraPessoa.checked = false;
+        } else {
+            solicitanteInput.value = atv ? atv.solicitante : '';
+            solicitanteInput.readOnly = false;
+            solicitanteInput.className = '';
+            outraPessoaGroup.style.display = 'none';
+            chkOutraPessoa.checked = false;
+        }
+
+        // Restante da configuração
         document.getElementById('estadoGroup').style.display = isCliente ? 'none' : 'block';
         document.getElementById('formHorarios').style.display = 'flex';
         document.getElementById('fimGroup').style.display = isCliente ? 'none' : 'block';
@@ -358,7 +385,6 @@
         if(atv && !isCliente){
             document.getElementById('atvId').value=atv.id;
             document.getElementById('atvServico').value=atv.servico_realizado;
-            document.getElementById('atvSolicitante').value=atv.solicitante;
             document.getElementById('atvData').value=normalizeDate(atv.data);
             document.getElementById('atvSolucao').value=atv.solucao_aplicada||'';
             document.getElementById('atvPendencia').value=atv.pendencia||'';
@@ -368,7 +394,7 @@
             document.getElementById('atvEstado').value = atv.estado;
             document.getElementById('modalAtividadeTitulo').textContent='✏️ Editar Atividade';
         } else if(atv && isCliente){
-            return; // cliente não edita
+            return;
         } else {
             document.getElementById('modalAtividadeTitulo').textContent = isCliente ? '📝 Abrir Chamado' : '➕ Nova Atividade';
             if(isCliente) {
@@ -377,6 +403,17 @@
         }
         document.getElementById('modalAtividadeOverlay').style.display='flex';
     }
+
+    // Evento do checkbox "outra pessoa"
+    document.getElementById('chkOutraPessoa').addEventListener('change', function(){
+        const solicitanteInput = document.getElementById('atvSolicitante');
+        solicitanteInput.readOnly = !this.checked;
+        solicitanteInput.className = this.checked ? '' : 'readonly-field';
+        if(!this.checked) {
+            solicitanteInput.value = currentUser.nome;
+        }
+    });
+
     function closeActivityModal(){document.getElementById('modalAtividadeOverlay').style.display='none';}
     document.getElementById('atvEstado').addEventListener('change',function(){
         if(currentUser.nivel==='cliente') return;
