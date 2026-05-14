@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Atendimentos</title>
+    <title>Gerenciador de Atendimentos v1.1</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         :root { --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --danger: #dc2626; --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --radius: 10px; }
@@ -74,8 +74,8 @@
     </header>
     <nav class="nav-bar" id="navBar">
         <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">📅 Fila do Dia</button>
-        <button class="nav-btn" data-page="relatorio" onclick="navigateTo('relatorio')">📊 Relatório</button>
-        <button class="nav-btn" data-page="minhaconta" onclick="navigateTo('minhaconta')">👤 Minha Conta</button>
+        <button class="nav-btn" data-page="relatorio" onclick="navigateTo('relatorio')" id="navRelatorio">📊 Relatório</button>
+        <button class="nav-btn" data-page="minhaconta" onclick="navigateTo('minhaconta')" id="navMinhaConta">👤 Minha Conta</button>
         <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">⚙️ Admin</button>
     </nav>
     <main class="main-content">
@@ -84,14 +84,9 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">📅 Fila do Dia</span>
-                    <button class="btn btn-primary btn-sm" onclick="openActivityModal()">➕ Nova Atividade</button>
+                    <button class="btn btn-primary btn-sm" id="btnNovaAtividade" onclick="openActivityModal()">➕ Nova Atividade</button>
                 </div>
-                <div style="overflow-x:auto;">
-                    <table>
-                        <thead><tr><th></th><th>Título</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Ações</th></tr></thead>
-                        <tbody id="tbodyAtividades"></tbody>
-                    </table>
-                </div>
+                <div style="overflow-x:auto;"><table><thead><tr><th></th><th>Título</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Estado</th><th>Ações</th></tr></thead><tbody id="tbodyAtividades"></tbody></table></div>
             </div>
         </div>
 
@@ -106,12 +101,13 @@
                     <div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div>
                     <div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div>
                 </div>
+                <div class="form-group" id="filtroUsuarioGroup" style="display:none;">
+                    <label>Filtrar por usuário</label>
+                    <select id="relUsuarioFiltro"><option value="">Todos</option></select>
+                </div>
                 <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
                 <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
-                <table>
-                    <thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead>
-                    <tbody id="tbodyRelatorio"></tbody>
-                </table>
+                <table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table>
             </div>
         </div>
 
@@ -131,7 +127,7 @@
         <div class="page" id="page-admin">
             <div class="card">
                 <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span><button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button></div>
-                <table><thead><tr><th>Usuário</th><th>Nível</th><th>Ações</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table>
+                <table><thead><tr><th>Usuário</th><th>Nível</th><th>Empresa</th><th>Ações</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table>
             </div>
         </div>
     </main>
@@ -145,7 +141,14 @@
         <div class="form-group"><label>Descrição detalhada</label><textarea id="atvDescricao" placeholder="Relate os detalhes da solicitação..."></textarea></div>
         <div class="form-row"><div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div><div class="form-group"><label>Hora Fim <span id="obrigatorioFim" style="color:var(--danger);display:none;">*</span></label><input type="time" id="atvHoraFim"></div></div>
         <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
-        <div class="form-group"><label>Estado</label><select id="atvEstado"><option value="Aberto">🔓 Aberto</option><option value="Em andamento">🔄 Em andamento</option><option value="Finalizado">✅ Finalizado</option></select></div>
+        <div class="form-group" id="estadoGroup">
+            <label>Estado</label>
+            <select id="atvEstado">
+                <option value="Aberto">🔓 Aberto</option>
+                <option value="Em andamento">🔄 Em andamento</option>
+                <option value="Finalizado">✅ Finalizado</option>
+            </select>
+        </div>
         <div class="form-group" id="solucaoGroup" style="display:none;"><label>Solução Aplicada</label><textarea id="atvSolucao"></textarea></div>
         <div class="form-group" id="checkPendenciaGroup" style="display:none;"><label><input type="checkbox" id="atvComPendencia"> Com Pendência</label></div>
         <div class="form-group" id="pendenciaGroup" style="display:none;"><label>Descreva a pendência</label><textarea id="atvPendencia"></textarea></div>
@@ -167,8 +170,24 @@
     <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
         <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
         <div class="form-group"><label>Nome *</label><input type="text" id="userNome"></div>
-        <div class="form-group"><label>Senha *</label><input type="password" id="userSenha"></div>
-        <div class="form-group"><label>Nível</label><select id="userNivel"><option value="comum">👤 Comum</option><option value="admin">👑 Admin</option></select></div>
+        <div class="form-group"><label>Senha *</label><input type="password" id="userSenha" placeholder="Mín. 4 caracteres"></div>
+        <div class="form-group"><label>Nível</label>
+            <select id="userNivel">
+                <option value="comum">👤 Técnico</option>
+                <option value="admin">👑 Admin</option>
+                <option value="cliente">🏢 Cliente</option>
+            </select>
+        </div>
+        <!-- Campos extras para cliente -->
+        <div id="clienteFields" style="display:none;">
+            <div class="form-group"><label>Empresa *</label><input type="text" id="userEmpresa"></div>
+            <div class="form-group"><label>Endereço Empresarial</label>
+                <input type="text" id="userEndereco" list="enderecoList" autocomplete="off">
+                <datalist id="enderecoList"></datalist>
+            </div>
+            <div class="form-group"><label>E-mail</label><input type="email" id="userEmail"></div>
+            <div class="form-group"><label>Telefone</label><input type="text" id="userTelefone"></div>
+        </div>
         <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarUsuario()">💾 Salvar</button></div>
     </div>
 </div>
@@ -176,11 +195,11 @@
 
 <script>
 (function() {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbwd1xNJDoEMnvR6-5XBWVQyLK_TfWtKn_i4q_ueVTsQ9MMbqLswna2KcEiBCiPB7U_2qA/exec';
+    const API_URL = 'https://script.google.com/macros/s/AKfycbz2Uj8asgo4p0i2Dla-GgQC_3uA5kNCyMXcFxWo1WDTfLd63CqHbBUL7Q3njhg8ts8jNg/exec';
     const dataCache = { users: [], activities: [], lastLoad: 0 };
     let currentUser = null;
 
-    // ---------- HELPERS ----------
+    // Helpers (mesmos de antes)
     function normalizeDate(v) { if(!v) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); if(!isNaN(d.getTime())) return d.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); return String(v).trim(); }
     function excelSerialToTime(v){ if(v==null||v==='')return''; if(typeof v==='string'){ if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v))return v.substring(0,5); if(v.includes('T')){const t=v.split('T')[1];return t?t.substring(0,5):'';} return v; } if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');} return''; }
     function hojeLocal(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});}
@@ -204,8 +223,8 @@
     function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
     function verifyPassword(pwd,stored){return String(pwd).trim()===String(stored).trim()||hashPassword(pwd)===String(stored).trim();}
 
-    // ---------- SESSÃO ----------
-    function setUser(u){currentUser=u;if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel}));}else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}}
+    // Sessão
+    function setUser(u){currentUser=u;if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel,empresa:u.empresa||'',endereco:u.endereco||'',email:u.email||'',telefone:u.telefone||''}));}else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}}
     async function restoreSession(){
         const uid=sessionStorage.getItem('app_uid');if(!uid)return null;
         let cached=null;try{cached=JSON.parse(sessionStorage.getItem('app_cache'));}catch(e){}
@@ -228,9 +247,27 @@
     function updateHeader(){
         if(!currentUser)return;
         const t=document.getElementById('headerUserTag');
-        t.innerHTML=currentUser.nivel==='admin'?`👑 ${currentUser.nome} <span class="admin-badge">Admin</span>`:`👤 ${currentUser.nome}`;
+        let nivel='';
+        if(currentUser.nivel==='admin') nivel=' <span class="admin-badge">Admin</span>';
+        else if(currentUser.nivel==='cliente') nivel=' <span style="background:#e0f2fe;color:#0369a1;font-size:0.7rem;padding:2px 8px;border-radius:10px;">Cliente</span>';
+        t.innerHTML=`👤 ${currentUser.nome}${nivel}`;
     }
-    function updateNav(){document.getElementById('navAdmin').style.display=currentUser&&currentUser.nivel==='admin'?'flex':'none';}
+    function updateNav(){
+        const navAdmin = document.getElementById('navAdmin');
+        const navMinhaConta = document.getElementById('navMinhaConta');
+        if(currentUser.nivel==='admin'){
+            navAdmin.style.display='flex';
+            navMinhaConta.style.display='flex';
+        } else {
+            navAdmin.style.display='none';
+            if(currentUser.nivel==='cliente'){
+                navMinhaConta.style.display='none'; // cliente não tem Minha Conta
+            } else {
+                navMinhaConta.style.display='flex';
+            }
+        }
+        // Mostrar botão Relatório sempre (já está visível)
+    }
     function navigateTo(p){
         document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -242,18 +279,33 @@
         else if(p==='admin')renderAdmin();
     }
 
-    // ---------- DASHBOARD ----------
+    // Dashboard (adaptado para cliente)
     function renderDashboard(){
         const hoje=hojeLocal();
         const acts=dataCache.activities;
-        let filtradas=currentUser.nivel==='admin'?acts.filter(a=>a.data===hoje):acts.filter(a=>a.data===hoje&&a.usuarioId===currentUser.id);
+        let filtradas;
+        if(currentUser.nivel==='admin'){
+            filtradas=acts.filter(a=>a.data===hoje);
+        } else if(currentUser.nivel==='cliente'){
+            // Cliente vê seus próprios chamados, mas apenas abertos/em andamento? O enunciado diz: "será exibido os chamados em aberto ou em andamento". Mas também menciona relatório com todos. Decidi mostrar apenas abertos e em andamento no dashboard.
+            filtradas=acts.filter(a=>a.data===hoje && a.usuarioId===currentUser.id && (a.estado==='Aberto'||a.estado==='Em andamento'));
+        } else {
+            filtradas=acts.filter(a=>a.data===hoje && a.usuarioId===currentUser.id);
+        }
         const prioridade={'Aberto':1,'Em andamento':2,'Finalizado':3};
         filtradas.sort((a,b)=>(prioridade[a.estado]||4)-(prioridade[b.estado]||4)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
         const tbody=document.getElementById('tbodyAtividades');
         if(!filtradas.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">Nenhuma atividade hoje.</td></tr>';return;}
+        const isCliente = currentUser.nivel==='cliente';
         tbody.innerHTML=filtradas.map(a=>{
-            const pode=currentUser.nivel==='admin'||a.usuarioId===currentUser.id;
+            const pode = currentUser.nivel==='admin' || (a.usuarioId===currentUser.id && !isCliente);
             const dotColor=a.estado==='Finalizado'?'dot-verde':a.estado==='Em andamento'?'dot-amarelo':'dot-vermelho';
+            // Cliente não pode editar, excluir nem finalizar; só visualizar
+            const actions = isCliente ? 
+                `<button class="btn btn-outline btn-sm" onclick="visualizarAtividade('${a.id}')" title="Visualizar">👁️</button>` :
+                `<button class="btn btn-outline btn-sm" onclick="visualizarAtividade('${a.id}')" title="Visualizar">👁️</button>
+                ${pode?`<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>`:''}
+                ${pode&&(a.estado==='Aberto'||a.estado==='Em andamento')?`<button class="btn btn-success btn-sm" onclick="finalizarAtividade('${a.id}')">✅</button>`:''}`;
             return `<tr>
                 <td><span class="dot ${dotColor}"></span></td>
                 <td><strong>${esc(a.servico_realizado)}</strong></td>
@@ -261,22 +313,18 @@
                 <td>${a.hora_inicio||'-'}</td>
                 <td>${a.hora_fim||'-'}</td>
                 <td><span class="status-badge" style="background:${a.estado==='Finalizado'?'#d1fae5':a.estado==='Em andamento'?'#dbeafe':'#fef3c7'}">${a.estado}</span></td>
-                <td style="display:flex; gap:4px;">
-                    <button class="btn btn-outline btn-sm" onclick="visualizarAtividade('${a.id}')" title="Visualizar">👁️</button>
-                    ${pode?`<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>`:''}
-                    ${pode&&(a.estado==='Aberto'||a.estado==='Em andamento')?`<button class="btn btn-success btn-sm" onclick="finalizarAtividade('${a.id}')">✅</button>`:''}
-                </td>
+                <td style="display:flex; gap:4px;">${actions}</td>
             </tr>`;
         }).join('');
     }
 
-    // ---------- VISUALIZAR ----------
+    // Visualizar (mantido)
     window.visualizarAtividade = function(id){
         const a = dataCache.activities.find(a=>a.id===id);
         if(!a) return toast('Atividade não encontrada.');
         const estado = a.estado || '';
         const dotColor = estado==='Finalizado'?'dot-verde':estado==='Em andamento'?'dot-amarelo':'dot-vermelho';
-        const html = `
+        document.getElementById('visualizarConteudo').innerHTML = `
             <p><strong><span class="dot ${dotColor}"></span> ${esc(estado)}</strong></p>
             <p><strong>Título:</strong> ${esc(a.servico_realizado)}</p>
             <p><strong>Solicitante:</strong> ${esc(a.solicitante)}</p>
@@ -287,24 +335,41 @@
             <p><strong>Pendência:</strong> ${esc(a.pendencia||'-')}</p>
             <p><strong>Descrição detalhada:</strong><br>${esc(a.descricao||'Nenhuma descrição fornecida.')}</p>
         `;
-        document.getElementById('visualizarConteudo').innerHTML = html;
         document.getElementById('modalVisualizarTitulo').textContent = '🔍 ' + esc(a.servico_realizado);
         document.getElementById('modalVisualizarOverlay').style.display = 'flex';
     };
 
-    // ---------- MODAL ATIVIDADE ----------
+    // Modal atividade (com restrição para cliente)
     function openActivityModal(atv=null){
         document.getElementById('atvId').value=''; document.getElementById('atvServico').value=''; document.getElementById('atvSolicitante').value=''; document.getElementById('atvHoraFim').value=''; document.getElementById('atvSolucao').value=''; document.getElementById('atvPendencia').value=''; document.getElementById('atvDescricao').value='';
         document.getElementById('atvComPendencia').checked=false;
-        document.getElementById('atvEstado').value='Aberto';
         document.getElementById('atvData').value=hojeLocal();
         const now=new Date(); document.getElementById('atvHoraInicio').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-        document.getElementById('solucaoGroup').style.display='none'; document.getElementById('checkPendenciaGroup').style.display='none'; document.getElementById('pendenciaGroup').style.display='none'; document.getElementById('obrigatorioFim').style.display='none';
-        if(atv){
-            document.getElementById('atvId').value=atv.id; document.getElementById('atvServico').value=atv.servico_realizado; document.getElementById('atvHoraInicio').value=excelSerialToTime(atv.hora_inicio); document.getElementById('atvHoraFim').value=excelSerialToTime(atv.hora_fim); document.getElementById('atvSolicitante').value=atv.solicitante; document.getElementById('atvEstado').value=atv.estado; document.getElementById('atvData').value=normalizeDate(atv.data); document.getElementById('atvSolucao').value=atv.solucao_aplicada||''; document.getElementById('atvPendencia').value=atv.pendencia||''; document.getElementById('atvDescricao').value=atv.descricao||'';
+        
+        const isCliente = currentUser.nivel==='cliente';
+        const estadoGroup = document.getElementById('estadoGroup');
+        const estadoSelect = document.getElementById('atvEstado');
+        if(isCliente){
+            estadoGroup.style.display='none';
+            estadoSelect.value = 'Aberto'; // cliente sempre abre como Aberto
+        } else {
+            estadoGroup.style.display='block';
+            estadoSelect.value = atv ? atv.estado : 'Aberto';
+        }
+
+        document.getElementById('solucaoGroup').style.display='none'; 
+        document.getElementById('checkPendenciaGroup').style.display='none'; 
+        document.getElementById('pendenciaGroup').style.display='none'; 
+        document.getElementById('obrigatorioFim').style.display='none';
+
+        if(atv && !isCliente){
+            document.getElementById('atvId').value=atv.id; document.getElementById('atvServico').value=atv.servico_realizado; document.getElementById('atvHoraInicio').value=excelSerialToTime(atv.hora_inicio); document.getElementById('atvHoraFim').value=excelSerialToTime(atv.hora_fim); document.getElementById('atvSolicitante').value=atv.solicitante; document.getElementById('atvData').value=normalizeDate(atv.data); document.getElementById('atvSolucao').value=atv.solucao_aplicada||''; document.getElementById('atvPendencia').value=atv.pendencia||''; document.getElementById('atvDescricao').value=atv.descricao||'';
             if(atv.estado==='Finalizado'){ document.getElementById('solucaoGroup').style.display='block'; document.getElementById('obrigatorioFim').style.display='inline'; }
             else if(atv.estado==='Em andamento'){ document.getElementById('checkPendenciaGroup').style.display='block'; const temPend=atv.pendencia&&atv.pendencia.trim().length>0; document.getElementById('atvComPendencia').checked=temPend; document.getElementById('pendenciaGroup').style.display=temPend?'block':'none'; }
             document.getElementById('modalAtividadeTitulo').textContent='✏️ Editar Atividade';
+        } else if(atv && isCliente){
+            // Cliente não deve editar, mas se por algum motivo chamar, apenas visualiza (não abrir modal de edição)
+            return;
         } else {
             document.getElementById('modalAtividadeTitulo').textContent='➕ Nova Atividade';
         }
@@ -312,6 +377,7 @@
     }
     function closeActivityModal(){document.getElementById('modalAtividadeOverlay').style.display='none';}
     document.getElementById('atvEstado').addEventListener('change',function(){
+        if(currentUser.nivel==='cliente') return;
         const solGroup=document.getElementById('solucaoGroup'); const checkPendGroup=document.getElementById('checkPendenciaGroup'); const pendGroup=document.getElementById('pendenciaGroup'); const obrigatorio=document.getElementById('obrigatorioFim');
         if(this.value==='Finalizado'){ solGroup.style.display='block'; obrigatorio.style.display='inline'; checkPendGroup.style.display='none'; pendGroup.style.display='none'; }
         else if(this.value==='Em andamento'){ solGroup.style.display='none'; obrigatorio.style.display='none'; checkPendGroup.style.display='block'; pendGroup.style.display=document.getElementById('atvComPendencia').checked?'block':'none'; }
@@ -319,7 +385,8 @@
     });
     document.getElementById('atvComPendencia').addEventListener('change',function(){ document.getElementById('pendenciaGroup').style.display=this.checked?'block':'none'; });
     async function salvarAtividade(){
-        const id=document.getElementById('atvId').value; const servico=document.getElementById('atvServico').value.trim(); const inicio=document.getElementById('atvHoraInicio').value; const fim=document.getElementById('atvHoraFim').value; const solicitante=document.getElementById('atvSolicitante').value.trim(); const estado=document.getElementById('atvEstado').value; const data=document.getElementById('atvData').value; const solucao=document.getElementById('atvSolucao').value.trim(); const pendencia=document.getElementById('atvPendencia').value.trim(); const descricao=document.getElementById('atvDescricao').value.trim();
+        const id=document.getElementById('atvId').value; const servico=document.getElementById('atvServico').value.trim(); const inicio=document.getElementById('atvHoraInicio').value; const fim=document.getElementById('atvHoraFim').value; const solicitante=document.getElementById('atvSolicitante').value.trim(); const data=document.getElementById('atvData').value; const solucao=document.getElementById('atvSolucao').value.trim(); const pendencia=document.getElementById('atvPendencia').value.trim(); const descricao=document.getElementById('atvDescricao').value.trim();
+        const estado = currentUser.nivel==='cliente' ? 'Aberto' : document.getElementById('atvEstado').value;
         if(!servico||!inicio||!solicitante){toast('Preencha os campos obrigatórios.');return;}
         if(estado==='Finalizado'&&!fim){toast('Informe a hora fim.');return;}
         if(id){
@@ -331,73 +398,150 @@
         renderDashboard(); closeActivityModal(); toast(id?'Atividade atualizada!':'Atividade criada!'); syncData('activities',dataCache.activities);
     }
     async function excluirAtividade(id){ if(!confirm('Excluir?'))return; dataCache.activities=dataCache.activities.filter(a=>a.id!==id); renderDashboard(); toast('Excluída.'); syncData('activities',dataCache.activities); }
-    function editarAtividade(id){ const a=dataCache.activities.find(a=>a.id===id); if(a) openActivityModal(a); }
+    function editarAtividade(id){ const a=dataCache.activities.find(a=>a.id===id); if(a && currentUser.nivel!=='cliente') openActivityModal(a); }
     window.finalizarAtividade = function(id){
+        if(currentUser.nivel==='cliente') return;
         const a=dataCache.activities.find(a=>a.id===id); if(!a)return;
         document.getElementById('atvId').value=a.id; document.getElementById('atvServico').value=a.servico_realizado; document.getElementById('atvHoraInicio').value=excelSerialToTime(a.hora_inicio); document.getElementById('atvHoraFim').value=excelSerialToTime(a.hora_fim)||''; document.getElementById('atvSolicitante').value=a.solicitante; document.getElementById('atvData').value=normalizeDate(a.data); document.getElementById('atvSolucao').value=a.solucao_aplicada||''; document.getElementById('atvEstado').value='Finalizado'; document.getElementById('atvDescricao').value=a.descricao||'';
+        document.getElementById('estadoGroup').style.display='block';
         document.getElementById('solucaoGroup').style.display='block'; document.getElementById('obrigatorioFim').style.display='inline'; document.getElementById('checkPendenciaGroup').style.display='none'; document.getElementById('pendenciaGroup').style.display='none';
         document.getElementById('modalAtividadeTitulo').textContent='✅ Finalizar Atendimento'; document.getElementById('modalAtividadeOverlay').style.display='flex';
     };
 
-    // ---------- RELATÓRIO ----------
-    function setupRelatorio(){document.getElementById('relDataInicio').value=hojeLocal();document.getElementById('relDataFim').value=hojeLocal();carregarRelatorio();}
+    // Relatório (com filtro de usuário para admin)
+    function setupRelatorio(){
+        document.getElementById('relDataInicio').value=hojeLocal();
+        document.getElementById('relDataFim').value=hojeLocal();
+        const filtroGroup = document.getElementById('filtroUsuarioGroup');
+        const select = document.getElementById('relUsuarioFiltro');
+        if(currentUser.nivel==='admin'){
+            filtroGroup.style.display='block';
+            select.innerHTML = '<option value="">Todos</option>';
+            dataCache.users.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.id;
+                opt.textContent = u.nome + (u.empresa ? ` (${u.empresa})` : '');
+                select.appendChild(opt);
+            });
+        } else {
+            filtroGroup.style.display='none';
+        }
+        carregarRelatorio();
+    }
     function carregarRelatorio(){
         const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value; if(!ini||!fim)return;
         let acts=dataCache.activities.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
+        
+        if(currentUser.nivel==='admin'){
+            const filtroUsuario = document.getElementById('relUsuarioFiltro').value;
+            if(filtroUsuario) acts = acts.filter(a=>a.usuarioId===filtroUsuario);
+        } else {
+            acts = acts.filter(a=>a.usuarioId===currentUser.id);
+        }
         acts.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
         const tbody=document.getElementById('tbodyRelatorio'),summary=document.getElementById('reportSummary');
         if(!acts.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">Nenhum atendimento.</td></tr>';summary.innerHTML='';return;}
         let totalMin=0,finalizados=0;
         tbody.innerHTML=acts.map(a=>{
-            const dur=calcularDuracao(a.hora_inicio,a.hora_fim); if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
-            return `<tr><td>${formatarData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td><td>${a.hora_inicio||'-'}</td><td>${a.hora_fim||'-'}</td><td>${formatarDuracao(dur)}</td><td>${a.estado}</td></tr>`;
+            const dur=calcDur(a.hora_inicio,a.hora_fim); if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
+            return `<tr><td>${fmtData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td><td>${a.hora_inicio||'-'}</td><td>${a.hora_fim||'-'}</td><td>${fmtDur(dur)}</td><td>${a.estado}</td></tr>`;
         }).join('');
         const h=Math.floor(totalMin/60),m=totalMin%60;
         summary.innerHTML=`<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados</div></div><div class="summary-card"><div class="summary-value">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
     }
-    function calcularDuracao(hi,hf){ hi=excelSerialToTime(hi);hf=excelSerialToTime(hf); if(!hi||!hf)return 0; const[h1,m1]=hi.split(':').map(Number), [h2,m2]=hf.split(':').map(Number); let min=(h2*60+m2)-(h1*60+m1); if(min<0)min+=24*60; return Math.max(0,min); }
-    function formatarDuracao(m){ if(m<=0)return'-'; const h=Math.floor(m/60),min=m%60; return h>0?`${h}h ${min}min`:`${min}min`; }
-    function formatarData(s){ if(!s)return'-'; const[a,m,d]=s.split('-'); return`${d}/${m}/${a}`; }
+    function calcDur(hi,hf){ hi=excelSerialToTime(hi);hf=excelSerialToTime(hf); if(!hi||!hf)return 0; const[h1,m1]=hi.split(':').map(Number), [h2,m2]=hf.split(':').map(Number); let min=(h2*60+m2)-(h1*60+m1); if(min<0)min+=24*60; return Math.max(0,min); }
+    function fmtDur(m){ if(m<=0)return'-'; const h=Math.floor(m/60),min=m%60; return h>0?`${h}h ${min}min`:`${min}min`; }
+    function fmtData(s){ if(!s)return'-'; const[a,m,d]=s.split('-'); return`${d}/${m}/${a}`; }
     async function exportarRelatorio(){
         const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
         let acts=dataCache.activities; if(ini&&fim)acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel!=='admin')acts=acts.filter(a=>a.usuarioId===currentUser.id);
+        if(currentUser.nivel==='admin'){
+            const filtroUsuario = document.getElementById('relUsuarioFiltro').value;
+            if(filtroUsuario) acts = acts.filter(a=>a.usuarioId===filtroUsuario);
+        } else {
+            acts = acts.filter(a=>a.usuarioId===currentUser.id);
+        }
         const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado']];
-        acts.forEach(a=>{ const dur=calcularDuracao(a.hora_inicio,a.hora_fim); excel.push([formatarData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',formatarDuracao(dur),a.estado]); });
+        acts.forEach(a=>{ const dur=calcDur(a.hora_inicio,a.hora_fim); excel.push([fmtData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',fmtDur(dur),a.estado]); });
         const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(excel);
         XLSX.utils.book_append_sheet(wb,ws,'Relatório'); XLSX.writeFile(wb,`relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
         toast('📥 Exportado!');
     }
 
-    // ---------- MINHA CONTA ----------
-    function renderMinhaConta(){ document.getElementById('contaNome').value=currentUser.nome; document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':'Usuário Comum'; document.getElementById('contaNovaSenha').value=''; document.getElementById('contaConfirmarSenha').value=''; }
+    // Minha Conta
+    function renderMinhaConta(){ document.getElementById('contaNome').value=currentUser.nome; document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':(currentUser.nivel==='cliente'?'Cliente':'Técnico'); document.getElementById('contaNovaSenha').value=''; document.getElementById('contaConfirmarSenha').value=''; }
     async function alterarMinhaSenha(){
+        if(currentUser.nivel==='cliente') return;
         const n=document.getElementById('contaNovaSenha').value.trim(),c=document.getElementById('contaConfirmarSenha').value.trim();
         if(!n||n.length<4)return toast('Mínimo 4 caracteres.'); if(n!==c)return toast('Senhas não conferem.');
         const idx=dataCache.users.findIndex(u=>u.id===currentUser.id);
         if(idx>=0){ dataCache.users[idx].senha=hashPassword(n); setUser(dataCache.users[idx]); await syncData('users',dataCache.users); toast('Senha alterada!'); }
     }
 
-    // ---------- ADMIN ----------
+    // Admin (com suporte a clientes)
     function renderAdmin(){
-        if(currentUser.nivel!=='admin')return navigateTo('dashboard');
-        document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td>${esc(u.nome)} ${u.id===currentUser.id?'(você)':''}</td><td>${u.nivel==='admin'?'👑 Admin':'👤 Comum'}</td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
+        if(currentUser.nivel!=='admin') return;
+        document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td>${esc(u.nome)} ${u.id===currentUser.id?'(você)':''}</td><td>${u.nivel==='admin'?'👑 Admin':u.nivel==='cliente'?'🏢 Cliente':'👤 Técnico'}</td><td>${u.empresa||'-'}</td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
+    }
+
+    // Modal usuário (com campos de cliente e autocomplete)
+    function atualizarEnderecoList(){
+        const list = document.getElementById('enderecoList');
+        list.innerHTML = '';
+        const enderecos = [...new Set(dataCache.users.filter(u=>u.endereco&&u.endereco.trim()).map(u=>u.endereco.trim()))];
+        enderecos.forEach(end => {
+            const opt = document.createElement('option');
+            opt.value = end;
+            list.appendChild(opt);
+        });
     }
     function openUserModal(u=null){
         document.getElementById('userId').value=''; document.getElementById('userNome').value=''; document.getElementById('userSenha').value=''; document.getElementById('userNivel').value='comum';
+        document.getElementById('userEmpresa').value=''; document.getElementById('userEndereco').value=''; document.getElementById('userEmail').value=''; document.getElementById('userTelefone').value='';
+        document.getElementById('clienteFields').style.display='none';
         document.getElementById('modalUserTitulo').textContent='➕ Novo Usuário';
-        if(u){ document.getElementById('userId').value=u.id; document.getElementById('userNome').value=u.nome; document.getElementById('userSenha').placeholder='Deixe em branco'; document.getElementById('userNivel').value=u.nivel; document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário'; }
+        if(u){
+            document.getElementById('userId').value=u.id; document.getElementById('userNome').value=u.nome; document.getElementById('userSenha').placeholder='Deixe em branco para manter'; document.getElementById('userNivel').value=u.nivel;
+            if(u.nivel==='cliente'){
+                document.getElementById('clienteFields').style.display='block';
+                document.getElementById('userEmpresa').value=u.empresa||''; document.getElementById('userEndereco').value=u.endereco||''; document.getElementById('userEmail').value=u.email||''; document.getElementById('userTelefone').value=u.telefone||'';
+            }
+            document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário';
+        }
+        atualizarEnderecoList();
         document.getElementById('modalUserOverlay').style.display='flex';
     }
     function closeUserModal(){document.getElementById('modalUserOverlay').style.display='none';}
+    document.getElementById('userNivel').addEventListener('change',function(){
+        document.getElementById('clienteFields').style.display = this.value==='cliente' ? 'block' : 'none';
+        if(this.value!=='cliente'){
+            document.getElementById('userEmpresa').value=''; document.getElementById('userEndereco').value=''; document.getElementById('userEmail').value=''; document.getElementById('userTelefone').value='';
+        }
+        atualizarEnderecoList();
+    });
     async function salvarUsuario(){
-        const id=document.getElementById('userId').value,nome=document.getElementById('userNome').value.trim(),senha=document.getElementById('userSenha').value.trim(),nivel=document.getElementById('userNivel').value;
+        const id=document.getElementById('userId').value, nome=document.getElementById('userNome').value.trim(), senha=document.getElementById('userSenha').value.trim(), nivel=document.getElementById('userNivel').value;
         if(!nome||nome.length<2)return toast('Nome curto.');
         if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()&&u.id!==id))return toast('Nome já existe.');
-        if(id){ const idx=dataCache.users.findIndex(u=>u.id===id); dataCache.users[idx].nome=nome; dataCache.users[idx].nivel=nivel; if(senha.length>=4)dataCache.users[idx].senha=hashPassword(senha); }
-        else{ if(!senha||senha.length<4)return toast('Senha mínima 4.'); dataCache.users.push({id:genId(),nome,senha:hashPassword(senha),nivel,criadoEm:agoraISO()}); }
+        const empresa = document.getElementById('userEmpresa').value.trim();
+        const endereco = document.getElementById('userEndereco').value.trim();
+        const email = document.getElementById('userEmail').value.trim();
+        const telefone = document.getElementById('userTelefone').value.trim();
+        if(nivel==='cliente' && !empresa) return toast('Empresa é obrigatória para cliente.');
+        
+        if(id){
+            const idx=dataCache.users.findIndex(u=>u.id===id);
+            if(idx>=0){ 
+                Object.assign(dataCache.users[idx],{nome,nivel,empresa,endereco,email,telefone});
+                if(senha.length>=4) dataCache.users[idx].senha=hashPassword(senha);
+                if(currentUser.id===id) setUser(dataCache.users[idx]);
+            }
+        }else{
+            if(!senha||senha.length<4)return toast('Senha mínima 4.');
+            dataCache.users.push({id:genId(),nome,senha:hashPassword(senha),nivel,empresa,endereco,email,telefone,criadoEm:agoraISO(),atualizadoEm:agoraISO()});
+        }
         await syncData('users',dataCache.users); closeUserModal(); renderAdmin(); toast(id?'Usuário atualizado!':'Usuário criado!');
+        atualizarEnderecoList();
     }
     async function excluirUsuario(id){ if(!confirm('Excluir?'))return; dataCache.users=dataCache.users.filter(u=>u.id!==id); await syncData('users',dataCache.users); renderAdmin(); toast('Excluído.'); }
     function editarUsuario(id){ const u=dataCache.users.find(u=>u.id===id); if(u)openUserModal(u); }
