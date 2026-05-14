@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Atendimentos v1.1.1</title>
+    <title>Gerenciador de Atendimentos v2.0.0</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         :root { --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --danger: #dc2626; --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --radius: 10px; }
@@ -20,17 +20,21 @@
         .nav-btn { padding:9px 18px; border:none; background:transparent; color:var(--text-light); cursor:pointer; border-radius:20px; font-weight:500; font-size:0.9rem; display:flex; align-items:center; gap:6px; transition:.2s; }
         .nav-btn:hover { background:#e2e8f0; }
         .nav-btn.active { background:var(--primary); color:#fff; font-weight:600; }
+        .nav-btn:focus { outline:2px solid var(--primary); outline-offset:2px; }
         .main-content { flex:1; padding:24px; overflow-y:auto; max-height:70vh; }
         .page { display:none; }
         .page.active { display:block; }
         .btn { padding:10px 20px; border:none; border-radius:20px; cursor:pointer; font-weight:600; font-size:0.9rem; display:inline-flex; align-items:center; gap:6px; transition:.2s; }
+        .btn:focus { outline:2px solid var(--primary); outline-offset:2px; }
         .btn-primary { background:var(--primary); color:#fff; }
         .btn-success { background:var(--success); color:#fff; }
         .btn-danger { background:var(--danger); color:#fff; }
         .btn-outline { background:transparent; border:2px solid var(--primary); color:var(--primary); }
         .btn-sm { padding:6px 14px; font-size:0.8rem; border-radius:16px; }
+        .btn:disabled { opacity:0.5; cursor:not-allowed; }
         .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
         .card-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+        .card-title { font-size:1.1rem; font-weight:700; }
         table { width:100%; border-collapse:collapse; font-size:0.85rem; }
         th,td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--border); }
         th { background:#f8fafc; font-weight:700; color:var(--text-light); text-transform:uppercase; font-size:0.75rem; }
@@ -42,47 +46,63 @@
         .form-group { margin-bottom:14px; }
         .form-group label { display:block; font-weight:600; margin-bottom:4px; font-size:0.85rem; color:var(--text-light); }
         .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px 14px; border:2px solid var(--border); border-radius:6px; font-size:0.95rem; background:#fafbfc; font-family:inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--primary); }
         .form-group textarea { resize:vertical; min-height:60px; }
         .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:20px; }
         .modal { background:var(--surface); border-radius:var(--radius); padding:24px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; position:relative; }
         .modal-close { position:absolute; top:12px; right:16px; background:none; border:none; font-size:1.5rem; cursor:pointer; }
+        .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
         .login-container { max-width:420px; width:100%; background:var(--surface); border-radius:var(--radius); box-shadow:0 10px 25px rgba(0,0,0,0.12); padding:40px 32px; text-align:center; }
+        .login-icon { font-size:3rem; margin-bottom:8px; }
         .login-error { color:var(--danger); font-size:0.85rem; margin-top:8px; display:none; }
-        .toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:14px 22px; border-radius:25px; z-index:2000; animation:slideUp .3s,fadeOut .3s 2.5s forwards; font-size:0.9rem; }
+        .toast { position:fixed; bottom:24px; right:24px; background:#1e293b; color:#fff; padding:14px 22px; border-radius:25px; z-index:2000; animation:slideUp .3s,fadeOut .3s 2.5s forwards; font-size:0.9rem; max-width:90vw; }
+        .toast-error { background:var(--danger); }
+        .toast-success { background:var(--success); }
         @keyframes slideUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
         @keyframes fadeOut { to{opacity:0;transform:translateY(10px);} }
         .hidden { display:none; }
         .readonly-field { background-color: #e9ecef; }
-        /* Alinhamento do checkbox "outra pessoa" */
-        #outraPessoaGroup label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            font-weight: normal;
-        }
-        @media(max-width:768px){ .nav-bar{overflow-x:auto;} }
+        .status-badge { padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:600; }
+        .summary-card { display:inline-block; background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px 20px; margin-right:10px; margin-bottom:10px; }
+        .summary-value { font-size:1.5rem; font-weight:700; color:var(--primary); }
+        .summary-label { font-size:0.75rem; color:var(--text-light); text-transform:uppercase; }
+        #syncIndicator { position:fixed; top:16px; right:16px; padding:6px 14px; border-radius:20px; font-size:0.75rem; z-index:1500; display:none; align-items:center; gap:6px; }
+        #syncIndicator.syncing { background:#dbeafe; color:#1e40af; display:flex; }
+        #syncIndicator.offline { background:#fef3c7; color:#92400e; display:flex; }
+        #syncIndicator.error { background:#fee2e2; color:#991b1b; display:flex; }
+        .spinner { display:inline-block; width:12px; height:12px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        #outraPessoaGroup label { display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:normal; }
+        @media(max-width:768px){ .nav-bar{overflow-x:auto;} .form-row{grid-template-columns:1fr;} }
+        @media print { #syncIndicator, .nav-bar, .modal-overlay, .header-actions { display:none !important; } }
     </style>
 </head>
 <body>
+
+<!-- Indicador de sincronização -->
+<div id="syncIndicator" role="status" aria-live="polite"></div>
+
+<!-- LOGIN -->
 <div id="loginContainer" class="login-container">
-    <div class="login-icon">📋</div>
+    <div class="login-icon" aria-hidden="true">📋</div>
     <h2>Gerenciador de Atendimentos</h2>
-    <div class="form-group"><label>Usuário</label><input type="text" id="loginUser" placeholder="Usuário"></div>
-    <div class="form-group"><label>Senha</label><input type="password" id="loginPass" placeholder="Senha"></div>
-    <p class="login-error" id="loginError"></p>
-    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">🔐 Entrar</button>
+    <div class="form-group"><label for="loginUser">Usuário</label><input type="text" id="loginUser" placeholder="Usuário" autocomplete="username"></div>
+    <div class="form-group"><label for="loginPass">Senha</label><input type="password" id="loginPass" placeholder="Senha" autocomplete="current-password"></div>
+    <p class="login-error" id="loginError" role="alert"></p>
+    <button class="btn btn-primary" id="btnLogin" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">🔐 Entrar</button>
 </div>
+
+<!-- APLICAÇÃO -->
 <div id="appContainer" class="app-container" style="display:none;">
     <header class="app-header">
-        <div class="logo"><span>📋</span> Atendimentos</div>
+        <div class="logo"><span aria-hidden="true">📋</span> Atendimentos</div>
         <div class="header-actions">
             <span class="user-tag" id="headerUserTag"></span>
-            <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;" onclick="logout()">🚪 Sair</button>
+            <button class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:#fff;" onclick="logout()" aria-label="Sair">🚪 Sair</button>
         </div>
     </header>
-    <nav class="nav-bar" id="navBar">
+    <nav class="nav-bar" id="navBar" role="navigation" aria-label="Menu principal">
         <button class="nav-btn active" data-page="dashboard" onclick="navigateTo('dashboard')">📅 Fila do Dia</button>
         <button class="nav-btn" data-page="relatorio" onclick="navigateTo('relatorio')" id="navRelatorio">📊 Relatório</button>
         <button class="nav-btn" data-page="minhaconta" onclick="navigateTo('minhaconta')" id="navMinhaConta">👤 Minha Conta</button>
@@ -106,26 +126,26 @@
                     <button class="btn btn-success btn-sm" onclick="exportarRelatorio()">📥 Exportar Excel</button>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Data Início</label><input type="date" id="relDataInicio"></div>
-                    <div class="form-group"><label>Data Fim</label><input type="date" id="relDataFim"></div>
+                    <div class="form-group"><label for="relDataInicio">Data Início</label><input type="date" id="relDataInicio"></div>
+                    <div class="form-group"><label for="relDataFim">Data Fim</label><input type="date" id="relDataFim"></div>
                 </div>
                 <div class="form-group" id="filtroUsuarioGroup" style="display:none;">
-                    <label>Filtrar por usuário</label>
+                    <label for="relUsuarioFiltro">Filtrar por usuário</label>
                     <select id="relUsuarioFiltro"><option value="">Todos</option></select>
                 </div>
                 <button class="btn btn-primary btn-sm" onclick="carregarRelatorio()">🔍 Filtrar</button>
                 <div class="report-summary" id="reportSummary" style="margin-top:16px;"></div>
-                <table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Data</th><th>Serviço</th><th>Solicitante</th><th>Início</th><th>Fim</th><th>Duração</th><th>Estado</th></tr></thead><tbody id="tbodyRelatorio"></tbody></table></div>
             </div>
         </div>
 
         <div class="page" id="page-minhaconta">
             <div class="card" style="max-width:500px;">
                 <div class="card-header"><span class="card-title">👤 Minha Conta</span></div>
-                <div class="form-group"><label>Usuário</label><input type="text" id="contaNome" disabled></div>
-                <div class="form-group"><label>Nível</label><input type="text" id="contaNivel" disabled></div>
-                <div class="form-group"><label>Nova Senha</label><input type="password" id="contaNovaSenha" placeholder="Mín. 4 caracteres"></div>
-                <div class="form-group"><label>Confirmar Senha</label><input type="password" id="contaConfirmarSenha"></div>
+                <div class="form-group"><label for="contaNome">Usuário</label><input type="text" id="contaNome" disabled></div>
+                <div class="form-group"><label for="contaNivel">Nível</label><input type="text" id="contaNivel" disabled></div>
+                <div class="form-group"><label for="contaNovaSenha">Nova Senha</label><input type="password" id="contaNovaSenha" placeholder="Mín. 4 caracteres" autocomplete="new-password"></div>
+                <div class="form-group"><label for="contaConfirmarSenha">Confirmar Senha</label><input type="password" id="contaConfirmarSenha" autocomplete="new-password"></div>
                 <button class="btn btn-primary" onclick="alterarMinhaSenha()">🔒 Alterar Senha</button>
             </div>
         </div>
@@ -133,26 +153,25 @@
         <div class="page" id="page-admin">
             <div class="card">
                 <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span><button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button></div>
-                <table><thead><tr><th>Usuário</th><th>Nível</th><th>Empresa</th><th>Ações</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table>
+                <div style="overflow-x:auto;"><table><thead><tr><th>Usuário</th><th>Nível</th><th>Empresa</th><th>Ações</th></tr></thead><tbody id="tbodyUsuarios"></tbody></table></div>
             </div>
         </div>
     </main>
 </div>
 
 <!-- Modal de Atividade -->
-<div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="closeActivityModal()">✕</button>
+<div class="modal-overlay" id="modalAtividadeOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalAtividadeTitulo">
+    <div class="modal"><button class="modal-close" onclick="closeActivityModal()" aria-label="Fechar">✕</button>
         <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
-        <div class="form-group"><label>Título da Solicitação *</label><input type="text" id="atvServico" placeholder="Resumo do atendimento"></div>
-        <div class="form-group"><label>Descrição detalhada</label><textarea id="atvDescricao" placeholder="Relate os detalhes da solicitação..."></textarea></div>
+        <div class="form-group"><label for="atvServico">Título da Solicitação *</label><input type="text" id="atvServico" placeholder="Resumo do atendimento" maxlength="500"></div>
+        <div class="form-group"><label for="atvDescricao">Descrição detalhada</label><textarea id="atvDescricao" placeholder="Relate os detalhes da solicitação..." maxlength="2000"></textarea></div>
         <div class="form-row" id="formHorarios">
-            <div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div>
-            <div class="form-group" id="fimGroup"><label>Hora Fim <span id="obrigatorioFim" style="color:var(--danger);display:none;">*</span></label><input type="time" id="atvHoraFim"></div>
+            <div class="form-group"><label for="atvHoraInicio">Hora Início *</label><input type="time" id="atvHoraInicio"></div>
+            <div class="form-group" id="fimGroup"><label for="atvHoraFim">Hora Fim <span id="obrigatorioFim" style="color:var(--danger);display:none;">*</span></label><input type="time" id="atvHoraFim"></div>
         </div>
-        <!-- Solicitante com checkbox "outra pessoa" para cliente -->
         <div class="form-group">
-            <label>Solicitante *</label>
-            <input type="text" id="atvSolicitante">
+            <label for="atvSolicitante">Solicitante *</label>
+            <input type="text" id="atvSolicitante" maxlength="200">
             <div id="outraPessoaGroup" style="margin-top:4px; display:none;">
                 <label>
                     <input type="checkbox" id="chkOutraPessoa"> Estou abrindo para outra pessoa
@@ -160,36 +179,36 @@
             </div>
         </div>
         <div class="form-group" id="estadoGroup">
-            <label>Estado</label>
+            <label for="atvEstado">Estado</label>
             <select id="atvEstado">
                 <option value="Aberto">🔓 Aberto</option>
                 <option value="Em andamento">🔄 Em andamento</option>
                 <option value="Finalizado">✅ Finalizado</option>
             </select>
         </div>
-        <div class="form-group" id="solucaoGroup" style="display:none;"><label>Solução Aplicada</label><textarea id="atvSolucao"></textarea></div>
+        <div class="form-group" id="solucaoGroup" style="display:none;"><label for="atvSolucao">Solução Aplicada</label><textarea id="atvSolucao" maxlength="2000"></textarea></div>
         <div class="form-group" id="checkPendenciaGroup" style="display:none;"><label><input type="checkbox" id="atvComPendencia"> Com Pendência</label></div>
-        <div class="form-group" id="pendenciaGroup" style="display:none;"><label>Descreva a pendência</label><textarea id="atvPendencia"></textarea></div>
-        <div class="form-group"><label>Data</label><input type="date" id="atvData"></div>
-        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarAtividade()">💾 Salvar</button></div>
+        <div class="form-group" id="pendenciaGroup" style="display:none;"><label for="atvPendencia">Descreva a pendência</label><textarea id="atvPendencia" maxlength="2000"></textarea></div>
+        <div class="form-group"><label for="atvData">Data</label><input type="date" id="atvData"></div>
+        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeActivityModal()">Cancelar</button><button class="btn btn-primary btn-sm" id="btnSalvarAtividade" onclick="salvarAtividade()">💾 Salvar</button></div>
     </div>
 </div>
 
 <!-- Modal de Visualização -->
-<div class="modal-overlay" id="modalVisualizarOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="document.getElementById('modalVisualizarOverlay').style.display='none'">✕</button>
+<div class="modal-overlay" id="modalVisualizarOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalVisualizarTitulo">
+    <div class="modal"><button class="modal-close" onclick="document.getElementById('modalVisualizarOverlay').style.display='none'" aria-label="Fechar">✕</button>
         <h3 id="modalVisualizarTitulo">Detalhes do Atendimento</h3>
         <div id="visualizarConteudo"></div>
     </div>
 </div>
 
 <!-- Modal de Usuário -->
-<div class="modal-overlay" id="modalUserOverlay" style="display:none;">
-    <div class="modal"><button class="modal-close" onclick="closeUserModal()">✕</button>
+<div class="modal-overlay" id="modalUserOverlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="modalUserTitulo">
+    <div class="modal"><button class="modal-close" onclick="closeUserModal()" aria-label="Fechar">✕</button>
         <h3 id="modalUserTitulo">➕ Novo Usuário</h3><input type="hidden" id="userId">
-        <div class="form-group"><label>Nome *</label><input type="text" id="userNome"></div>
-        <div class="form-group"><label>Senha *</label><input type="password" id="userSenha" placeholder="Mín. 4 caracteres"></div>
-        <div class="form-group"><label>Nível</label>
+        <div class="form-group"><label for="userNome">Nome *</label><input type="text" id="userNome" maxlength="100"></div>
+        <div class="form-group"><label for="userSenha">Senha *</label><input type="password" id="userSenha" placeholder="Mín. 4 caracteres" autocomplete="new-password"></div>
+        <div class="form-group"><label for="userNivel">Nível</label>
             <select id="userNivel">
                 <option value="comum">👤 Técnico</option>
                 <option value="admin">👑 Admin</option>
@@ -197,179 +216,461 @@
             </select>
         </div>
         <div id="clienteFields" style="display:none;">
-            <div class="form-group"><label>Empresa *</label><input type="text" id="userEmpresa"></div>
-            <div class="form-group"><label>Endereço Empresarial</label>
-                <input type="text" id="userEndereco" list="enderecoList" autocomplete="off">
+            <div class="form-group"><label for="userEmpresa">Empresa *</label><input type="text" id="userEmpresa" maxlength="200"></div>
+            <div class="form-group"><label for="userEndereco">Endereço Empresarial</label>
+                <input type="text" id="userEndereco" list="enderecoList" autocomplete="off" maxlength="500">
                 <datalist id="enderecoList"></datalist>
             </div>
-            <div class="form-group"><label>E-mail</label><input type="email" id="userEmail"></div>
-            <div class="form-group"><label>Telefone</label><input type="text" id="userTelefone"></div>
+            <div class="form-group"><label for="userEmail">E-mail</label><input type="email" id="userEmail" maxlength="200"></div>
+            <div class="form-group"><label for="userTelefone">Telefone</label><input type="text" id="userTelefone" maxlength="50"></div>
         </div>
-        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button><button class="btn btn-primary btn-sm" onclick="salvarUsuario()">💾 Salvar</button></div>
+        <div class="modal-actions"><button class="btn btn-outline btn-sm" onclick="closeUserModal()">Cancelar</button><button class="btn btn-primary btn-sm" id="btnSalvarUsuario" onclick="salvarUsuario()">💾 Salvar</button></div>
     </div>
 </div>
-<div id="toastContainer"></div>
+
+<div id="toastContainer" aria-live="polite"></div>
 
 <script>
 (function() {
-    const API_URL = 'https://script.google.com/macros/s/AKfycbz2Uj8asgo4p0i2Dla-GgQC_3uA5kNCyMXcFxWo1WDTfLd63CqHbBUL7Q3njhg8ts8jNg/exec';
+    'use strict';
+
+    // =================================================================
+    // CONFIGURAÇÃO
+    // =================================================================
+    // ⚠️ ATUALIZE AQUI APÓS PUBLICAR O APPS SCRIPT COMO APP DA WEB
+    const API_URL = 'https://script.google.com/macros/s/AKfycbznFETY44v6YUZgJYIiRRiZQAXWT53SZ_KrQDHeTcefSAhA6AQ2AdtrzzP07hs4FzLxNg/exec';
+
+    const STORAGE_TOKEN = 'app_session_token';
+    const STORAGE_USER = 'app_session_user';
+    const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
     const dataCache = { users: [], activities: [], lastLoad: 0 };
     let currentUser = null;
+    let currentToken = null;
 
-    // Helpers
-    function normalizeDate(v) { if(!v) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); if(!isNaN(d.getTime())) return d.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); return String(v).trim(); }
-    function excelSerialToTime(v){ if(v==null||v==='')return''; if(typeof v==='string'){ if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v))return v.substring(0,5); if(v.includes('T')){const t=v.split('T')[1];return t?t.substring(0,5):'';} return v; } if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');} return''; }
-    function hojeLocal(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});}
-    function agoraISO(){return new Date().toISOString();}
-    function genId(){return'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);}
-    function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-    function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3000);}
+    // =================================================================
+    // UTILIDADES
+    // =================================================================
+    function $(id) { return document.getElementById(id); }
 
-    async function loadData(){
-        try{
-            const r=await fetch(`${API_URL}?action=load`);const d=await r.json();
-            if(d.error){console.error(d.error);return false;}
-            dataCache.users=d.users||[];
-            dataCache.activities=(d.activities||[]).map(a=>({...a,data:normalizeDate(a.data),hora_inicio:excelSerialToTime(a.hora_inicio),hora_fim:excelSerialToTime(a.hora_fim),pendencia:a.pendencia||'',descricao:a.descricao||''}));
-            dataCache.lastLoad=Date.now();
-            return true;
-        }catch(e){console.error(e);return false;}
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
     }
-    async function syncData(type,payload){try{await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',type,payload})});return true;}catch(e){return false;}}
 
-    function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
-    function verifyPassword(pwd,stored){return String(pwd).trim()===String(stored).trim()||hashPassword(pwd)===String(stored).trim();}
+    function normalizeDate(v) {
+        if (!v) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+        const d = new Date(v);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+        return String(v).trim();
+    }
 
-    function setUser(u){currentUser=u;if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel,empresa:u.empresa||'',endereco:u.endereco||'',email:u.email||'',telefone:u.telefone||''}));}else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}}
-    async function restoreSession(){
-        const uid=sessionStorage.getItem('app_uid');if(!uid)return null;
-        let cached=null;try{cached=JSON.parse(sessionStorage.getItem('app_cache'));}catch(e){}
-        if(cached&&cached.id===uid){loadData().then(()=>{const fresh=dataCache.users.find(u=>u.id===uid);if(fresh)setUser(fresh);if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();});return cached;}
-        await loadData();return dataCache.users.find(u=>u.id===uid)||null;
+    function excelSerialToTime(v) {
+        if (v == null || v === '') return '';
+        if (typeof v === 'string') {
+            if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(v)) return v.substring(0, 5);
+            if (v.includes('T')) { const t = v.split('T')[1]; return t ? t.substring(0, 5) : ''; }
+            return v;
+        }
+        if (typeof v === 'number') {
+            const m = Math.round(v * 1440);
+            const h = Math.floor(m / 60), min = m % 60;
+            return String(h).padStart(2, '0') + ':' + String(min).padStart(2, '0');
+        }
+        return '';
     }
-    async function doLogin(){
-        const n=document.getElementById('loginUser').value.trim();
-        const p=document.getElementById('loginPass').value.trim();
-        const e=document.getElementById('loginError');e.style.display='none';
-        if(!n||!p){e.textContent='Preencha os campos.';e.style.display='block';return;}
-        if(!dataCache.users.length||Date.now()-dataCache.lastLoad>300000)await loadData();
-        const u=dataCache.users.find(u=>u.nome.toLowerCase()===n.toLowerCase());
-        if(!u||!verifyPassword(p,u.senha)){e.textContent='Usuário ou senha inválidos.';e.style.display='block';return;}
-        setUser(u);showApp();toast('✅ Bem-vindo, '+u.nome+'!');
+
+    function hojeLocal() {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
     }
-    function logout(){if(confirm('Sair?')){setUser(null);hideApp();}}
-    function showApp(){document.getElementById('loginContainer').style.display='none';document.getElementById('appContainer').style.display='flex';updateHeader();updateNav();navigateTo('dashboard');}
-    function hideApp(){document.getElementById('loginContainer').style.display='block';document.getElementById('appContainer').style.display='none';}
-    function updateHeader(){
-        if(!currentUser)return;
-        const t=document.getElementById('headerUserTag');
-        let nivel='';
-        if(currentUser.nivel==='admin') nivel=' <span class="admin-badge">Admin</span>';
-        else if(currentUser.nivel==='cliente') nivel=' <span class="cliente-badge">Cliente</span>';
-        t.innerHTML=`👤 ${currentUser.nome}${nivel}`;
+
+    function agoraISO() { return new Date().toISOString(); }
+
+    function genId() {
+        return 'id_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
     }
-    function updateNav(){
-        const navAdmin = document.getElementById('navAdmin');
-        const navMinhaConta = document.getElementById('navMinhaConta');
-        if(currentUser.nivel==='admin'){
-            navAdmin.style.display='flex';
-            navMinhaConta.style.display='flex';
+
+    function toast(msg, tipo) {
+        const t = document.createElement('div');
+        t.className = 'toast' + (tipo === 'error' ? ' toast-error' : tipo === 'success' ? ' toast-success' : '');
+        t.textContent = msg;
+        t.setAttribute('role', 'status');
+        $('toastContainer').appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    function setSyncStatus(status, msg) {
+        const ind = $('syncIndicator');
+        ind.className = '';
+        if (!status) { ind.style.display = 'none'; return; }
+        ind.classList.add(status);
+        ind.innerHTML = '';
+        if (status === 'syncing') {
+            const sp = document.createElement('span');
+            sp.className = 'spinner';
+            ind.appendChild(sp);
+            ind.appendChild(document.createTextNode(' ' + (msg || 'Sincronizando...')));
         } else {
-            navAdmin.style.display='none';
-            if(currentUser.nivel==='cliente'){
-                navMinhaConta.style.display='none';
-            } else {
-                navMinhaConta.style.display='flex';
+            ind.textContent = msg || '';
+        }
+    }
+
+    // =================================================================
+    // COMUNICAÇÃO COM API (com retry e backoff)
+    // =================================================================
+    async function apiGet(params) {
+        const qs = new URLSearchParams(params).toString();
+        const url = API_URL + (qs ? '?' + qs : '');
+        const r = await fetch(url, { method: 'GET' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return await r.json();
+    }
+
+    async function apiPost(body) {
+        // Apps Script não aceita Content-Type: application/json sem CORS preflight.
+        // Usamos text/plain (que é "simple request") e o servidor faz JSON.parse.
+        const r = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(body)
+        });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return await r.json();
+    }
+
+    async function apiPostComRetry(body, tentativas) {
+        tentativas = tentativas || 3;
+        let ultimoErro;
+        for (let i = 0; i < tentativas; i++) {
+            try {
+                const resp = await apiPost(body);
+                if (resp && resp.code === 'AUTH_REQUIRED') {
+                    forceLogout();
+                    throw new Error('Sessão expirada');
+                }
+                if (resp && resp.code === 'BUSY' && i < tentativas - 1) {
+                    await sleep(500 * Math.pow(2, i));
+                    continue;
+                }
+                return resp;
+            } catch (e) {
+                ultimoErro = e;
+                if (i < tentativas - 1) await sleep(500 * Math.pow(2, i));
             }
         }
-    }
-    function navigateTo(p){
-        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-        const el=document.getElementById('page-'+p);if(el)el.classList.add('active');
-        const btn=document.querySelector(`.nav-btn[data-page="${p}"]`);if(btn)btn.classList.add('active');
-        if(p==='dashboard')renderDashboard();
-        else if(p==='relatorio')setupRelatorio();
-        else if(p==='minhaconta')renderMinhaConta();
-        else if(p==='admin')renderAdmin();
+        throw ultimoErro;
     }
 
-    function renderDashboard(){
-        const hoje=hojeLocal();
-        const acts=dataCache.activities;
-        let filtradas;
-        if(currentUser.nivel==='admin'){
-            filtradas=acts.filter(a=>a.data===hoje);
-        } else if(currentUser.nivel==='cliente'){
-            filtradas=acts.filter(a=>a.data===hoje && a.usuarioId===currentUser.id && (a.estado==='Aberto'||a.estado==='Em andamento'));
-        } else {
-            filtradas=acts.filter(a=>a.data===hoje && a.usuarioId===currentUser.id);
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // =================================================================
+    // SESSÃO
+    // =================================================================
+    function salvarSessao(token, user) {
+        currentToken = token;
+        currentUser = user;
+        try {
+            localStorage.setItem(STORAGE_TOKEN, token);
+            localStorage.setItem(STORAGE_USER, JSON.stringify(user));
+        } catch (e) { /* localStorage pode estar bloqueado */ }
+    }
+
+    function limparSessao() {
+        currentToken = null;
+        currentUser = null;
+        try {
+            localStorage.removeItem(STORAGE_TOKEN);
+            localStorage.removeItem(STORAGE_USER);
+        } catch (e) {}
+    }
+
+    function restaurarSessao() {
+        try {
+            const token = localStorage.getItem(STORAGE_TOKEN);
+            const userStr = localStorage.getItem(STORAGE_USER);
+            if (token && userStr) {
+                currentToken = token;
+                currentUser = JSON.parse(userStr);
+                return true;
+            }
+        } catch (e) {}
+        return false;
+    }
+
+    function forceLogout() {
+        limparSessao();
+        hideApp();
+        toast('Sessão expirada. Faça login novamente.', 'error');
+    }
+
+    // =================================================================
+    // LOAD INICIAL
+    // =================================================================
+    async function loadData() {
+        if (!currentToken) return false;
+        try {
+            setSyncStatus('syncing', 'Carregando dados...');
+            const d = await apiGet({ action: 'load', token: currentToken });
+            if (d.code === 'AUTH_REQUIRED') { forceLogout(); return false; }
+            if (d.error) { console.error(d.error); setSyncStatus('error', d.error); return false; }
+            dataCache.users = d.users || [];
+            dataCache.activities = (d.activities || []).map(a => ({
+                ...a,
+                data: normalizeDate(a.data),
+                hora_inicio: excelSerialToTime(a.hora_inicio),
+                hora_fim: excelSerialToTime(a.hora_fim),
+                pendencia: a.pendencia || '',
+                descricao: a.descricao || ''
+            }));
+            dataCache.lastLoad = Date.now();
+            setSyncStatus(null);
+            return true;
+        } catch (e) {
+            console.error(e);
+            setSyncStatus('offline', 'Sem conexão');
+            return false;
         }
-        const prioridade={'Aberto':1,'Em andamento':2,'Finalizado':3};
-        filtradas.sort((a,b)=>(prioridade[a.estado]||4)-(prioridade[b.estado]||4)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-        const tbody=document.getElementById('tbodyAtividades');
-        if(!filtradas.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">Nenhuma atividade hoje.</td></tr>';return;}
-        const isCliente = currentUser.nivel==='cliente';
-        tbody.innerHTML=filtradas.map(a=>{
-            const pode = currentUser.nivel==='admin' || (a.usuarioId===currentUser.id && !isCliente);
-            const dotColor=a.estado==='Finalizado'?'dot-verde':a.estado==='Em andamento'?'dot-amarelo':'dot-vermelho';
-            const actions = isCliente ? 
-                `<button class="btn btn-outline btn-sm" onclick="visualizarAtividade('${a.id}')" title="Visualizar">👁️</button>` :
-                `<button class="btn btn-outline btn-sm" onclick="visualizarAtividade('${a.id}')" title="Visualizar">👁️</button>
-                ${pode?`<button class="btn btn-outline btn-sm" onclick="editarAtividade('${a.id}')">✏️</button><button class="btn btn-danger btn-sm" onclick="excluirAtividade('${a.id}')">🗑️</button>`:''}
-                ${pode&&(a.estado==='Aberto'||a.estado==='Em andamento')?`<button class="btn btn-success btn-sm" onclick="finalizarAtividade('${a.id}')">✅</button>`:''}`;
-            return `<tr>
-                <td><span class="dot ${dotColor}"></span></td>
-                <td><strong>${esc(a.servico_realizado)}</strong></td>
-                <td>${esc(a.solicitante)}</td>
-                <td>${a.hora_inicio||'-'}</td>
-                <td>${a.hora_fim||'-'}</td>
-                <td><span class="status-badge" style="background:${a.estado==='Finalizado'?'#d1fae5':a.estado==='Em andamento'?'#dbeafe':'#fef3c7'}">${a.estado}</span></td>
-                <td style="display:flex; gap:4px;">${actions}</td>
-            </tr>`;
-        }).join('');
     }
 
-    window.visualizarAtividade = function(id){
-        const a = dataCache.activities.find(a=>a.id===id);
-        if(!a) return toast('Atividade não encontrada.');
-        const estado = a.estado || '';
-        const dotColor = estado==='Finalizado'?'dot-verde':estado==='Em andamento'?'dot-amarelo':'dot-vermelho';
-        document.getElementById('visualizarConteudo').innerHTML = `
-            <p><strong><span class="dot ${dotColor}"></span> ${esc(estado)}</strong></p>
-            <p><strong>Título:</strong> ${esc(a.servico_realizado)}</p>
-            <p><strong>Solicitante:</strong> ${esc(a.solicitante)}</p>
-            <p><strong>Data:</strong> ${esc(a.data)}</p>
-            <p><strong>Hora Início:</strong> ${a.hora_inicio||'-'}</p>
-            <p><strong>Hora Fim:</strong> ${a.hora_fim||'-'}</p>
-            <p><strong>Solução:</strong> ${esc(a.solucao_aplicada||'-')}</p>
-            <p><strong>Pendência:</strong> ${esc(a.pendencia||'-')}</p>
-            <p><strong>Descrição detalhada:</strong><br>${esc(a.descricao||'Nenhuma descrição fornecida.')}</p>
-        `;
-        document.getElementById('modalVisualizarTitulo').textContent = '🔍 ' + esc(a.servico_realizado);
-        document.getElementById('modalVisualizarOverlay').style.display = 'flex';
-    };
+    // =================================================================
+    // LOGIN / LOGOUT
+    // =================================================================
+    async function doLogin() {
+        const btn = $('btnLogin');
+        const n = $('loginUser').value.trim();
+        const p = $('loginPass').value;
+        const e = $('loginError');
+        e.style.display = 'none';
+        if (!n || !p) {
+            e.textContent = 'Preencha os campos.';
+            e.style.display = 'block';
+            return;
+        }
+        btn.disabled = true;
+        btn.textContent = '⏳ Entrando...';
+        try {
+            const resp = await apiPost({ action: 'login', payload: { nome: n, senha: p } });
+            if (resp.error) {
+                e.textContent = resp.error;
+                e.style.display = 'block';
+                return;
+            }
+            salvarSessao(resp.token, resp.user);
+            const ok = await loadData();
+            if (!ok) {
+                e.textContent = 'Erro ao carregar dados.';
+                e.style.display = 'block';
+                return;
+            }
+            showApp();
+            toast('✅ Bem-vindo, ' + resp.user.nome + '!', 'success');
+        } catch (err) {
+            console.error(err);
+            e.textContent = 'Erro de conexão. Tente novamente.';
+            e.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🔐 Entrar';
+        }
+    }
 
-    function openActivityModal(atv=null){
-        const isCliente = currentUser.nivel==='cliente';
-        document.getElementById('atvId').value=''; document.getElementById('atvServico').value=''; document.getElementById('atvSolicitante').value=''; document.getElementById('atvHoraFim').value=''; document.getElementById('atvSolucao').value=''; document.getElementById('atvPendencia').value=''; document.getElementById('atvDescricao').value='';
-        document.getElementById('atvComPendencia').checked=false;
-        document.getElementById('atvData').value=hojeLocal();
-        
-        // Hora início
-        const now=new Date();
-        const horaAtual = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-        const horaInicioInput = document.getElementById('atvHoraInicio');
+    async function logout() {
+        if (!confirm('Sair?')) return;
+        const token = currentToken;
+        limparSessao();
+        hideApp();
+        // Avisa o servidor de forma "fire and forget"
+        if (token) {
+            try { await apiPost({ action: 'logout', token: token }); } catch (e) {}
+        }
+    }
+
+    function showApp() {
+        $('loginContainer').style.display = 'none';
+        $('appContainer').style.display = 'flex';
+        updateHeader();
+        updateNav();
+        navigateTo('dashboard');
+    }
+
+    function hideApp() {
+        $('loginContainer').style.display = 'block';
+        $('appContainer').style.display = 'none';
+        $('loginUser').value = '';
+        $('loginPass').value = '';
+    }
+
+    function updateHeader() {
+        if (!currentUser) return;
+        const t = $('headerUserTag');
+        t.textContent = '';
+        const txt = document.createTextNode('👤 ' + currentUser.nome);
+        t.appendChild(txt);
+        if (currentUser.nivel === 'admin') {
+            const badge = document.createElement('span');
+            badge.className = 'admin-badge';
+            badge.textContent = 'Admin';
+            t.appendChild(document.createTextNode(' '));
+            t.appendChild(badge);
+        } else if (currentUser.nivel === 'cliente') {
+            const badge = document.createElement('span');
+            badge.className = 'cliente-badge';
+            badge.textContent = 'Cliente';
+            t.appendChild(document.createTextNode(' '));
+            t.appendChild(badge);
+        }
+    }
+
+    function updateNav() {
+        const navAdmin = $('navAdmin');
+        const navMinhaConta = $('navMinhaConta');
+        if (currentUser.nivel === 'admin') {
+            navAdmin.style.display = 'flex';
+            navMinhaConta.style.display = 'flex';
+        } else {
+            navAdmin.style.display = 'none';
+            navMinhaConta.style.display = currentUser.nivel === 'cliente' ? 'none' : 'flex';
+        }
+    }
+
+    function navigateTo(p) {
+        document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        const el = $('page-' + p); if (el) el.classList.add('active');
+        const btn = document.querySelector('.nav-btn[data-page="' + p + '"]'); if (btn) btn.classList.add('active');
+        if (p === 'dashboard') renderDashboard();
+        else if (p === 'relatorio') setupRelatorio();
+        else if (p === 'minhaconta') renderMinhaConta();
+        else if (p === 'admin') renderAdmin();
+    }
+
+    // =================================================================
+    // DASHBOARD
+    // =================================================================
+    function renderDashboard() {
+        const hoje = hojeLocal();
+        const acts = dataCache.activities;
+        let filtradas;
+        if (currentUser.nivel === 'admin') {
+            filtradas = acts.filter(a => a.data === hoje);
+        } else if (currentUser.nivel === 'cliente') {
+            filtradas = acts.filter(a => a.data === hoje && a.usuarioId === currentUser.id && (a.estado === 'Aberto' || a.estado === 'Em andamento'));
+        } else {
+            filtradas = acts.filter(a => a.data === hoje && a.usuarioId === currentUser.id);
+        }
+        const prioridade = { 'Aberto': 1, 'Em andamento': 2, 'Finalizado': 3 };
+        filtradas.sort((a, b) => (prioridade[a.estado] || 4) - (prioridade[b.estado] || 4) || (a.hora_inicio || '').localeCompare(b.hora_inicio || ''));
+        const tbody = $('tbodyAtividades');
+        tbody.innerHTML = '';
+        if (!filtradas.length) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 7; td.className = 'empty-state';
+            td.textContent = 'Nenhuma atividade hoje.';
+            tr.appendChild(td); tbody.appendChild(tr); return;
+        }
+        const isCliente = currentUser.nivel === 'cliente';
+        filtradas.forEach(a => {
+            const pode = currentUser.nivel === 'admin' || (a.usuarioId === currentUser.id && !isCliente);
+            const dotColor = a.estado === 'Finalizado' ? 'dot-verde' : a.estado === 'Em andamento' ? 'dot-amarelo' : 'dot-vermelho';
+            const bgEstado = a.estado === 'Finalizado' ? '#d1fae5' : a.estado === 'Em andamento' ? '#dbeafe' : '#fef3c7';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td><span class="dot ' + dotColor + '"></span></td>' +
+                '<td><strong>' + esc(a.servico_realizado) + '</strong></td>' +
+                '<td>' + esc(a.solicitante) + '</td>' +
+                '<td>' + esc(a.hora_inicio || '-') + '</td>' +
+                '<td>' + esc(a.hora_fim || '-') + '</td>' +
+                '<td><span class="status-badge" style="background:' + bgEstado + '">' + esc(a.estado) + '</span></td>';
+
+            const tdAcoes = document.createElement('td');
+            tdAcoes.style.display = 'flex';
+            tdAcoes.style.gap = '4px';
+
+            tdAcoes.appendChild(criarBtn('btn-outline', '👁️', () => visualizarAtividade(a.id), 'Visualizar'));
+            if (!isCliente && pode) {
+                tdAcoes.appendChild(criarBtn('btn-outline', '✏️', () => editarAtividade(a.id), 'Editar'));
+                tdAcoes.appendChild(criarBtn('btn-danger', '🗑️', () => excluirAtividade(a.id), 'Excluir'));
+                if (a.estado === 'Aberto' || a.estado === 'Em andamento') {
+                    tdAcoes.appendChild(criarBtn('btn-success', '✅', () => finalizarAtividade(a.id), 'Finalizar'));
+                }
+            }
+            tr.appendChild(tdAcoes);
+            tbody.appendChild(tr);
+        });
+    }
+
+    function criarBtn(cls, txt, onclick, title) {
+        const b = document.createElement('button');
+        b.className = 'btn ' + cls + ' btn-sm';
+        b.textContent = txt;
+        b.title = title || '';
+        b.setAttribute('aria-label', title || txt);
+        b.onclick = onclick;
+        return b;
+    }
+
+    function visualizarAtividade(id) {
+        const a = dataCache.activities.find(a => a.id === id);
+        if (!a) return toast('Atividade não encontrada.', 'error');
+        const estado = a.estado || '';
+        const dotColor = estado === 'Finalizado' ? 'dot-verde' : estado === 'Em andamento' ? 'dot-amarelo' : 'dot-vermelho';
+        const cont = $('visualizarConteudo');
+        cont.innerHTML = '';
+        const linhas = [
+            ['Status', estado, dotColor],
+            ['Título', a.servico_realizado],
+            ['Solicitante', a.solicitante],
+            ['Data', a.data],
+            ['Hora Início', a.hora_inicio || '-'],
+            ['Hora Fim', a.hora_fim || '-'],
+            ['Solução', a.solucao_aplicada || '-'],
+            ['Pendência', a.pendencia || '-'],
+            ['Descrição detalhada', a.descricao || 'Nenhuma descrição fornecida.']
+        ];
+        linhas.forEach(([rotulo, valor, cor]) => {
+            const p = document.createElement('p');
+            const strong = document.createElement('strong');
+            if (cor) {
+                const dot = document.createElement('span');
+                dot.className = 'dot ' + cor;
+                strong.appendChild(dot);
+            }
+            strong.appendChild(document.createTextNode(rotulo + ': '));
+            p.appendChild(strong);
+            p.appendChild(document.createTextNode(' ' + valor));
+            cont.appendChild(p);
+        });
+        $('modalVisualizarTitulo').textContent = '🔍 ' + a.servico_realizado;
+        $('modalVisualizarOverlay').style.display = 'flex';
+    }
+
+    // =================================================================
+    // MODAL DE ATIVIDADE
+    // =================================================================
+    function openActivityModal(atv) {
+        atv = atv || null;
+        const isCliente = currentUser.nivel === 'cliente';
+        $('atvId').value = ''; $('atvServico').value = ''; $('atvSolicitante').value = '';
+        $('atvHoraFim').value = ''; $('atvSolucao').value = ''; $('atvPendencia').value = '';
+        $('atvDescricao').value = ''; $('atvComPendencia').checked = false;
+        $('atvData').value = hojeLocal();
+
+        const now = new Date();
+        const horaAtual = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        const horaInicioInput = $('atvHoraInicio');
         horaInicioInput.value = atv ? excelSerialToTime(atv.hora_inicio) : horaAtual;
         horaInicioInput.readOnly = isCliente;
         horaInicioInput.className = isCliente ? 'readonly-field' : '';
 
-        // Solicitante
-        const solicitanteInput = document.getElementById('atvSolicitante');
-        const outraPessoaGroup = document.getElementById('outraPessoaGroup');
-        const chkOutraPessoa = document.getElementById('chkOutraPessoa');
-        
-        if(isCliente){
+        const solicitanteInput = $('atvSolicitante');
+        const outraPessoaGroup = $('outraPessoaGroup');
+        const chkOutraPessoa = $('chkOutraPessoa');
+
+        if (isCliente) {
             solicitanteInput.value = currentUser.nome;
             solicitanteInput.readOnly = true;
             solicitanteInput.className = 'readonly-field';
@@ -383,232 +684,560 @@
             chkOutraPessoa.checked = false;
         }
 
-        // Restante da configuração
-        document.getElementById('estadoGroup').style.display = isCliente ? 'none' : 'block';
-        document.getElementById('formHorarios').style.display = 'flex';
-        document.getElementById('fimGroup').style.display = isCliente ? 'none' : 'block';
-        document.getElementById('solucaoGroup').style.display='none';
-        document.getElementById('checkPendenciaGroup').style.display='none';
-        document.getElementById('pendenciaGroup').style.display='none';
-        document.getElementById('obrigatorioFim').style.display='none';
+        $('estadoGroup').style.display = isCliente ? 'none' : 'block';
+        $('formHorarios').style.display = 'flex';
+        $('fimGroup').style.display = isCliente ? 'none' : 'block';
+        $('solucaoGroup').style.display = 'none';
+        $('checkPendenciaGroup').style.display = 'none';
+        $('pendenciaGroup').style.display = 'none';
+        $('obrigatorioFim').style.display = 'none';
 
-        if(atv && !isCliente){
-            document.getElementById('atvId').value=atv.id;
-            document.getElementById('atvServico').value=atv.servico_realizado;
-            document.getElementById('atvData').value=normalizeDate(atv.data);
-            document.getElementById('atvSolucao').value=atv.solucao_aplicada||'';
-            document.getElementById('atvPendencia').value=atv.pendencia||'';
-            document.getElementById('atvDescricao').value=atv.descricao||'';
-            if(atv.estado==='Finalizado'){ document.getElementById('solucaoGroup').style.display='block'; document.getElementById('obrigatorioFim').style.display='inline'; }
-            else if(atv.estado==='Em andamento'){ document.getElementById('checkPendenciaGroup').style.display='block'; const temPend=atv.pendencia&&atv.pendencia.trim().length>0; document.getElementById('atvComPendencia').checked=temPend; document.getElementById('pendenciaGroup').style.display=temPend?'block':'none'; }
-            document.getElementById('atvEstado').value = atv.estado;
-            document.getElementById('modalAtividadeTitulo').textContent='✏️ Editar Atividade';
-        } else if(atv && isCliente){
+        if (atv && !isCliente) {
+            $('atvId').value = atv.id;
+            $('atvServico').value = atv.servico_realizado;
+            $('atvData').value = normalizeDate(atv.data);
+            $('atvSolucao').value = atv.solucao_aplicada || '';
+            $('atvPendencia').value = atv.pendencia || '';
+            $('atvDescricao').value = atv.descricao || '';
+            $('atvHoraFim').value = excelSerialToTime(atv.hora_fim) || '';
+            if (atv.estado === 'Finalizado') {
+                $('solucaoGroup').style.display = 'block';
+                $('obrigatorioFim').style.display = 'inline';
+            } else if (atv.estado === 'Em andamento') {
+                $('checkPendenciaGroup').style.display = 'block';
+                const temPend = atv.pendencia && atv.pendencia.trim().length > 0;
+                $('atvComPendencia').checked = temPend;
+                $('pendenciaGroup').style.display = temPend ? 'block' : 'none';
+            }
+            $('atvEstado').value = atv.estado;
+            $('modalAtividadeTitulo').textContent = '✏️ Editar Atividade';
+        } else if (atv && isCliente) {
             return;
         } else {
-            document.getElementById('modalAtividadeTitulo').textContent = isCliente ? '📝 Abrir Chamado' : '➕ Nova Atividade';
-            if(isCliente) {
-                document.getElementById('atvEstado').value = 'Aberto';
-            }
+            $('modalAtividadeTitulo').textContent = isCliente ? '📝 Abrir Chamado' : '➕ Nova Atividade';
+            if (isCliente) $('atvEstado').value = 'Aberto';
         }
-        document.getElementById('modalAtividadeOverlay').style.display='flex';
+        $('modalAtividadeOverlay').style.display = 'flex';
+        setTimeout(() => $('atvServico').focus(), 50);
     }
 
-    // Evento do checkbox "outra pessoa"
-    document.getElementById('chkOutraPessoa').addEventListener('change', function(){
-        const solicitanteInput = document.getElementById('atvSolicitante');
+    function closeActivityModal() {
+        $('modalAtividadeOverlay').style.display = 'none';
+    }
+
+    async function salvarAtividade() {
+        const btn = $('btnSalvarAtividade');
+        const id = $('atvId').value;
+        const servico = $('atvServico').value.trim();
+        const inicio = $('atvHoraInicio').value;
+        const fim = $('atvHoraFim').value;
+        const solicitante = $('atvSolicitante').value.trim();
+        const data = $('atvData').value;
+        const solucao = $('atvSolucao').value.trim();
+        const pendencia = $('atvPendencia').value.trim();
+        const descricao = $('atvDescricao').value.trim();
+        const estado = currentUser.nivel === 'cliente' ? 'Aberto' : $('atvEstado').value;
+
+        if (!servico || !inicio || !solicitante) {
+            toast('Preencha os campos obrigatórios.', 'error'); return;
+        }
+        if (estado === 'Finalizado' && !fim) {
+            toast('Informe a hora fim.', 'error'); return;
+        }
+
+        btn.disabled = true;
+        const txtOriginal = btn.textContent;
+        btn.textContent = '⏳ Salvando...';
+        setSyncStatus('syncing');
+
+        const payload = {
+            id: id || undefined,
+            servico_realizado: servico,
+            hora_inicio: inicio,
+            hora_fim: fim,
+            solicitante: solicitante,
+            estado: estado,
+            data: data,
+            solucao_aplicada: solucao,
+            pendencia: pendencia,
+            descricao: descricao
+        };
+
+        try {
+            const acao = id ? 'updateActivity' : 'createActivity';
+            const resp = await apiPostComRetry({ action: acao, token: currentToken, payload: payload });
+            if (resp.error) {
+                toast('Erro: ' + resp.error, 'error');
+                setSyncStatus('error', resp.error);
+                return;
+            }
+            // Atualiza cache local com a versão do servidor (fonte de verdade)
+            const atvServidor = resp.activity;
+            const idx = dataCache.activities.findIndex(a => a.id === atvServidor.id);
+            const normalizada = {
+                ...atvServidor,
+                data: normalizeDate(atvServidor.data),
+                hora_inicio: excelSerialToTime(atvServidor.hora_inicio),
+                hora_fim: excelSerialToTime(atvServidor.hora_fim)
+            };
+            if (idx >= 0) dataCache.activities[idx] = normalizada;
+            else dataCache.activities.push(normalizada);
+            renderDashboard();
+            closeActivityModal();
+            toast(id ? '✏️ Atividade atualizada!' : '➕ Atividade criada!', 'success');
+            setSyncStatus(null);
+        } catch (err) {
+            console.error(err);
+            toast('Falha na sincronização. Tente novamente.', 'error');
+            setSyncStatus('error', 'Falha ao salvar');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = txtOriginal;
+        }
+    }
+
+    async function excluirAtividade(id) {
+        if (!confirm('Excluir este atendimento?')) return;
+        setSyncStatus('syncing');
+        try {
+            const resp = await apiPostComRetry({ action: 'deleteActivity', token: currentToken, payload: { id: id } });
+            if (resp.error) { toast('Erro: ' + resp.error, 'error'); setSyncStatus('error', resp.error); return; }
+            dataCache.activities = dataCache.activities.filter(a => a.id !== id);
+            renderDashboard();
+            toast('🗑️ Excluído.', 'success');
+            setSyncStatus(null);
+        } catch (err) {
+            console.error(err);
+            toast('Falha ao excluir.', 'error');
+            setSyncStatus('error', 'Falha');
+        }
+    }
+
+    function editarAtividade(id) {
+        const a = dataCache.activities.find(a => a.id === id);
+        if (a && currentUser.nivel !== 'cliente') openActivityModal(a);
+    }
+
+    function finalizarAtividade(id) {
+        if (currentUser.nivel === 'cliente') return;
+        const a = dataCache.activities.find(a => a.id === id); if (!a) return;
+        $('atvId').value = a.id;
+        $('atvServico').value = a.servico_realizado;
+        $('atvHoraInicio').value = excelSerialToTime(a.hora_inicio);
+        $('atvHoraFim').value = excelSerialToTime(a.hora_fim) || '';
+        $('atvSolicitante').value = a.solicitante;
+        $('atvData').value = normalizeDate(a.data);
+        $('atvSolucao').value = a.solucao_aplicada || '';
+        $('atvEstado').value = 'Finalizado';
+        $('atvDescricao').value = a.descricao || '';
+        $('estadoGroup').style.display = 'block';
+        $('solucaoGroup').style.display = 'block';
+        $('obrigatorioFim').style.display = 'inline';
+        $('checkPendenciaGroup').style.display = 'none';
+        $('pendenciaGroup').style.display = 'none';
+        $('modalAtividadeTitulo').textContent = '✅ Finalizar Atendimento';
+        $('modalAtividadeOverlay').style.display = 'flex';
+    }
+
+    // =================================================================
+    // EVENTOS DOS MODAIS
+    // =================================================================
+    $('chkOutraPessoa').addEventListener('change', function() {
+        const solicitanteInput = $('atvSolicitante');
         solicitanteInput.readOnly = !this.checked;
         solicitanteInput.className = this.checked ? '' : 'readonly-field';
-        if(!this.checked) {
-            solicitanteInput.value = currentUser.nome;
+        if (!this.checked) solicitanteInput.value = currentUser.nome;
+    });
+
+    $('atvEstado').addEventListener('change', function() {
+        if (currentUser.nivel === 'cliente') return;
+        const solGroup = $('solucaoGroup');
+        const checkPendGroup = $('checkPendenciaGroup');
+        const pendGroup = $('pendenciaGroup');
+        const obrigatorio = $('obrigatorioFim');
+        if (this.value === 'Finalizado') {
+            solGroup.style.display = 'block'; obrigatorio.style.display = 'inline';
+            checkPendGroup.style.display = 'none'; pendGroup.style.display = 'none';
+        } else if (this.value === 'Em andamento') {
+            solGroup.style.display = 'none'; obrigatorio.style.display = 'none';
+            checkPendGroup.style.display = 'block';
+            pendGroup.style.display = $('atvComPendencia').checked ? 'block' : 'none';
+        } else {
+            solGroup.style.display = 'none'; obrigatorio.style.display = 'none';
+            checkPendGroup.style.display = 'none'; pendGroup.style.display = 'none';
         }
     });
 
-    function closeActivityModal(){document.getElementById('modalAtividadeOverlay').style.display='none';}
-    document.getElementById('atvEstado').addEventListener('change',function(){
-        if(currentUser.nivel==='cliente') return;
-        const solGroup=document.getElementById('solucaoGroup'); const checkPendGroup=document.getElementById('checkPendenciaGroup'); const pendGroup=document.getElementById('pendenciaGroup'); const obrigatorio=document.getElementById('obrigatorioFim');
-        if(this.value==='Finalizado'){ solGroup.style.display='block'; obrigatorio.style.display='inline'; checkPendGroup.style.display='none'; pendGroup.style.display='none'; }
-        else if(this.value==='Em andamento'){ solGroup.style.display='none'; obrigatorio.style.display='none'; checkPendGroup.style.display='block'; pendGroup.style.display=document.getElementById('atvComPendencia').checked?'block':'none'; }
-        else{ solGroup.style.display='none'; obrigatorio.style.display='none'; checkPendGroup.style.display='none'; pendGroup.style.display='none'; }
+    $('atvComPendencia').addEventListener('change', function() {
+        $('pendenciaGroup').style.display = this.checked ? 'block' : 'none';
     });
-    document.getElementById('atvComPendencia').addEventListener('change',function(){ document.getElementById('pendenciaGroup').style.display=this.checked?'block':'none'; });
-    async function salvarAtividade(){
-        const id=document.getElementById('atvId').value; const servico=document.getElementById('atvServico').value.trim(); const inicio=document.getElementById('atvHoraInicio').value; const fim=document.getElementById('atvHoraFim').value; const solicitante=document.getElementById('atvSolicitante').value.trim(); const data=document.getElementById('atvData').value; const solucao=document.getElementById('atvSolucao').value.trim(); const pendencia=document.getElementById('atvPendencia').value.trim(); const descricao=document.getElementById('atvDescricao').value.trim();
-        const estado = currentUser.nivel==='cliente' ? 'Aberto' : document.getElementById('atvEstado').value;
-        if(!servico||!inicio||!solicitante){toast('Preencha os campos obrigatórios.');return;}
-        if(estado==='Finalizado'&&!fim){toast('Informe a hora fim.');return;}
-        if(id){
-            const idx=dataCache.activities.findIndex(a=>a.id===id);
-            if(idx>=0){ Object.assign(dataCache.activities[idx],{servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,solicitante,estado,data,solucao_aplicada:solucao,pendencia,descricao,atualizadoEm:agoraISO()}); }
-        }else{
-            dataCache.activities.push({id:genId(),usuarioId:currentUser.id,usuarioNome:currentUser.nome,servico_realizado:servico,hora_inicio:inicio,hora_fim:fim,solicitante,estado,data,solucao_aplicada:solucao,pendencia,descricao,criadoEm:agoraISO(),atualizadoEm:agoraISO()});
-        }
-        renderDashboard(); closeActivityModal(); toast(id?'Atividade atualizada!':'Atividade criada!'); syncData('activities',dataCache.activities);
-    }
-    async function excluirAtividade(id){ if(!confirm('Excluir?'))return; dataCache.activities=dataCache.activities.filter(a=>a.id!==id); renderDashboard(); toast('Excluída.'); syncData('activities',dataCache.activities); }
-    function editarAtividade(id){ const a=dataCache.activities.find(a=>a.id===id); if(a && currentUser.nivel!=='cliente') openActivityModal(a); }
-    window.finalizarAtividade = function(id){
-        if(currentUser.nivel==='cliente') return;
-        const a=dataCache.activities.find(a=>a.id===id); if(!a)return;
-        document.getElementById('atvId').value=a.id; document.getElementById('atvServico').value=a.servico_realizado; document.getElementById('atvHoraInicio').value=excelSerialToTime(a.hora_inicio); document.getElementById('atvHoraFim').value=excelSerialToTime(a.hora_fim)||''; document.getElementById('atvSolicitante').value=a.solicitante; document.getElementById('atvData').value=normalizeDate(a.data); document.getElementById('atvSolucao').value=a.solucao_aplicada||''; document.getElementById('atvEstado').value='Finalizado'; document.getElementById('atvDescricao').value=a.descricao||'';
-        document.getElementById('estadoGroup').style.display='block';
-        document.getElementById('solucaoGroup').style.display='block'; document.getElementById('obrigatorioFim').style.display='inline'; document.getElementById('checkPendenciaGroup').style.display='none'; document.getElementById('pendenciaGroup').style.display='none';
-        document.getElementById('modalAtividadeTitulo').textContent='✅ Finalizar Atendimento'; document.getElementById('modalAtividadeOverlay').style.display='flex';
-    };
 
-    // Relatório (com filtro de usuário para admin)
-    function setupRelatorio(){
-        document.getElementById('relDataInicio').value=hojeLocal();
-        document.getElementById('relDataFim').value=hojeLocal();
-        const filtroGroup = document.getElementById('filtroUsuarioGroup');
-        const select = document.getElementById('relUsuarioFiltro');
-        if(currentUser.nivel==='admin'){
-            filtroGroup.style.display='block';
-            select.innerHTML = '<option value="">Todos</option>';
+    // =================================================================
+    // RELATÓRIO
+    // =================================================================
+    function setupRelatorio() {
+        $('relDataInicio').value = hojeLocal();
+        $('relDataFim').value = hojeLocal();
+        const filtroGroup = $('filtroUsuarioGroup');
+        const select = $('relUsuarioFiltro');
+        if (currentUser.nivel === 'admin') {
+            filtroGroup.style.display = 'block';
+            select.innerHTML = '';
+            const optAll = document.createElement('option');
+            optAll.value = ''; optAll.textContent = 'Todos';
+            select.appendChild(optAll);
             dataCache.users.forEach(u => {
                 const opt = document.createElement('option');
                 opt.value = u.id;
-                opt.textContent = u.nome + (u.empresa ? ` (${u.empresa})` : '');
+                opt.textContent = u.nome + (u.empresa ? ' (' + u.empresa + ')' : '');
                 select.appendChild(opt);
             });
         } else {
-            filtroGroup.style.display='none';
+            filtroGroup.style.display = 'none';
         }
         carregarRelatorio();
     }
-    function carregarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value; if(!ini||!fim)return;
-        let acts=dataCache.activities.filter(a=>a.data>=ini&&a.data<=fim);
-        
-        if(currentUser.nivel==='admin'){
-            const filtroUsuario = document.getElementById('relUsuarioFiltro').value;
-            if(filtroUsuario) acts = acts.filter(a=>a.usuarioId===filtroUsuario);
+
+    function carregarRelatorio() {
+        const ini = $('relDataInicio').value, fim = $('relDataFim').value;
+        if (!ini || !fim) return;
+        let acts = dataCache.activities.filter(a => a.data >= ini && a.data <= fim);
+        if (currentUser.nivel === 'admin') {
+            const filtroUsuario = $('relUsuarioFiltro').value;
+            if (filtroUsuario) acts = acts.filter(a => a.usuarioId === filtroUsuario);
         } else {
-            acts = acts.filter(a=>a.usuarioId===currentUser.id);
+            acts = acts.filter(a => a.usuarioId === currentUser.id);
         }
-        acts.sort((a,b)=>a.data.localeCompare(b.data)||(a.hora_inicio||'').localeCompare(b.hora_inicio||''));
-        const tbody=document.getElementById('tbodyRelatorio'),summary=document.getElementById('reportSummary');
-        if(!acts.length){tbody.innerHTML='<tr><td colspan="7" class="empty-state">Nenhum atendimento.</td></tr>';summary.innerHTML='';return;}
-        let totalMin=0,finalizados=0;
-        tbody.innerHTML=acts.map(a=>{
-            const dur=calcDur(a.hora_inicio,a.hora_fim); if(a.estado==='Finalizado'){totalMin+=dur;finalizados++;}
-            return `<tr><td>${fmtData(a.data)}</td><td>${esc(a.servico_realizado)}</td><td>${esc(a.solicitante)}</td><td>${a.hora_inicio||'-'}</td><td>${a.hora_fim||'-'}</td><td>${fmtDur(dur)}</td><td>${a.estado}</td></tr>`;
-        }).join('');
-        const h=Math.floor(totalMin/60),m=totalMin%60;
-        summary.innerHTML=`<div class="summary-card"><div class="summary-value">${acts.length}</div><div class="summary-label">Total</div></div><div class="summary-card"><div class="summary-value">${finalizados}</div><div class="summary-label">Finalizados</div></div><div class="summary-card"><div class="summary-value">${h>0?h+'h ':''}${m}min</div><div class="summary-label">Tempo Total</div></div>`;
+        acts.sort((a, b) => a.data.localeCompare(b.data) || (a.hora_inicio || '').localeCompare(b.hora_inicio || ''));
+        const tbody = $('tbodyRelatorio'), summary = $('reportSummary');
+        tbody.innerHTML = ''; summary.innerHTML = '';
+        if (!acts.length) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 7; td.className = 'empty-state';
+            td.textContent = 'Nenhum atendimento.';
+            tr.appendChild(td); tbody.appendChild(tr); return;
+        }
+        let totalMin = 0, finalizados = 0;
+        acts.forEach(a => {
+            const dur = calcDur(a.hora_inicio, a.hora_fim);
+            if (a.estado === 'Finalizado') { totalMin += dur; finalizados++; }
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>' + esc(fmtData(a.data)) + '</td>' +
+                '<td>' + esc(a.servico_realizado) + '</td>' +
+                '<td>' + esc(a.solicitante) + '</td>' +
+                '<td>' + esc(a.hora_inicio || '-') + '</td>' +
+                '<td>' + esc(a.hora_fim || '-') + '</td>' +
+                '<td>' + esc(fmtDur(dur)) + '</td>' +
+                '<td>' + esc(a.estado) + '</td>';
+            tbody.appendChild(tr);
+        });
+        const h = Math.floor(totalMin / 60), m = totalMin % 60;
+        summary.innerHTML =
+            '<div class="summary-card"><div class="summary-value">' + acts.length + '</div><div class="summary-label">Total</div></div>' +
+            '<div class="summary-card"><div class="summary-value">' + finalizados + '</div><div class="summary-label">Finalizados</div></div>' +
+            '<div class="summary-card"><div class="summary-value">' + (h > 0 ? h + 'h ' : '') + m + 'min</div><div class="summary-label">Tempo Total</div></div>';
     }
-    function calcDur(hi,hf){ hi=excelSerialToTime(hi);hf=excelSerialToTime(hf); if(!hi||!hf)return 0; const[h1,m1]=hi.split(':').map(Number), [h2,m2]=hf.split(':').map(Number); let min=(h2*60+m2)-(h1*60+m1); if(min<0)min+=24*60; return Math.max(0,min); }
-    function fmtDur(m){ if(m<=0)return'-'; const h=Math.floor(m/60),min=m%60; return h>0?`${h}h ${min}min`:`${min}min`; }
-    function fmtData(s){ if(!s)return'-'; const[a,m,d]=s.split('-'); return`${d}/${m}/${a}`; }
-    async function exportarRelatorio(){
-        const ini=document.getElementById('relDataInicio').value,fim=document.getElementById('relDataFim').value;
-        let acts=dataCache.activities; if(ini&&fim)acts=acts.filter(a=>a.data>=ini&&a.data<=fim);
-        if(currentUser.nivel==='admin'){
-            const filtroUsuario = document.getElementById('relUsuarioFiltro').value;
-            if(filtroUsuario) acts = acts.filter(a=>a.usuarioId===filtroUsuario);
+
+    function calcDur(hi, hf) {
+        hi = excelSerialToTime(hi); hf = excelSerialToTime(hf);
+        if (!hi || !hf) return 0;
+        const [h1, m1] = hi.split(':').map(Number), [h2, m2] = hf.split(':').map(Number);
+        let min = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (min < 0) min += 24 * 60;
+        return Math.max(0, min);
+    }
+
+    function fmtDur(m) {
+        if (m <= 0) return '-';
+        const h = Math.floor(m / 60), min = m % 60;
+        return h > 0 ? h + 'h ' + min + 'min' : min + 'min';
+    }
+
+    function fmtData(s) {
+        if (!s) return '-';
+        const [a, m, d] = s.split('-');
+        return d + '/' + m + '/' + a;
+    }
+
+    function exportarRelatorio() {
+        const ini = $('relDataInicio').value, fim = $('relDataFim').value;
+        let acts = dataCache.activities;
+        if (ini && fim) acts = acts.filter(a => a.data >= ini && a.data <= fim);
+        if (currentUser.nivel === 'admin') {
+            const filtroUsuario = $('relUsuarioFiltro').value;
+            if (filtroUsuario) acts = acts.filter(a => a.usuarioId === filtroUsuario);
         } else {
-            acts = acts.filter(a=>a.usuarioId===currentUser.id);
+            acts = acts.filter(a => a.usuarioId === currentUser.id);
         }
-        const excel=[['Data','Serviço','Solicitante','Início','Fim','Duração','Estado']];
-        acts.forEach(a=>{ const dur=calcDur(a.hora_inicio,a.hora_fim); excel.push([fmtData(a.data),a.servico_realizado,a.solicitante,excelSerialToTime(a.hora_inicio)||'',excelSerialToTime(a.hora_fim)||'',fmtDur(dur),a.estado]); });
-        const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet(excel);
-        XLSX.utils.book_append_sheet(wb,ws,'Relatório'); XLSX.writeFile(wb,`relatorio_${ini||'todos'}_a_${fim||'todos'}.xlsx`);
-        toast('📥 Exportado!');
+        const excel = [['Data', 'Serviço', 'Solicitante', 'Início', 'Fim', 'Duração', 'Estado']];
+        acts.forEach(a => {
+            const dur = calcDur(a.hora_inicio, a.hora_fim);
+            excel.push([fmtData(a.data), a.servico_realizado, a.solicitante,
+                excelSerialToTime(a.hora_inicio) || '', excelSerialToTime(a.hora_fim) || '',
+                fmtDur(dur), a.estado]);
+        });
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(excel);
+        XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+        XLSX.writeFile(wb, 'relatorio_' + (ini || 'todos') + '_a_' + (fim || 'todos') + '.xlsx');
+        toast('📥 Exportado!', 'success');
     }
 
-    function renderMinhaConta(){ document.getElementById('contaNome').value=currentUser.nome; document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':(currentUser.nivel==='cliente'?'Cliente':'Técnico'); document.getElementById('contaNovaSenha').value=''; document.getElementById('contaConfirmarSenha').value=''; }
-    async function alterarMinhaSenha(){
-        if(currentUser.nivel==='cliente') return;
-        const n=document.getElementById('contaNovaSenha').value.trim(),c=document.getElementById('contaConfirmarSenha').value.trim();
-        if(!n||n.length<4)return toast('Mínimo 4 caracteres.'); if(n!==c)return toast('Senhas não conferem.');
-        const idx=dataCache.users.findIndex(u=>u.id===currentUser.id);
-        if(idx>=0){ dataCache.users[idx].senha=hashPassword(n); setUser(dataCache.users[idx]); await syncData('users',dataCache.users); toast('Senha alterada!'); }
+    // =================================================================
+    // MINHA CONTA
+    // =================================================================
+    function renderMinhaConta() {
+        $('contaNome').value = currentUser.nome;
+        $('contaNivel').value = currentUser.nivel === 'admin' ? 'Administrador'
+            : currentUser.nivel === 'cliente' ? 'Cliente' : 'Técnico';
+        $('contaNovaSenha').value = '';
+        $('contaConfirmarSenha').value = '';
     }
 
-    function renderAdmin(){
-        if(currentUser.nivel!=='admin') return;
-        document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td>${esc(u.nome)} ${u.id===currentUser.id?'(você)':''}</td><td>${u.nivel==='admin'?'👑 Admin':u.nivel==='cliente'?'🏢 Cliente':'👤 Técnico'}</td><td>${u.empresa||'-'}</td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
+    async function alterarMinhaSenha() {
+        if (currentUser.nivel === 'cliente') return;
+        const n = $('contaNovaSenha').value, c = $('contaConfirmarSenha').value;
+        if (!n || n.length < 4) return toast('Mínimo 4 caracteres.', 'error');
+        if (n !== c) return toast('Senhas não conferem.', 'error');
+        setSyncStatus('syncing');
+        try {
+            const resp = await apiPostComRetry({ action: 'changeOwnPassword', token: currentToken, payload: { novaSenha: n } });
+            if (resp.error) { toast('Erro: ' + resp.error, 'error'); setSyncStatus('error', resp.error); return; }
+            $('contaNovaSenha').value = ''; $('contaConfirmarSenha').value = '';
+            toast('🔒 Senha alterada!', 'success');
+            setSyncStatus(null);
+        } catch (err) {
+            console.error(err); toast('Falha ao alterar senha.', 'error');
+            setSyncStatus('error', 'Falha');
+        }
     }
 
-    function atualizarEnderecoList(){
-        const list = document.getElementById('enderecoList');
+    // =================================================================
+    // ADMIN
+    // =================================================================
+    function renderAdmin() {
+        if (currentUser.nivel !== 'admin') return;
+        const tbody = $('tbodyUsuarios');
+        tbody.innerHTML = '';
+        dataCache.users.forEach(u => {
+            const tr = document.createElement('tr');
+            const tdNome = document.createElement('td');
+            tdNome.textContent = u.nome + (u.id === currentUser.id ? ' (você)' : '');
+            const tdNivel = document.createElement('td');
+            tdNivel.textContent = u.nivel === 'admin' ? '👑 Admin' : u.nivel === 'cliente' ? '🏢 Cliente' : '👤 Técnico';
+            const tdEmpresa = document.createElement('td');
+            tdEmpresa.textContent = u.empresa || '-';
+            const tdAcoes = document.createElement('td');
+            tdAcoes.appendChild(criarBtn('btn-outline', '✏️', () => editarUsuario(u.id), 'Editar'));
+            if (u.id !== currentUser.id) {
+                tdAcoes.appendChild(document.createTextNode(' '));
+                tdAcoes.appendChild(criarBtn('btn-danger', '🗑️', () => excluirUsuario(u.id), 'Excluir'));
+            }
+            tr.appendChild(tdNome); tr.appendChild(tdNivel); tr.appendChild(tdEmpresa); tr.appendChild(tdAcoes);
+            tbody.appendChild(tr);
+        });
+    }
+
+    function atualizarEnderecoList() {
+        const list = $('enderecoList');
         list.innerHTML = '';
-        const enderecos = [...new Set(dataCache.users.filter(u=>u.endereco&&u.endereco.trim()).map(u=>u.endereco.trim()))];
+        const enderecos = [...new Set(dataCache.users.filter(u => u.endereco && u.endereco.trim()).map(u => u.endereco.trim()))];
         enderecos.forEach(end => {
             const opt = document.createElement('option');
             opt.value = end;
             list.appendChild(opt);
         });
     }
-    function openUserModal(u=null){
-        document.getElementById('userId').value=''; document.getElementById('userNome').value=''; document.getElementById('userSenha').value=''; document.getElementById('userNivel').value='comum';
-        document.getElementById('userEmpresa').value=''; document.getElementById('userEndereco').value=''; document.getElementById('userEmail').value=''; document.getElementById('userTelefone').value='';
-        document.getElementById('clienteFields').style.display='none';
-        document.getElementById('modalUserTitulo').textContent='➕ Novo Usuário';
-        if(u){
-            document.getElementById('userId').value=u.id; document.getElementById('userNome').value=u.nome; document.getElementById('userSenha').placeholder='Deixe em branco para manter'; document.getElementById('userNivel').value=u.nivel;
-            if(u.nivel==='cliente'){
-                document.getElementById('clienteFields').style.display='block';
-                document.getElementById('userEmpresa').value=u.empresa||''; document.getElementById('userEndereco').value=u.endereco||''; document.getElementById('userEmail').value=u.email||''; document.getElementById('userTelefone').value=u.telefone||'';
+
+    function openUserModal(u) {
+        u = u || null;
+        $('userId').value = ''; $('userNome').value = ''; $('userSenha').value = '';
+        $('userNivel').value = 'comum';
+        $('userEmpresa').value = ''; $('userEndereco').value = '';
+        $('userEmail').value = ''; $('userTelefone').value = '';
+        $('clienteFields').style.display = 'none';
+        $('modalUserTitulo').textContent = '➕ Novo Usuário';
+        $('userSenha').placeholder = 'Mín. 4 caracteres';
+        if (u) {
+            $('userId').value = u.id;
+            $('userNome').value = u.nome;
+            $('userSenha').placeholder = 'Deixe em branco para manter';
+            $('userNivel').value = u.nivel;
+            if (u.nivel === 'cliente') {
+                $('clienteFields').style.display = 'block';
+                $('userEmpresa').value = u.empresa || '';
+                $('userEndereco').value = u.endereco || '';
+                $('userEmail').value = u.email || '';
+                $('userTelefone').value = u.telefone || '';
             }
-            document.getElementById('modalUserTitulo').textContent='✏️ Editar Usuário';
+            $('modalUserTitulo').textContent = '✏️ Editar Usuário';
         }
         atualizarEnderecoList();
-        document.getElementById('modalUserOverlay').style.display='flex';
+        $('modalUserOverlay').style.display = 'flex';
+        setTimeout(() => $('userNome').focus(), 50);
     }
-    function closeUserModal(){document.getElementById('modalUserOverlay').style.display='none';}
-    document.getElementById('userNivel').addEventListener('change',function(){
-        document.getElementById('clienteFields').style.display = this.value==='cliente' ? 'block' : 'none';
-        if(this.value!=='cliente'){
-            document.getElementById('userEmpresa').value=''; document.getElementById('userEndereco').value=''; document.getElementById('userEmail').value=''; document.getElementById('userTelefone').value='';
+
+    function closeUserModal() { $('modalUserOverlay').style.display = 'none'; }
+
+    $('userNivel').addEventListener('change', function() {
+        $('clienteFields').style.display = this.value === 'cliente' ? 'block' : 'none';
+        if (this.value !== 'cliente') {
+            $('userEmpresa').value = ''; $('userEndereco').value = '';
+            $('userEmail').value = ''; $('userTelefone').value = '';
         }
         atualizarEnderecoList();
     });
-    async function salvarUsuario(){
-        const id=document.getElementById('userId').value, nome=document.getElementById('userNome').value.trim(), senha=document.getElementById('userSenha').value.trim(), nivel=document.getElementById('userNivel').value;
-        if(!nome||nome.length<2)return toast('Nome curto.');
-        if(dataCache.users.some(u=>u.nome.toLowerCase()===nome.toLowerCase()&&u.id!==id))return toast('Nome já existe.');
-        const empresa = document.getElementById('userEmpresa').value.trim();
-        const endereco = document.getElementById('userEndereco').value.trim();
-        const email = document.getElementById('userEmail').value.trim();
-        const telefone = document.getElementById('userTelefone').value.trim();
-        if(nivel==='cliente' && !empresa) return toast('Empresa é obrigatória para cliente.');
-        
-        if(id){
-            const idx=dataCache.users.findIndex(u=>u.id===id);
-            if(idx>=0){ 
-                Object.assign(dataCache.users[idx],{nome,nivel,empresa,endereco,email,telefone});
-                if(senha.length>=4) dataCache.users[idx].senha=hashPassword(senha);
-                if(currentUser.id===id) setUser(dataCache.users[idx]);
+
+    async function salvarUsuario() {
+        const btn = $('btnSalvarUsuario');
+        const id = $('userId').value;
+        const nome = $('userNome').value.trim();
+        const senha = $('userSenha').value;
+        const nivel = $('userNivel').value;
+        const empresa = $('userEmpresa').value.trim();
+        const endereco = $('userEndereco').value.trim();
+        const email = $('userEmail').value.trim();
+        const telefone = $('userTelefone').value.trim();
+
+        if (!nome || nome.length < 2) return toast('Nome curto.', 'error');
+        if (!id && (!senha || senha.length < 4)) return toast('Senha mínima 4 caracteres.', 'error');
+        if (id && senha && senha.length < 4) return toast('Senha mínima 4 caracteres.', 'error');
+        if (nivel === 'cliente' && !empresa) return toast('Empresa é obrigatória para cliente.', 'error');
+
+        btn.disabled = true;
+        const txt = btn.textContent;
+        btn.textContent = '⏳ Salvando...';
+        setSyncStatus('syncing');
+
+        const payload = { nome, nivel, empresa, endereco, email, telefone };
+        if (senha) payload.senha = senha;
+        if (id) payload.id = id;
+
+        try {
+            const acao = id ? 'updateUser' : 'createUser';
+            const resp = await apiPostComRetry({ action: acao, token: currentToken, payload: payload });
+            if (resp.error) {
+                toast('Erro: ' + resp.error, 'error');
+                setSyncStatus('error', resp.error);
+                return;
             }
-        }else{
-            if(!senha||senha.length<4)return toast('Senha mínima 4.');
-            dataCache.users.push({id:genId(),nome,senha:hashPassword(senha),nivel,empresa,endereco,email,telefone,criadoEm:agoraISO(),atualizadoEm:agoraISO()});
+            const userServidor = resp.user;
+            const idx = dataCache.users.findIndex(u => u.id === userServidor.id);
+            if (idx >= 0) dataCache.users[idx] = userServidor;
+            else dataCache.users.push(userServidor);
+
+            // Se editou a si próprio, atualiza currentUser
+            if (currentUser.id === userServidor.id) {
+                currentUser = { ...currentUser, ...userServidor };
+                localStorage.setItem(STORAGE_USER, JSON.stringify(currentUser));
+                updateHeader(); updateNav();
+            }
+            closeUserModal();
+            renderAdmin();
+            atualizarEnderecoList();
+            toast(id ? '✏️ Usuário atualizado!' : '➕ Usuário criado!', 'success');
+            setSyncStatus(null);
+        } catch (err) {
+            console.error(err); toast('Falha na sincronização.', 'error');
+            setSyncStatus('error', 'Falha');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = txt;
         }
-        await syncData('users',dataCache.users); closeUserModal(); renderAdmin(); toast(id?'Usuário atualizado!':'Usuário criado!');
-        atualizarEnderecoList();
     }
-    async function excluirUsuario(id){ if(!confirm('Excluir?'))return; dataCache.users=dataCache.users.filter(u=>u.id!==id); await syncData('users',dataCache.users); renderAdmin(); toast('Excluído.'); }
-    function editarUsuario(id){ const u=dataCache.users.find(u=>u.id===id); if(u)openUserModal(u); }
 
-    document.addEventListener('click',e=>{ if(e.target.id==='modalAtividadeOverlay')closeActivityModal(); if(e.target.id==='modalUserOverlay')closeUserModal(); if(e.target.id==='modalVisualizarOverlay')document.getElementById('modalVisualizarOverlay').style.display='none'; });
-    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeActivityModal(); closeUserModal(); document.getElementById('modalVisualizarOverlay').style.display='none'; } });
+    async function excluirUsuario(id) {
+        if (!confirm('Excluir este usuário?')) return;
+        setSyncStatus('syncing');
+        try {
+            const resp = await apiPostComRetry({ action: 'deleteUser', token: currentToken, payload: { id: id } });
+            if (resp.error) { toast('Erro: ' + resp.error, 'error'); setSyncStatus('error', resp.error); return; }
+            dataCache.users = dataCache.users.filter(u => u.id !== id);
+            renderAdmin();
+            toast('🗑️ Excluído.', 'success');
+            setSyncStatus(null);
+        } catch (err) {
+            console.error(err); toast('Falha ao excluir.', 'error');
+            setSyncStatus('error', 'Falha');
+        }
+    }
 
-    window.addEventListener('load',async()=>{
-        const u=await restoreSession();
-        if(u){setUser(u);showApp();}else hideApp();
+    function editarUsuario(id) {
+        const u = dataCache.users.find(u => u.id === id);
+        if (u) openUserModal(u);
+    }
+
+    // =================================================================
+    // EVENTOS GLOBAIS
+    // =================================================================
+    document.addEventListener('click', e => {
+        if (e.target.id === 'modalAtividadeOverlay') closeActivityModal();
+        if (e.target.id === 'modalUserOverlay') closeUserModal();
+        if (e.target.id === 'modalVisualizarOverlay') $('modalVisualizarOverlay').style.display = 'none';
     });
 
-    window.doLogin=doLogin; window.logout=logout; window.navigateTo=navigateTo;
-    window.openActivityModal=openActivityModal; window.closeActivityModal=closeActivityModal;
-    window.editarAtividade=editarAtividade; window.salvarAtividade=salvarAtividade;
-    window.excluirAtividade=excluirAtividade; window.finalizarAtividade=finalizarAtividade;
-    window.visualizarAtividade=visualizarAtividade;
-    window.carregarRelatorio=carregarRelatorio; window.exportarRelatorio=exportarRelatorio;
-    window.alterarMinhaSenha=alterarMinhaSenha;
-    window.openUserModal=openUserModal; window.closeUserModal=closeUserModal;
-    window.editarUsuario=editarUsuario; window.salvarUsuario=salvarUsuario; window.excluirUsuario=excluirUsuario;
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            closeActivityModal();
+            closeUserModal();
+            $('modalVisualizarOverlay').style.display = 'none';
+        }
+    });
+
+    // Enter no login
+    ['loginUser', 'loginPass'].forEach(idEl => {
+        $(idEl).addEventListener('keydown', e => {
+            if (e.key === 'Enter') doLogin();
+        });
+    });
+
+    // Atualização periódica em background (cache leve)
+    setInterval(async () => {
+        if (currentToken && Date.now() - dataCache.lastLoad > CACHE_TTL_MS) {
+            await loadData();
+            const ativa = document.querySelector('.page.active');
+            if (ativa) {
+                const pid = ativa.id.replace('page-', '');
+                if (pid === 'dashboard') renderDashboard();
+                else if (pid === 'admin') renderAdmin();
+            }
+        }
+    }, 60000); // verifica a cada 1 minuto
+
+    // =================================================================
+    // BOOT
+    // =================================================================
+    window.addEventListener('load', async () => {
+        if (restaurarSessao()) {
+            const ok = await loadData();
+            if (ok) showApp();
+            else { limparSessao(); hideApp(); }
+        } else {
+            hideApp();
+        }
+    });
+
+    // Exponhe handlers no escopo global (necessário para onclick=)
+    window.doLogin = doLogin;
+    window.logout = logout;
+    window.navigateTo = navigateTo;
+    window.openActivityModal = openActivityModal;
+    window.closeActivityModal = closeActivityModal;
+    window.editarAtividade = editarAtividade;
+    window.salvarAtividade = salvarAtividade;
+    window.excluirAtividade = excluirAtividade;
+    window.finalizarAtividade = finalizarAtividade;
+    window.visualizarAtividade = visualizarAtividade;
+    window.carregarRelatorio = carregarRelatorio;
+    window.exportarRelatorio = exportarRelatorio;
+    window.alterarMinhaSenha = alterarMinhaSenha;
+    window.openUserModal = openUserModal;
+    window.closeUserModal = closeUserModal;
+    window.editarUsuario = editarUsuario;
+    window.salvarUsuario = salvarUsuario;
+    window.excluirUsuario = excluirUsuario;
 })();
 </script>
 </body>
