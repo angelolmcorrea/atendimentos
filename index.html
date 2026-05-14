@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Atendimentos v1.1</title>
+    <title>Gerenciador de Atendimentos v1.1.1</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         :root { --bg: #f0f4f8; --surface: #fff; --primary: #2563eb; --danger: #dc2626; --success: #16a34a; --warning: #f59e0b; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --radius: 10px; }
@@ -15,6 +15,7 @@
         .header-actions { display:flex; gap:8px; align-items:center; }
         .user-tag { background:rgba(255,255,255,0.2); padding:6px 14px; border-radius:20px; font-size:0.9rem; }
         .admin-badge { background:#fbbf24; color:#1e293b; font-size:0.7rem; padding:2px 8px; border-radius:10px; font-weight:700; margin-left:6px; }
+        .cliente-badge { background:#e0f2fe; color:#0369a1; font-size:0.7rem; padding:2px 8px; border-radius:10px; margin-left:6px; }
         .nav-bar { display:flex; padding:12px 24px; background:#f8fafc; border-bottom:1px solid var(--border); gap:4px; flex-wrap:wrap; }
         .nav-btn { padding:9px 18px; border:none; background:transparent; color:var(--text-light); cursor:pointer; border-radius:20px; font-weight:500; font-size:0.9rem; display:flex; align-items:center; gap:6px; transition:.2s; }
         .nav-btn:hover { background:#e2e8f0; }
@@ -79,7 +80,6 @@
         <button class="nav-btn" data-page="admin" id="navAdmin" style="display:none;" onclick="navigateTo('admin')">⚙️ Admin</button>
     </nav>
     <main class="main-content">
-        <!-- Dashboard -->
         <div class="page active" id="page-dashboard">
             <div class="card">
                 <div class="card-header">
@@ -90,7 +90,6 @@
             </div>
         </div>
 
-        <!-- Relatório -->
         <div class="page" id="page-relatorio">
             <div class="card">
                 <div class="card-header">
@@ -111,7 +110,6 @@
             </div>
         </div>
 
-        <!-- Minha Conta -->
         <div class="page" id="page-minhaconta">
             <div class="card" style="max-width:500px;">
                 <div class="card-header"><span class="card-title">👤 Minha Conta</span></div>
@@ -123,7 +121,6 @@
             </div>
         </div>
 
-        <!-- Admin -->
         <div class="page" id="page-admin">
             <div class="card">
                 <div class="card-header"><span class="card-title">⚙️ Gerenciar Usuários</span><button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Novo Usuário</button></div>
@@ -139,7 +136,10 @@
         <h3 id="modalAtividadeTitulo">➕ Nova Atividade</h3><input type="hidden" id="atvId">
         <div class="form-group"><label>Título da Solicitação *</label><input type="text" id="atvServico" placeholder="Resumo do atendimento"></div>
         <div class="form-group"><label>Descrição detalhada</label><textarea id="atvDescricao" placeholder="Relate os detalhes da solicitação..."></textarea></div>
-        <div class="form-row"><div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div><div class="form-group"><label>Hora Fim <span id="obrigatorioFim" style="color:var(--danger);display:none;">*</span></label><input type="time" id="atvHoraFim"></div></div>
+        <div class="form-row" id="formHorarios">
+            <div class="form-group"><label>Hora Início *</label><input type="time" id="atvHoraInicio"></div>
+            <div class="form-group" id="fimGroup"><label>Hora Fim <span id="obrigatorioFim" style="color:var(--danger);display:none;">*</span></label><input type="time" id="atvHoraFim"></div>
+        </div>
         <div class="form-group"><label>Solicitante *</label><input type="text" id="atvSolicitante"></div>
         <div class="form-group" id="estadoGroup">
             <label>Estado</label>
@@ -178,7 +178,6 @@
                 <option value="cliente">🏢 Cliente</option>
             </select>
         </div>
-        <!-- Campos extras para cliente -->
         <div id="clienteFields" style="display:none;">
             <div class="form-group"><label>Empresa *</label><input type="text" id="userEmpresa"></div>
             <div class="form-group"><label>Endereço Empresarial</label>
@@ -199,7 +198,7 @@
     const dataCache = { users: [], activities: [], lastLoad: 0 };
     let currentUser = null;
 
-    // Helpers (mesmos de antes)
+    // Helpers
     function normalizeDate(v) { if(!v) return ''; if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; const d = new Date(v); if(!isNaN(d.getTime())) return d.toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'}); return String(v).trim(); }
     function excelSerialToTime(v){ if(v==null||v==='')return''; if(typeof v==='string'){ if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v))return v.substring(0,5); if(v.includes('T')){const t=v.split('T')[1];return t?t.substring(0,5):'';} return v; } if(typeof v==='number'){const m=Math.round(v*1440);const h=Math.floor(m/60);const min=m%60;return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0');} return''; }
     function hojeLocal(){return new Date().toLocaleDateString('en-CA',{timeZone:'America/Sao_Paulo'});}
@@ -223,7 +222,6 @@
     function hashPassword(p){let h=0;const s='salt_'+p+'_app';for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return'h_'+Math.abs(h).toString(36)+'_'+btoa(p).substring(0,8);}
     function verifyPassword(pwd,stored){return String(pwd).trim()===String(stored).trim()||hashPassword(pwd)===String(stored).trim();}
 
-    // Sessão
     function setUser(u){currentUser=u;if(u){sessionStorage.setItem('app_uid',u.id);sessionStorage.setItem('app_cache',JSON.stringify({id:u.id,nome:u.nome,nivel:u.nivel,empresa:u.empresa||'',endereco:u.endereco||'',email:u.email||'',telefone:u.telefone||''}));}else{sessionStorage.removeItem('app_uid');sessionStorage.removeItem('app_cache');}}
     async function restoreSession(){
         const uid=sessionStorage.getItem('app_uid');if(!uid)return null;
@@ -249,7 +247,7 @@
         const t=document.getElementById('headerUserTag');
         let nivel='';
         if(currentUser.nivel==='admin') nivel=' <span class="admin-badge">Admin</span>';
-        else if(currentUser.nivel==='cliente') nivel=' <span style="background:#e0f2fe;color:#0369a1;font-size:0.7rem;padding:2px 8px;border-radius:10px;">Cliente</span>';
+        else if(currentUser.nivel==='cliente') nivel=' <span class="cliente-badge">Cliente</span>';
         t.innerHTML=`👤 ${currentUser.nome}${nivel}`;
     }
     function updateNav(){
@@ -261,12 +259,11 @@
         } else {
             navAdmin.style.display='none';
             if(currentUser.nivel==='cliente'){
-                navMinhaConta.style.display='none'; // cliente não tem Minha Conta
+                navMinhaConta.style.display='none';
             } else {
                 navMinhaConta.style.display='flex';
             }
         }
-        // Mostrar botão Relatório sempre (já está visível)
     }
     function navigateTo(p){
         document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -279,7 +276,6 @@
         else if(p==='admin')renderAdmin();
     }
 
-    // Dashboard (adaptado para cliente)
     function renderDashboard(){
         const hoje=hojeLocal();
         const acts=dataCache.activities;
@@ -287,7 +283,6 @@
         if(currentUser.nivel==='admin'){
             filtradas=acts.filter(a=>a.data===hoje);
         } else if(currentUser.nivel==='cliente'){
-            // Cliente vê seus próprios chamados, mas apenas abertos/em andamento? O enunciado diz: "será exibido os chamados em aberto ou em andamento". Mas também menciona relatório com todos. Decidi mostrar apenas abertos e em andamento no dashboard.
             filtradas=acts.filter(a=>a.data===hoje && a.usuarioId===currentUser.id && (a.estado==='Aberto'||a.estado==='Em andamento'));
         } else {
             filtradas=acts.filter(a=>a.data===hoje && a.usuarioId===currentUser.id);
@@ -300,7 +295,6 @@
         tbody.innerHTML=filtradas.map(a=>{
             const pode = currentUser.nivel==='admin' || (a.usuarioId===currentUser.id && !isCliente);
             const dotColor=a.estado==='Finalizado'?'dot-verde':a.estado==='Em andamento'?'dot-amarelo':'dot-vermelho';
-            // Cliente não pode editar, excluir nem finalizar; só visualizar
             const actions = isCliente ? 
                 `<button class="btn btn-outline btn-sm" onclick="visualizarAtividade('${a.id}')" title="Visualizar">👁️</button>` :
                 `<button class="btn btn-outline btn-sm" onclick="visualizarAtividade('${a.id}')" title="Visualizar">👁️</button>
@@ -318,7 +312,6 @@
         }).join('');
     }
 
-    // Visualizar (mantido)
     window.visualizarAtividade = function(id){
         const a = dataCache.activities.find(a=>a.id===id);
         if(!a) return toast('Atividade não encontrada.');
@@ -339,39 +332,48 @@
         document.getElementById('modalVisualizarOverlay').style.display = 'flex';
     };
 
-    // Modal atividade (com restrição para cliente)
     function openActivityModal(atv=null){
+        const isCliente = currentUser.nivel==='cliente';
         document.getElementById('atvId').value=''; document.getElementById('atvServico').value=''; document.getElementById('atvSolicitante').value=''; document.getElementById('atvHoraFim').value=''; document.getElementById('atvSolucao').value=''; document.getElementById('atvPendencia').value=''; document.getElementById('atvDescricao').value='';
         document.getElementById('atvComPendencia').checked=false;
         document.getElementById('atvData').value=hojeLocal();
-        const now=new Date(); document.getElementById('atvHoraInicio').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
         
-        const isCliente = currentUser.nivel==='cliente';
-        const estadoGroup = document.getElementById('estadoGroup');
-        const estadoSelect = document.getElementById('atvEstado');
-        if(isCliente){
-            estadoGroup.style.display='none';
-            estadoSelect.value = 'Aberto'; // cliente sempre abre como Aberto
-        } else {
-            estadoGroup.style.display='block';
-            estadoSelect.value = atv ? atv.estado : 'Aberto';
-        }
+        // Hora início sempre preenchida, mas readonly para cliente
+        const now=new Date();
+        const horaAtual = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        const horaInicioInput = document.getElementById('atvHoraInicio');
+        horaInicioInput.value = atv ? excelSerialToTime(atv.hora_inicio) : horaAtual;
+        horaInicioInput.readOnly = isCliente;
+        horaInicioInput.style.backgroundColor = isCliente ? '#e9ecef' : '#fafbfc';
 
-        document.getElementById('solucaoGroup').style.display='none'; 
-        document.getElementById('checkPendenciaGroup').style.display='none'; 
-        document.getElementById('pendenciaGroup').style.display='none'; 
+        // Esconde ou mostra campos conforme nível
+        document.getElementById('estadoGroup').style.display = isCliente ? 'none' : 'block';
+        document.getElementById('formHorarios').style.display = 'flex';
+        document.getElementById('fimGroup').style.display = isCliente ? 'none' : 'block';
+        document.getElementById('solucaoGroup').style.display='none';
+        document.getElementById('checkPendenciaGroup').style.display='none';
+        document.getElementById('pendenciaGroup').style.display='none';
         document.getElementById('obrigatorioFim').style.display='none';
 
         if(atv && !isCliente){
-            document.getElementById('atvId').value=atv.id; document.getElementById('atvServico').value=atv.servico_realizado; document.getElementById('atvHoraInicio').value=excelSerialToTime(atv.hora_inicio); document.getElementById('atvHoraFim').value=excelSerialToTime(atv.hora_fim); document.getElementById('atvSolicitante').value=atv.solicitante; document.getElementById('atvData').value=normalizeDate(atv.data); document.getElementById('atvSolucao').value=atv.solucao_aplicada||''; document.getElementById('atvPendencia').value=atv.pendencia||''; document.getElementById('atvDescricao').value=atv.descricao||'';
+            document.getElementById('atvId').value=atv.id;
+            document.getElementById('atvServico').value=atv.servico_realizado;
+            document.getElementById('atvSolicitante').value=atv.solicitante;
+            document.getElementById('atvData').value=normalizeDate(atv.data);
+            document.getElementById('atvSolucao').value=atv.solucao_aplicada||'';
+            document.getElementById('atvPendencia').value=atv.pendencia||'';
+            document.getElementById('atvDescricao').value=atv.descricao||'';
             if(atv.estado==='Finalizado'){ document.getElementById('solucaoGroup').style.display='block'; document.getElementById('obrigatorioFim').style.display='inline'; }
             else if(atv.estado==='Em andamento'){ document.getElementById('checkPendenciaGroup').style.display='block'; const temPend=atv.pendencia&&atv.pendencia.trim().length>0; document.getElementById('atvComPendencia').checked=temPend; document.getElementById('pendenciaGroup').style.display=temPend?'block':'none'; }
+            document.getElementById('atvEstado').value = atv.estado;
             document.getElementById('modalAtividadeTitulo').textContent='✏️ Editar Atividade';
         } else if(atv && isCliente){
-            // Cliente não deve editar, mas se por algum motivo chamar, apenas visualiza (não abrir modal de edição)
-            return;
+            return; // cliente não edita
         } else {
-            document.getElementById('modalAtividadeTitulo').textContent='➕ Nova Atividade';
+            document.getElementById('modalAtividadeTitulo').textContent = isCliente ? '📝 Abrir Chamado' : '➕ Nova Atividade';
+            if(isCliente) {
+                document.getElementById('atvEstado').value = 'Aberto';
+            }
         }
         document.getElementById('modalAtividadeOverlay').style.display='flex';
     }
@@ -468,7 +470,6 @@
         toast('📥 Exportado!');
     }
 
-    // Minha Conta
     function renderMinhaConta(){ document.getElementById('contaNome').value=currentUser.nome; document.getElementById('contaNivel').value=currentUser.nivel==='admin'?'Administrador':(currentUser.nivel==='cliente'?'Cliente':'Técnico'); document.getElementById('contaNovaSenha').value=''; document.getElementById('contaConfirmarSenha').value=''; }
     async function alterarMinhaSenha(){
         if(currentUser.nivel==='cliente') return;
@@ -478,13 +479,11 @@
         if(idx>=0){ dataCache.users[idx].senha=hashPassword(n); setUser(dataCache.users[idx]); await syncData('users',dataCache.users); toast('Senha alterada!'); }
     }
 
-    // Admin (com suporte a clientes)
     function renderAdmin(){
         if(currentUser.nivel!=='admin') return;
         document.getElementById('tbodyUsuarios').innerHTML=dataCache.users.map(u=>`<tr><td>${esc(u.nome)} ${u.id===currentUser.id?'(você)':''}</td><td>${u.nivel==='admin'?'👑 Admin':u.nivel==='cliente'?'🏢 Cliente':'👤 Técnico'}</td><td>${u.empresa||'-'}</td><td><button class="btn btn-outline btn-sm" onclick="editarUsuario('${u.id}')">✏️</button>${u.id!==currentUser.id?`<button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">🗑️</button>`:''}</td></tr>`).join('');
     }
 
-    // Modal usuário (com campos de cliente e autocomplete)
     function atualizarEnderecoList(){
         const list = document.getElementById('enderecoList');
         list.innerHTML = '';
